@@ -1,5 +1,6 @@
-import { _decorator, Component, Node, Canvas, UITransform, Camera, Layers, Color, Graphics, Label, Sprite, SpriteFrame, Texture2D, resources, Rect, view, ResolutionPolicy, tween, Vec3, UIOpacity, game, Game, profiler, Tween, Mask } from 'cc';
+import { _decorator, Component, Node, Canvas, UITransform, Camera, Layers, Color, Graphics, Label, Sprite, SpriteFrame, Texture2D, resources, Rect, view, ResolutionPolicy, tween, Vec3, UIOpacity, game, Game, profiler, Tween, Mask, sys } from 'cc';
 import { SquadBattleModel, HERO_CONFIG, MONSTERS, SquadHit } from './SquadBattleModel';
+import { LocalSave } from './LocalSave';
 import { HeroPage } from './HeroPage';
 import { BagPage } from './BagPage';
 const { ccclass } = _decorator;
@@ -15,7 +16,12 @@ export class Adventure extends Component {
   private ui!:Texture2D; private heroTextures:Texture2D[]=[]; private monsters!:Texture2D; private enemyPortraits:Node[]=[]; private shownWave=0; private shownRegroup=false;
   private floating:{target:number;text:string;color:string}[]=[]; private floatTimer=0; private floatSerial=0; private effects=new Set<Node>();
   private heroPage!:HeroPage; private bagPage!:BagPage; private currentPage:'adventure'|'hero'|'bag'='adventure'; private canvasRoot!:Node;
+  private saves!:LocalSave<SquadBattleModel>; private saveClock=0; private background=false;
+  private saveProgress=()=>{if(!this.saves)return false;const snapshot=this.model.snapshot();if(this.background)snapshot.paused=this.foregroundPaused;const ok=this.saves.save(snapshot);if(!ok&&this.notice)this.notice.string=this.saves.error;return ok;};
+  private upgradeHero=(i:number)=>{const before=this.model.snapshot();const error=this.model.upgrade(i);if(error)return error;if(!this.saveProgress()){this.model=SquadBattleModel.restore(before)!;return this.saves.error+'，本次升级未扣经验';}return null;};
   onLoad() {
+    this.saves=new LocalSave(sys.localStorage,SquadBattleModel.restore);this.model=this.saves.load()||this.model;
+    if(typeof window!=='undefined')window.addEventListener('beforeunload',this.saveProgress);
     profiler.hideStats();
     view.setDesignResolutionSize(887,1774,ResolutionPolicy.SHOW_ALL);
     const cameraNode = new Node('UI Camera'); cameraNode.parent = this.node;
@@ -35,8 +41,8 @@ export class Adventure extends Component {
       this.heroTextures.forEach((t,i)=>{const [x,y]=this.positions[i];this.units.push(this.picture(t,new Rect(0,0,t.width,t.height),x,y,i===0?280:260,i===0?280:260,HERO_CONFIG[i].name));});
       this.units[1].setSiblingIndex(this.units[0].getSiblingIndex());
       this.model.enemies.forEach((e,j)=>{const [x,y]=this.positions[j+3];this.units.push(this.picture(monsters,this.monsterRect(j),x,y,260,260,'Monster '+j));});
-      this.drawPage();this.ready=true;this.sync();
-      this.heroPage=new HeroPage(this.canvasRoot,heroUI,yard,knight,()=>this.openPage('adventure'),()=>this.openPage('bag'),this.heroTextures,ui,()=>({gold:this.model.gold,experience:this.model.heroes.map(h=>h.experience)}));
+      this.drawPage();this.ready=true;this.sync();this.pauseLabel.string=this.model.paused?'继续战斗':'暂停战斗';if(this.saves.error)this.notice.string=this.saves.error;
+      this.heroPage=new HeroPage(this.canvasRoot,heroUI,yard,knight,()=>this.openPage('adventure'),()=>this.openPage('bag'),this.heroTextures,ui,()=>({gold:this.model.gold,experience:this.model.heroes.map(h=>h.experience),levels:this.model.heroes.map(h=>h.level),stats:this.model.heroes.map((_,i)=>this.model.stats(i))}),this.upgradeHero);
       this.bagPage=new BagPage(this.canvasRoot,bagUI,yard,(page)=>this.openPage(page));
     }).catch(e=>{console.error(e);this.label('素材加载失败，请刷新重试',0,0,700,70,34);});
   }
@@ -106,7 +112,7 @@ export class Adventure extends Component {
     // Pause/retry belong in the hamburger menu, keeping the reference's battlefield clear.
     this.menu=this.panel('Battle menu',0,220,520,500,'#FFF6E4',30);
     this.label('战斗设置',0,205,450,55,36,C.ink,this.menu);
-    const pause=this.button('暂停战斗',0,250,410,75,()=>{if(this.model.result!=='fighting')return;this.model.paused=!this.model.paused;this.pauseLabel.string=this.model.paused?'继续战斗':'暂停战斗';});
+    const pause=this.button('暂停战斗',0,250,410,75,()=>{if(this.model.result!=='fighting')return;this.model.paused=!this.model.paused;this.pauseLabel.string=this.model.paused?'继续战斗':'暂停战斗';this.saveProgress();});
     pause.node.parent!.parent=this.menu;pause.node.parent!.setPosition(0,110);this.pauseLabel=pause;
     const retry=this.button('重新挑战',0,140,410,75,()=>{this.restart();this.menu.active=false;},C.gold);
     retry.node.parent!.parent=this.menu;retry.node.parent!.setPosition(0,15);
@@ -120,19 +126,19 @@ export class Adventure extends Component {
   private restart(index=this.model.monsterIndex){
     if(!this.ready)return;const previous=this.model,auto=previous.autoSkill;this.model=new SquadBattleModel(index,Math.random,3,true);this.model.inheritIncome(previous);this.floating=[];this.effects.forEach(n=>{Tween.stopAllByTarget(n);n.destroy();});this.effects.clear();this.model.autoSkill=auto;this.pauseLabel.string='暂停战斗';this.notice.string='持续挂机 · 收益按实际时间结算';
     this.units.forEach((n,i)=>{Tween.stopAllByTarget(n);const o=n.getComponent(UIOpacity);if(o){Tween.stopAllByTarget(o);o.opacity=255;}n.getComponent(Sprite)!.color=Color.WHITE;n.setScale(1,1,1);n.setPosition(this.positions[i][0],this.positions[i][1]);});
-    this.shownWave=0;this.sync();
+    this.shownWave=0;this.sync();this.saveProgress();
   }
   private sync(){
     const b=this.model;
     this.status.string=b.regrouping?'整备后重试':b.waveDelay>0?'下一波即将入场':'第 '+b.wave+' 波';
-    this.goldLabel.string=String(b.gold);this.incomeLabel.string='本次击杀 '+b.kills+' · 每位英雄经验 +'+b.heroes[0].experience;
+    this.goldLabel.string=String(b.gold);this.incomeLabel.string='累计击杀 '+b.kills+' · 在线挂机收益';
     if(this.shownWave!==b.wave||(this.shownRegroup&&!b.regrouping)){
       this.shownWave=b.wave;this.model.enemies.forEach((e,j)=>{const n=this.units[j+3];this.setMonsterFrame(n,j);this.setMonsterFrame(this.enemyPortraits[j],j);const [x,y]=this.positions[j+3];Tween.stopAllByTarget(n);n.setPosition(x+160,y);tween(n).to(.35,{position:new Vec3(x,y,0)}).start();});
     }this.shownRegroup=b.regrouping;
     b.enemies.forEach((e,j)=>{const i=j+3;this.hpLabels[i].string=e.hp+'/'+e.maxHp;this.paintBar(this.bars[i],e.hp,e.maxHp,'#F38B71');this.enemyNames[j].string='';const o=this.units[i].getComponent(UIOpacity)||this.units[i].addComponent(UIOpacity);o.opacity=e.hp>0?255:0;this.hpLabels[i].node.active=e.hp>0;this.bars[i].node.active=e.hp>0;});
     b.heroes.forEach((h,i)=>{
-      this.hpLabels[i].string=h.hp+'/'+HERO_CONFIG[i].hp;this.partyHP[i].string=this.hpLabels[i].string;
-      this.paintBar(this.bars[i],h.hp,HERO_CONFIG[i].hp,'#9AF032');this.paintBar(this.partyBars[i],h.hp,HERO_CONFIG[i].hp,'#9AF032');
+      this.hpLabels[i].string=h.hp+'/'+b.stats(i).hp;this.partyHP[i].string=this.hpLabels[i].string;
+      this.paintBar(this.bars[i],h.hp,b.stats(i).hp,'#9AF032');this.paintBar(this.partyBars[i],h.hp,b.stats(i).hp,'#9AF032');
       this.skillLabels[i].string=h.hp<=0?'已倒下':h.queued?'已排队':h.cooldown>0?h.cooldown.toFixed(1):'';
       const g=this.skillShades[i];g.clear();if(h.cooldown>0||h.hp<=0){g.fillColor=new Color(15,34,62,155);g.roundRect(-60,-60,120,h.hp<=0?120:Math.max(1,120*h.cooldown/HERO_CONFIG[i].cooldown),10);g.fill();}
       const o=this.units[i].getComponent(UIOpacity)||this.units[i].addComponent(UIOpacity);o.opacity=h.hp<=0?65:255;
@@ -151,7 +157,7 @@ export class Adventure extends Component {
     if(hit.damage)this.floating.push({target:hit.target,text:(hit.skill?'火焰 ':'−')+hit.damage,color:hit.actor>=3?'#EE7463':hit.skill?'#FFCD58':'#FFFFFF'});
     if(hit.blocked)this.floating.push({target:hit.target,text:'吸收 '+hit.blocked,color:'#8BD8FF'});
     if(hit.heal)this.floating.push({target:hit.target,text:'+'+hit.heal,color:'#95EF72'});
-    if(hit.skill&&hit.actor===0)this.floating.push({target:0,text:'护盾 +220',color:'#8BD8FF'});
+    if(hit.skill&&hit.actor===0)this.floating.push({target:0,text:'护盾 +'+this.model.stats(0).power,color:'#8BD8FF'});
 
     if(this.floating.length>18)this.floating.splice(0,this.floating.length-18);
   }
@@ -165,8 +171,8 @@ export class Adventure extends Component {
     tween(o).delay(.48).to(.37,{opacity:0}).start();
   }
   private openPage(page:'adventure'|'hero'|'bag'){if(!this.heroPage||!this.bagPage)return;this.currentPage=page;if(page==='hero')this.heroPage.refresh();if(page==='bag')this.bagPage.setGold(this.model.gold);this.root.active=page==='adventure';this.heroPage.node.active=page==='hero';this.bagPage.node.active=page==='bag';}
-  update(dt:number){if(!this.ready)return;this.model.settleIdle(dt);if(this.currentPage==='hero'){this.heroPage.refreshIncome();return;}if(this.currentPage==='bag'){this.bagPage.setGold(this.model.gold);return;}this.clock+=dt;this.updateFloats(dt);for(const h of this.model.step(Math.min(dt,.1)*this.speed))this.animate(h);if(!this.model.paused&&this.model.result==='fighting'&&this.model.waveDelay===0)this.units.forEach((n,i)=>{if(i<3&&this.model.heroes[i].hp<=0||i>=3&&this.model.enemies[i-3].hp<=0)return;const s=1+Math.sin(this.clock*3+i)*.012;n.setScale(i>=3?1/s:1,s,1);});this.sync();}
-  private hide(){this.foregroundPaused=this.model.paused;this.model.paused=true;}
-  private show(){this.model.paused=this.foregroundPaused;}
-  onDestroy(){game.off(Game.EVENT_HIDE,this.hide,this);game.off(Game.EVENT_SHOW,this.show,this);}
+  update(dt:number){if(!this.ready)return;this.model.settleIdle(dt);this.saveClock+=dt;if(this.saveClock>=1){this.saveClock=0;this.saveProgress();}if(this.currentPage==='hero'){this.heroPage.refreshIncome();return;}if(this.currentPage==='bag'){this.bagPage.setGold(this.model.gold);return;}this.clock+=dt;this.updateFloats(dt);for(const h of this.model.step(Math.min(dt,.1)*this.speed))this.animate(h);if(!this.model.paused&&this.model.result==='fighting'&&this.model.waveDelay===0)this.units.forEach((n,i)=>{if(i<3&&this.model.heroes[i].hp<=0||i>=3&&this.model.enemies[i-3].hp<=0)return;const s=1+Math.sin(this.clock*3+i)*.012;n.setScale(i>=3?1/s:1,s,1);});this.sync();}
+  private hide(){this.saveProgress();this.foregroundPaused=this.model.paused;this.background=true;this.model.paused=true;}
+  private show(){this.background=false;this.model.paused=this.foregroundPaused;}
+  onDestroy(){if(typeof window!=='undefined')window.removeEventListener('beforeunload',this.saveProgress);game.off(Game.EVENT_HIDE,this.hide,this);game.off(Game.EVENT_SHOW,this.show,this);}
 }
