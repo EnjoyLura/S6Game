@@ -10,7 +10,10 @@ export const MONSTERS = [
   {name:'嫩叶史莱姆',hp:2400,attack:230}, {name:'橙帽蘑菇',hp:2600,attack:245},
   {name:'圆壳蜗牛',hp:2800,attack:250}, {name:'芽芽树桩',hp:3000,attack:265},
 ];
-export type SquadHit = {actor:number;target:number;damage:number;blocked:number;heal:number;skill:boolean;killed?:boolean};
+export type EnemyTargetRule='random'|'lowest-hp-ratio'|'highest-attack'|{preferred:number};
+// Skills may override this independently of basic attacks. Current fire stays random.
+export const FIRE_TARGET:EnemyTargetRule='random';
+export type SquadHit = {actor:number;target:number;damage:number;blocked:number;heal:number;skill:boolean;killed?:boolean;hpAfter:number;shieldAfter:number};
 // Indices 0..2 are heroes; 3..5 are enemies. Only battle time advances cooldowns.
 export class SquadBattleModel {
   heroes=HERO_CONFIG.map(c=>({hp:c.hp,shield:0,cooldown:0,queued:false,damage:0,healing:0,experience:0,level:1}));
@@ -39,6 +42,13 @@ export class SquadBattleModel {
   private alive(id:number){return id<3?this.heroes[id].hp>0:this.enemies[id-3].hp>0;}
   get nextActor(){for(let n=0;n<this.order.length;n++){const i=this.order[(this.cursor+n)%this.order.length];if(this.alive(i))return i;}return 0;}
   requestSkill(i:number){const h=this.heroes[i];if(!h||h.hp<=0||h.cooldown>0||h.queued||this.result!=='fighting'||this.waveDelay>0)return false;h.queued=true;return true;}
+  selectEnemy(rule:EnemyTargetRule='random'){
+    const alive=this.enemies.map((_,i)=>i).filter(i=>this.enemies[i].hp>0);if(!alive.length)return -1;
+    if(typeof rule==='object'&&alive.indexOf(rule.preferred-3)>=0)return rule.preferred;
+    if(rule==='lowest-hp-ratio'){const score=Math.min(...alive.map(i=>this.enemies[i].hp/this.enemies[i].maxHp));const tied=alive.filter(i=>this.enemies[i].hp/this.enemies[i].maxHp===score);return 3+tied[Math.min(tied.length-1,Math.floor(this.random()*tied.length))];}
+    if(rule==='highest-attack'){const score=Math.max(...alive.map(i=>this.enemies[i].attack));const tied=alive.filter(i=>this.enemies[i].attack===score);return 3+tied[Math.min(tied.length-1,Math.floor(this.random()*tied.length))];}
+    return 3+alive[Math.min(alive.length-1,Math.floor(this.random()*alive.length))];
+  }
   private patient(){return this.heroes.map((_,i)=>i).filter(i=>this.heroes[i].hp>0&&this.heroes[i].hp<this.stats(i).hp).sort((a,b)=>this.heroes[a].hp/this.stats(a).hp-this.heroes[b].hp/this.stats(b).hp)[0];}
   private target(){const alive=this.heroes.map((_,i)=>i).filter(i=>this.heroes[i].hp>0);const total=alive.reduce((s,i)=>s+(i===0?6:2),0);let roll=this.random()*total;for(const i of alive){roll-=i===0?6:2;if(roll<0)return i;}return alive[alive.length-1];}
   inheritIncome(previous:SquadBattleModel){
@@ -86,7 +96,7 @@ export class SquadBattleModel {
       if(this.timer+1e-8<1)break;this.timer=0;
       let actor=this.order[this.cursor];this.cursor=(this.cursor+1)%this.order.length;
       while(!this.alive(actor)){actor=this.order[this.cursor];this.cursor=(this.cursor+1)%this.order.length;}
-      this.actions++;let target=3+this.enemies.findIndex(e=>e.hp>0),damage=0,blocked=0,heal=0,skill=false,killed=false;
+      this.actions++;let target=actor,damage=0,blocked=0,heal=0,skill=false,killed=false;
       if(actor>=3){target=this.target();const h=this.heroes[target],attack=this.enemies[actor-3].attack;blocked=Math.min(h.shield,attack);h.shield-=blocked;damage=Math.min(h.hp,attack-blocked);h.hp-=damage;this.received+=damage;}
       else{
         const h=this.heroes[actor],c=this.stats(actor),patient=this.patient();
@@ -94,13 +104,13 @@ export class SquadBattleModel {
           skill=true;h.queued=false;h.cooldown=c.cooldown;
           if(actor===0){target=actor;h.shield=c.power;}
           else if(actor===2){target=patient!;heal=Math.min(c.power,this.stats(target).hp-this.heroes[target].hp);this.heroes[target].hp+=heal;h.healing+=heal;}
-          else damage=Math.min(this.enemies[target-3].hp,c.power);
-        }else damage=Math.min(this.enemies[target-3].hp,c.attack);
+          else{target=this.selectEnemy(FIRE_TARGET);damage=Math.min(this.enemies[target-3].hp,c.power);}
+        }else{target=this.selectEnemy('random');damage=Math.min(this.enemies[target-3].hp,c.attack);}
         if(damage){const e=this.enemies[target-3];e.hp-=damage;h.damage+=damage;this.damage+=damage;
           if(e.hp===0){killed=true;this.kills++;}
         }
       }
-      hits.push({actor,target,damage,blocked,heal,skill,killed});
+      hits.push({actor,target,damage,blocked,heal,skill,killed,hpAfter:target<3?this.heroes[target].hp:this.enemies[target-3].hp,shieldAfter:target<3?this.heroes[target].shield:0});
       if(this.enemies.every(e=>e.hp<=0)){
         this.clearedWaves++;
         if(this.continuous){this.waveDelay=1.2;this.heroes.forEach((h,i)=>{if(h.hp>0)h.hp=Math.min(this.stats(i).hp,h.hp+Math.ceil(this.stats(i).hp*.08));});}
