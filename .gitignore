@@ -1,0 +1,39 @@
+
+#///////////////////////////
+# Cocos Creator Project
+#///////////////////////////
+
+/library/
+/temp/
+/local/
+/build/
+/profiles/
+/native/engine/android/**/*/assets
+
+#//////////////////////////
+# NPM
+#//////////////////////////
+node_modules/
+
+#//////////////////////////
+# VSCode
+#//////////////////////////
+.vscode/
+
+#//////////////////////////
+# WebStorm
+#//////////////////////////
+.idea/
+
+/logs/
+
+# Local credentials and editor-generated service information
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+/settings/v2/packages/information.json
+*.log
+Thumbs.db
+.DS_Store

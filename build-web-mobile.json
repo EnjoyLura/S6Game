@@ -1,0 +1,22 @@
+{
+  "name": "forest-idle",
+  "platform": "web-mobile",
+  "buildPath": "project://build",
+  "outputName": "web-mobile",
+  "debug": true,
+  "sourceMaps": true,
+  "startScene": "4ef00fc0-9384-4a14-8c25-6416ef40f001",
+  "scenes": [
+    {
+      "url": "db://assets/scenes/Adventure.scene",
+      "uuid": "4ef00fc0-9384-4a14-8c25-6416ef40f001"
+    }
+  ],
+  "packages": {
+    "web-mobile": {
+      "orientation": "portrait",
+      "embedWebDebugger": false
+    }
+  },
+  "replaceSplashScreen": true
+}
