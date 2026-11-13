@@ -1,5 +1,7 @@
 import { Node, UITransform, Graphics, Label, Color, Texture2D, SpriteFrame, Sprite, Rect, Layers, BlockInputEvents, Mask } from 'cc';
-import { HERO_CONFIG, upgradeCost, LEVEL_CAP } from './SquadBattleModel';
+import { HERO_CONFIG, upgradeCost, LEVEL_CAP, SquadBattleModel, gearName, gearDescription } from './SquadBattleModel';
+
+import {gearTile} from './GearView';
 
 const INK='#704124', CREAM='#FFF5E5';
 const HEROES=['骑士','法师','牧师','弓箭手'];
@@ -10,7 +12,7 @@ export class HeroPage {
   private selected=0; private balance!:Label; private experienceLabel!:Label; private experienceFill!:Graphics; private upgradeButton!:Node;
   private content!:Node;
   private dialog:Node|null=null;
-  constructor(parent:Node,private atlas:Texture2D,private forest:Texture2D,private actors:Texture2D,private onAdventure:()=>void,private onBag:()=>void,private heroTextures:Texture2D[],private battleUI:Texture2D,private progress:()=>{gold:number;experience:number[];levels:number[];stats:typeof HERO_CONFIG},private onUpgrade:(i:number)=>string|null){
+  constructor(parent:Node,private atlas:Texture2D,private forest:Texture2D,private actors:Texture2D,private onAdventure:()=>void,private onBag:(slot?:number,hero?:number)=>void,private heroTextures:Texture2D[],private battleUI:Texture2D,private progress:()=>{gold:number;experience:number[];levels:number[];stats:typeof HERO_CONFIG},private onUpgrade:(i:number)=>string|null,private model:()=>SquadBattleModel,private mutate:(fn:(b:SquadBattleModel)=>string|null)=>string|null,private bagAtlas:Texture2D){
     this.node=this.nodeAt(parent,'Hero page',0,0,887,1774);this.render();this.node.active=false;
   }
   private nodeAt(parent:Node,name:string,x:number,y:number,w:number,h:number){const n=new Node(name);n.layer=Layers.Enum.UI_2D;n.parent=parent;n.setPosition(x,y);n.addComponent(UITransform).setContentSize(w,h);return n;}
@@ -27,6 +29,12 @@ export class HeroPage {
     this.panel(layer,0,15,710,585,'#DDB88C',36);const card=this.panel(layer,0,25,690,575,CREAM,32);
     this.text(card,title,0,218,580,65,39);this.text(card,body,0,20,590,310,28);
     this.button(card,'知道了',0,-210,300,70,()=>{layer.destroy();this.dialog=null;});
+  }
+  private equipmentInfo(slot:number){
+    const g=this.model().equipment(this.selected)[slot];this.info(EQUIPMENT[slot],g?gearName(g)+' Lv.'+g.level+'\n'+gearDescription(g)+'\n属性已计入当前英雄。':'该部位未穿戴装备。\n挂机掉落后可前往背包选择。');
+    const card=this.dialog!;
+    this.button(card,'选择装备',-170,-100,280,65,()=>{card.destroy();this.dialog=null;this.onBag(slot,this.selected);});
+    if(g)this.button(card,'卸下',170,-100,230,65,()=>{const error=this.mutate(b=>b.equip(this.selected,null,slot));card.destroy();this.dialog=null;this.render();if(error)this.info('装备操作',error);});
   }
   refresh(){this.render();}
   refreshIncome(){
@@ -53,18 +61,16 @@ export class HeroPage {
     const equipmentRegions=[[48,345],[48,518],[48,691],[678,345],[678,518],[678,691]];
     equipmentRegions.forEach((r,i)=>{
       const x=i<3?-315:315,y=465-(i%3)*173;
-      // Sample the equipment icon and slot; level text remains a separate live label.
-      const slot=this.cut(r[0],r[1],164,152,x,y,164,152);
-      this.panel(p,x,y+54,130,32,'#C6DDCD',12);this.text(p,owned?'Lv.1':'未装备',x,y+54,150,35,25);
-      if(!owned)slot.getComponent(Sprite)!.grayscale=true;
-      slot.on(Node.EventType.TOUCH_END,()=>this.info(EQUIPMENT[i],owned?'Lv.1 '+EQUIPMENT[i]+' · 外观展示\n当前未接入装备掉落与属性加成。\n装备替换与锁定将在背包中处理。':'尚未招募该英雄，暂无装备。'));
+      const gear=owned?this.model().equipment(this.selected)[i]:null;
+      const slot=gearTile(p,this.bagAtlas,gear,i,x,y,152);
+      slot.on(Node.EventType.TOUCH_END,()=>{if(!owned){this.info(EQUIPMENT[i],'尚未招募该英雄。');return;}this.equipmentInfo(i);});
     });
     if(owned){const t=this.heroTextures[this.selected];this.sprite(p,t,new Rect(0,0,t.width,t.height),0,245,495,495);}
     else{const r=tabSources[this.selected];const n=this.cut(r[0]+5,r[1],108,110,0,245,285,290);n.getComponent(Sprite)!.grayscale=true;this.round(n);this.text(p,'未招募',0,62,300,55,34);}
-    this.experienceLabel=this.text(p,owned?'经验 '+this.progress().experience[this.selected]+' / —':'经验 —',-225,13,310,44,28);
+    this.experienceLabel=this.text(p,owned?'经验 '+this.progress().experience[this.selected]+' / —':'经验 —',-270,13,260,44,24);
     this.panel(p,60,13,390,23,'#C4B8A6',12);this.experienceFill=this.nodeAt(p,'Experience fill',60,13,380,16).addComponent(Graphics);
     this.cut(728,850,51,47,310,13).on(Node.EventType.TOUCH_END,()=>this.info('经验重置','每位英雄使用独立经验。\n重置后回到1级并返还已投入经验。\n当前版本暂未开放经验重置。'));
-    this.button(p,'一键换装',-143,-46,267,64,()=>this.info('一键换装','当前没有可替换的背包装备。\n装备系统接入后可在这里快速换装。'));
+    this.button(p,'一键换装',-143,-46,267,64,()=>{const before=owned?this.model().loadouts[this.selected].slice():[];const error=this.mutate(b=>b.autoEquip(this.selected));if(error){this.info('一键换装',error);return;}const changes=this.model().loadouts[this.selected].filter((id,i)=>id!==before[i]).length;this.render();this.info('一键换装',changes?'已更换'+changes+'件装备，属性已生效并保存。':'没有更合适的空闲装备。\n不会取走其他英雄正在穿戴的装备。');});
     this.upgradeButton=this.button(p,owned?(level>=LEVEL_CAP?'已满级':'升级 · '+upgradeCost(level)+'经验'):'未招募',145,-46,267,64,()=>{
       if(!owned){this.info('英雄升级','请先招募该英雄。');return;}
       const old=this.progress().stats[this.selected],error=this.onUpgrade(this.selected);
@@ -90,14 +96,14 @@ export class HeroPage {
     this.text(p,'天赋树',327,-295,145,42,29);this.text(p,'0点',327,-327,145,32,23);
     this.text(p,'英雄属性',-290,-398,235,52,40);
     const names=[['生命','攻击','防御','移速','暴击率','暴击伤害','连击率'],['破甲率','冷却缩减','治疗加成','护盾加成','普攻伤害','技能伤害','闪避率']];
-    const values=[[String(config?.hp||0),String(config?.attack||0),'0',String(config?.speed||0),'0%','150%','0%'],['0%','0%','0%','0%','0%','0%','0%']];
+    const values=[[String(config?.hp||0),String(config?.attack||0),String(owned?this.model().stats(this.selected).defense:0),String(config?.speed||0),'0%','150%','0%'],['0%','0%','0%','0%','0%','0%','0%']];
     names.forEach((column,c)=>column.forEach((label,r)=>{
       const x=c===0?-213:207,y=-451-r*42;
       this.panel(p,x,y,388,36,'#F8E3C9',18);
       this.cut(c===0?59:481,1320+r*42,39,34,x-157,y,34,30);
       const l=this.text(p,label,x-15,y,185,36,26);l.horizontalAlign=Label.HorizontalAlign.LEFT;
       const v=this.text(p,owned?values[c][r]:'—',x+130,y,115,36,26);v.horizontalAlign=Label.HorizontalAlign.RIGHT;
-      l.node.on(Node.EventType.TOUCH_END,()=>this.info(label,label==='移速'?'移速决定每轮出手顺序。\n不是场景移动速度，也不增加行动次数。':label==='连击率'?'普攻触发连击的概率。\n当前战斗样例尚未启用连击。':label==='破甲率'?'无视目标防御的比例。\n当前样例未启用防御结算。':label==='闪避率'?'初期仅对普攻生效。\n当前战斗样例尚未启用闪避。':'当前显示原型基础数值。\n除生命、普攻攻击外，完整属性公式尚未接入。'));
+      l.node.on(Node.EventType.TOUCH_END,()=>this.info(label,label==='移速'?'移速决定每轮出手顺序。\n不是场景移动速度，也不增加行动次数。':label==='连击率'?'普攻触发连击的概率。\n当前战斗样例尚未启用连击。':label==='破甲率'?'无视目标防御的比例。\n当前没有破甲装备。防御会减少受到的伤害。':label==='闪避率'?'初期仅对普攻生效。\n当前战斗样例尚未启用闪避。':'生命、攻击、防御包含穿戴装备加成。\n防御直接减少每次敌人攻击伤害，最低1点。\n装备技能效果增加主动技能数值，其余百分比属性暂未启用。'));
     }));
     const nav=[[10,1648,177,120],[190,1648,170,120],[362,1648,169,120],[534,1648,170,120],[707,1648,170,120]];
     nav.forEach((r,i)=>this.cut(r[0],r[1],r[2],r[3],-348+i*174,-820,170,120).on(Node.EventType.TOUCH_END,()=>{if(i===2)this.onAdventure();else if(i===3)this.onBag();else if(i!==0)this.info(['英雄','招募','冒险','背包','副本'][i],'此功能尚未开放。\n当前可以查看英雄与体验冒险战斗。');}));

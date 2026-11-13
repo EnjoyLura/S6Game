@@ -1,5 +1,5 @@
 import { _decorator, Component, Node, Canvas, UITransform, Camera, Layers, Color, Graphics, Label, Sprite, SpriteFrame, Texture2D, resources, Rect, view, ResolutionPolicy, tween, Vec3, UIOpacity, game, Game, profiler, Tween, Mask, sys } from 'cc';
-import { SquadBattleModel, HERO_CONFIG, MONSTERS, SquadHit } from './SquadBattleModel';
+import { SquadBattleModel, HERO_CONFIG, MONSTERS, SquadHit, gearName, DROP_SECONDS } from './SquadBattleModel';
 import { BattleFeedback } from './BattleFeedback';
 import { LocalSave } from './LocalSave';
 import { HeroPage } from './HeroPage';
@@ -20,6 +20,7 @@ export class Adventure extends Component {
   private saves!:LocalSave<SquadBattleModel>; private saveClock=0; private background=false;
   private saveProgress=()=>{if(!this.saves)return false;const snapshot=this.model.snapshot();if(this.background)snapshot.paused=this.foregroundPaused;const ok=this.saves.save(snapshot);if(!ok&&this.notice)this.notice.string=this.saves.error;return ok;};
   private upgradeHero=(i:number)=>{const before=this.model.snapshot();const error=this.model.upgrade(i);if(error)return error;if(!this.saveProgress()){this.model=SquadBattleModel.restore(before)!;return this.saves.error+'，本次升级未扣经验';}return null;};
+  private mutateEquipment=(fn:(b:SquadBattleModel)=>string|null)=>{const before=this.model.snapshot();const error=fn(this.model);if(error)return error;if(!this.saveProgress()){this.model=SquadBattleModel.restore(before)!;return this.saves.error+'，装备操作已撤销';}this.resetFeedback();return null;};
   onLoad() {
     this.saves=new LocalSave(sys.localStorage,SquadBattleModel.restore);this.model=this.saves.load()||this.model;
     if(typeof window!=='undefined')window.addEventListener('beforeunload',this.saveProgress);
@@ -44,8 +45,8 @@ export class Adventure extends Component {
       this.model.enemies.forEach((e,j)=>{const [x,y]=this.positions[j+3];this.units.push(this.picture(monsters,this.monsterRect(j),x,y,260,260,'Monster '+j));});
       const fxLayer=this.base('Combat effects',0,0,887,1774);this.feedback=new BattleFeedback(this.units,this.positions,fxLayer,h=>this.impactText(h));this.resetFeedback();
       this.drawPage();this.ready=true;this.sync();this.pauseLabel.string=this.model.paused?'继续战斗':'暂停战斗';if(this.saves.error)this.notice.string=this.saves.error;
-      this.heroPage=new HeroPage(this.canvasRoot,heroUI,yard,knight,()=>this.openPage('adventure'),()=>this.openPage('bag'),this.heroTextures,ui,()=>({gold:this.model.gold,experience:this.model.heroes.map(h=>h.experience),levels:this.model.heroes.map(h=>h.level),stats:this.model.heroes.map((_,i)=>this.model.stats(i))}),this.upgradeHero);
-      this.bagPage=new BagPage(this.canvasRoot,bagUI,yard,(page)=>this.openPage(page));
+      this.heroPage=new HeroPage(this.canvasRoot,heroUI,yard,knight,()=>this.openPage('adventure'),(slot,hero)=>{this.openPage('bag');if(slot!==undefined)this.bagPage.showSlot(slot,hero!);},this.heroTextures,ui,()=>({gold:this.model.gold,experience:this.model.heroes.map(h=>h.experience),levels:this.model.heroes.map(h=>h.level),stats:this.model.heroes.map((_,i)=>this.model.stats(i))}),this.upgradeHero,()=>this.model,this.mutateEquipment,bagUI);
+      this.bagPage=new BagPage(this.canvasRoot,bagUI,yard,(page)=>this.openPage(page),()=>this.model,this.mutateEquipment);
     }).catch(e=>{console.error(e);this.label('素材加载失败，请刷新重试',0,0,700,70,34);});
   }
   private texture(path:string):Promise<Texture2D>{return new Promise((resolve,reject)=>resources.load(path+'/texture',Texture2D,(e,t)=>e?reject(e):resolve(t)));}
@@ -140,7 +141,7 @@ export class Adventure extends Component {
   private sync(){
     const b=this.model;
     this.status.string=b.regrouping?'整备后重试':b.waveDelay>0?'下一波即将入场':'第 '+b.wave+' 波';
-    this.goldLabel.string=String(b.gold);this.incomeLabel.string='累计击杀 '+b.kills+' · 在线挂机收益';
+    this.goldLabel.string=String(b.gold);this.incomeLabel.string='击杀 '+b.kills+' · 装备 '+b.inventory.length+' · 下件 '+Math.ceil(DROP_SECONDS-b.dropRemainder)+'秒';
     if(this.shownWave!==b.wave||(this.shownRegroup&&!b.regrouping)){
       this.shownWave=b.wave;this.model.enemies.forEach((e,j)=>{const n=this.units[j+3];this.setMonsterFrame(n,j);this.setMonsterFrame(this.enemyPortraits[j],j);});this.resetFeedback();this.feedback.enter();
     }this.shownRegroup=b.regrouping;
@@ -175,9 +176,9 @@ export class Adventure extends Component {
     tween(l.node).to(.10,{scale:new Vec3(1.08,1.08,1)}).to(.1,{scale:Vec3.ONE}).by(.65,{position:new Vec3(0,54,0)}).call(()=>{this.effects.delete(l.node);l.node.destroy();}).start();
     tween(o).delay(.48).to(.37,{opacity:0}).start();
   }
-  private openPage(page:'adventure'|'hero'|'bag'){if(!this.heroPage||!this.bagPage)return;this.currentPage=page;this.resetFeedback();this.floating=[];if(page==='hero')this.heroPage.refresh();if(page==='bag')this.bagPage.setGold(this.model.gold);this.root.active=page==='adventure';this.heroPage.node.active=page==='hero';this.bagPage.node.active=page==='bag';}
+  private openPage(page:'adventure'|'hero'|'bag'){if(!this.heroPage||!this.bagPage)return;this.currentPage=page;this.resetFeedback();this.floating=[];if(page==='hero')this.heroPage.refresh();if(page==='bag'){this.bagPage.setGold(this.model.gold);this.bagPage.refresh();}this.root.active=page==='adventure';this.heroPage.node.active=page==='hero';this.bagPage.node.active=page==='bag';}
   update(dt:number){
-    if(!this.ready)return;this.model.settleIdle(dt);this.saveClock+=dt;if(this.saveClock>=1){this.saveClock=0;this.saveProgress();}
+    if(!this.ready)return;const count=this.model.inventory.length;this.model.settleIdle(dt);if(this.model.inventory.length>count){this.saveProgress();if(this.currentPage==='bag')this.bagPage.refresh();if(this.currentPage==='adventure')this.toast('获得 '+gearName(this.model.inventory[this.model.inventory.length-1])+' · 已进入背包');}this.saveClock+=dt;if(this.saveClock>=1){this.saveClock=0;this.saveProgress();}
     if(this.currentPage==='hero'){this.heroPage.refreshIncome();return;}if(this.currentPage==='bag'){this.bagPage.setGold(this.model.gold);return;}
     const visualDt=this.model.paused?0:Math.min(dt,.1)*this.speed;
     this.feedback.update(visualDt);for(const h of this.model.step(visualDt))this.feedback.play(h);this.updateFloats(this.model.paused?0:dt);this.sync();
