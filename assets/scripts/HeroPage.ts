@@ -1,5 +1,5 @@
 import { Node, UITransform, Graphics, Label, Color, Texture2D, SpriteFrame, Sprite, Rect, Layers, BlockInputEvents, Mask, ScrollView } from 'cc';
-import { HERO_CONFIG, upgradeCost, LEVEL_CAP, SquadBattleModel, gearName, gearDescription, gearStats, QUALITY_NAMES } from './SquadBattleModel';
+import { STAR_CONFIG, HERO_CONFIG, upgradeCost, LEVEL_CAP, SquadBattleModel, gearName, gearDescription, gearStats, QUALITY_NAMES } from './SquadBattleModel';
 
 import {gearTile,drawNavigation} from './GearView';
 
@@ -101,6 +101,21 @@ export class HeroPage {
       if(picker){picker.setSiblingIndex(this.node.children.length-1);layer.destroy();refreshPicker?.();}else this.closeEquipment();
     });
   }
+  private starDialog(){
+    const id=this.selected,p=this.model().starPreview(id);if(!p){this.info('英雄升星','请先招募该英雄');return;}
+    this.closeEquipment();const {layer,card}=this.equipmentLayer(HEROES[id]+' · 升星',950);this.dialog=layer;
+    const max=p.stars===STAR_CONFIG.cap;
+    this.text(card,max?'★★★★★ · 已满星':p.stars+'星 → '+(p.stars+1)+'星',0,315,700,65,39);
+    this.text(card,'可用重复份数 '+p.available+(max?'':' / 需要 '+p.cost+'份'),0,230,720,55,30);
+    this.text(card,'保留角色本体，只消耗同名英雄重复份数',0,172,720,50,25);
+    const line=(name:string,a:number,b:number)=>name+'  '+a+(max?'':' → '+b);
+    this.text(card,[line('生命',p.before.hp,p.after.hp),line('攻击',p.before.attack,p.after.attack),line(p.before.skill+'效果',p.before.power,p.after.power)].join('\n'),0,20,730,200,32);
+    this.text(card,'测试配置：每星基础生命/攻击 +15%\n招牌技能效果 +25%，装备加成独立叠加。\n保持当前生命比例，不复活、不重置技能冷却。',0,-175,730,150,25);
+    if(!max)this.button(card,p.available>=p.cost?'升星 · 消耗'+p.cost+'份':'份数不足',0,-350,420,75,()=>{
+      const error=this.mutate(b=>b.starUp(id));if(error){this.info('英雄升星',error);return;}
+      this.render();this.starDialog();
+    },p.available>=p.cost?'#FFCE52':'#E2D2B9');
+  }
   private formationPicker(){
     this.closeEquipment();const {layer,card}=this.equipmentLayer('队伍编成',950);this.dialog=layer;
     let draft=this.model().formation.slice();const rows=this.nodeAt(card,'Formation draft',0,0,760,700);
@@ -133,10 +148,11 @@ export class HeroPage {
     tabSources.forEach((r,i)=>{const x=-330+i*220;const tab=this.panel(p,x,680,210,94,i===this.selected?'#FFCE52':CREAM,26);const t=this.heroTextures[i];const face=t?this.sprite(tab,t,new Rect(0,0,t.width,t.height),-52,8,108,108):this.cut(r[0]+5,r[1],108,110,-52,8,103,105,tab);this.round(face);this.text(tab,HEROES[i],48,0,105,55,28);tab.on(Node.EventType.TOUCH_END,()=>{if(this.selected!==i){this.selected=i;this.render();}});if(i===this.selected)this.panel(p,x,620,162,6,'#F3AC21',3);});
     const copies=this.model().recruitment.counts[this.selected];
     this.text(p,owned?name+' · Lv.'+level:name+(copies?' · 已招募':' · 未招募'),0,589,530,65,44);
-    this.text(p,'持有 '+copies+' 份',310,589,220,45,24);
+
     this.button(p,this.model().formation.indexOf(this.selected)>=0?'已上阵 · 编队':'上阵 / 编队',-325,589,190,52,()=>this.formationPicker(), '#F4DEB7');
-    for(let i=0;i<5;i++)this.cut(owned&&i===0?303:425,334,40,40,-122+i*42,535,40,40);
-    this.cut(533,324,62,62,120,535).on(Node.EventType.TOUCH_END,()=>this.info('升星',owned?'升星可提高属性并强化招牌技能。\n当前为1星展示，尚无英雄碎片。\n升星成本与验证范围待定。':(copies?'该英雄已招募，升星功能待开放。':'获得该英雄后可查看升星。')));
+    for(let i=0;i<5;i++)this.cut(owned&&i<this.model().heroes[this.selected].stars?303:425,334,40,40,-122+i*42,535,40,40);
+    this.cut(533,324,62,62,120,535).on(Node.EventType.TOUCH_END,()=>this.starDialog());
+    const star=this.model().starPreview(this.selected);this.text(p,star?(star.stars===STAR_CONFIG.cap?'已满星':'升星 '+star.available+' / '+star.cost+'份'):'未招募',310,589,220,45,24);
     const roles=[['战士','坦克','输出'],['法师','输出'],['牧师','治疗'],['弓箭手','输出']][this.selected];
     const roleRow=this.nodeAt(p,'Roles',0,478,430,45);roles.forEach((role,i)=>{const x=(i-(roles.length-1)/2)*140;this.cut(role==='坦克'?394:role==='输出'?514:275,393,36,37,x-42,0,32,33,roleRow);this.text(roleRow,role,x+12,0,91,40,28);});roleRow.on(Node.EventType.TOUCH_END,()=>this.info('职业与定位',roles.join(' / ')+'\n职业决定技能特色，定位说明队伍职责。\n可选择至多三位不同英雄上阵，第一位为前排。'));
     const equipmentRegions=[[48,345],[48,518],[48,691],[678,345],[678,518],[678,691]];
