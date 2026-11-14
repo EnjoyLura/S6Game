@@ -23,13 +23,11 @@ export class HeroPage {
   private button(parent:Node,text:string,x:number,y:number,w:number,h:number,fn:()=>void,color='#FFCE52'){const n=this.panel(parent,x,y,w,h,color,h/2);this.text(n,text,0,0,w-18,h-6,30);n.on(Node.EventType.TOUCH_END,fn);return n;}
   private round(n:Node){const u=n.getComponent(UITransform)!;const h=this.nodeAt(n.parent!, 'Portrait mask',n.position.x,n.position.y,u.width,u.height);h.addComponent(Mask).type=Mask.Type.GRAPHICS_ELLIPSE;n.parent=h;n.setPosition(0,0);}
   private info(title:string,body:string){
-    this.dialog?.destroy();
-    const layer=this.nodeAt(this.node,'Detail modal',0,0,887,1774);layer.addComponent(BlockInputEvents);this.dialog=layer;
-    const shade=layer.addComponent(Graphics);shade.fillColor=new Color(40,26,11,140);shade.rect(-444,-887,888,1774);shade.fill();
-    this.panel(layer,0,15,710,585,'#DDB88C',36);const card=this.panel(layer,0,25,690,575,CREAM,32);
-    this.text(card,title,0,218,580,65,39);this.text(card,body,0,20,590,310,28);
-    this.button(card,'知道了',0,-210,300,70,()=>{layer.destroy();this.dialog=null;});
+    this.closeEquipment();
+    const {layer,card}=this.equipmentLayer(title,585);this.dialog=layer;
+    this.text(card,body,0,-20,690,370,28);
   }
+
   private closeEquipment(){this.dialog?.destroy();this.dialog=null;}
   private equipmentLayer(title:string,height:number,parent=this.node){
     const layer=this.nodeAt(parent,title,0,0,887,1774);layer.addComponent(BlockInputEvents);
@@ -38,6 +36,7 @@ export class HeroPage {
     const card=this.panel(layer,0,0,820,height,CREAM,32);card.addComponent(BlockInputEvents);card.on(Node.EventType.TOUCH_END,(e:any)=>e.propagationStopped=true);
     this.text(card,title,0,height/2-60,650,65,39);
     this.button(card,'×',350,height/2-60,65,65,()=>{if(layer===this.dialog)this.closeEquipment();else layer.destroy();},'#F1D6AF');
+    this.text(layer,'点击空白处关闭',0,-height/2-65,650,50,27,'#FFF5E5');
     return {layer,card};
   }
   private equipmentInfo(slot:number){
@@ -45,29 +44,40 @@ export class HeroPage {
     if(g)this.equipmentDetail(g.id);else this.equipmentPicker(slot);
   }
   private equipmentPicker(initialSlot:number){
-    let part=initialSlot,quality=-1,source=0;
+    let part=initialSlot,quality=-1;
     const {layer,card}=this.equipmentLayer('装备选择',1370);this.dialog=layer;
     let body:Node|null=null;
     const draw=()=>{
       body?.destroy();body=this.nodeAt(card,'Equipment picker content',0,-20,780,1180);const p=body!,b=this.model();
-      ['背包','英雄'].forEach((name,i)=>this.button(p,name,-190+i*380,525,350,76,()=>{source=i;draw();},source===i?'#FFCE52':'#F4E2CA'));
-      this.text(p,source===0?HEROES[this.selected]+' · 选择背包中的空闲装备':'英雄已穿戴装备 · 卸下后可分配',0,445,720,50,27);
-      const items=b.inventory.filter(g=>(source===0?b.owner(g.id)<0:b.owner(g.id)>=0)&&(part<0||g.slot===part)&&(quality<0||g.quality===quality)).slice().sort((a,b)=>b.quality-a.quality||b.level-a.level||b.id-a.id);
-      const viewport=this.nodeAt(p,'Equipment selection scroll',0,20,750,770);viewport.addComponent(Mask).type=Mask.Type.GRAPHICS_RECT;
-      const list=this.nodeAt(viewport,'Equipment choices',0,385,750,Math.max(770,Math.ceil(items.length/5)*150+20));list.getComponent(UITransform)!.setAnchorPoint(.5,1);
+      const items=b.inventory.filter(g=>b.owner(g.id)<0&&(part<0||g.slot===part)&&(quality<0||g.quality===quality)).slice().sort((a,b)=>b.quality-a.quality||b.level-a.level||b.id-a.id);
+      const viewport=this.nodeAt(p,'Equipment selection scroll',0,95,750,920);viewport.addComponent(Mask).type=Mask.Type.GRAPHICS_RECT;
+      const list=this.nodeAt(viewport,'Equipment choices',0,460,750,Math.max(920,Math.ceil(items.length/5)*150+20));list.getComponent(UITransform)!.setAnchorPoint(.5,1);
       const scroll=viewport.addComponent(ScrollView);scroll.content=list;scroll.horizontal=false;scroll.vertical=true;scroll.cancelInnerEvents=true;
       items.forEach((g,i)=>{const owner=b.owner(g.id),n=gearTile(list,this.bagAtlas,g,g.slot,-300+i%5*150,-80-Math.floor(i/5)*150,138,owner>=0?HEROES[owner]:'');n.on(Node.EventType.TOUCH_END,()=>this.equipmentDetail(g.id,layer,draw));});
       if(!items.length)this.text(viewport,'没有符合条件的装备\n可调整部位或品质筛选',0,180,680,110,30,'#AA8060');
       this.text(p,'品阶',-310,-427,100,50,29);
       this.button(p,(quality<0?'全部':QUALITY_NAMES[quality])+' ▾',-100,-427,285,65,()=>{
-        const {layer:filter,card:choices}=this.equipmentLayer('品质筛选',680,layer);
-        ['全部',...QUALITY_NAMES].forEach((name,i)=>this.button(choices,name,0,225-i*78,570,62,()=>{quality=i-1;filter.destroy();draw();},quality===i-1?'#FFCE52':'#F4E2CA'));
+        // Anchored select menu opens upward because this control sits at the bottom.
+        // A transparent dismiss target blocks clicks through to the inventory beneath it.
+        const dropdown=this.nodeAt(layer,'Quality dropdown',0,0,887,1774);dropdown.addComponent(BlockInputEvents);
+        dropdown.on(Node.EventType.TOUCH_END,()=>dropdown.destroy());
+        const choices=this.panel(dropdown,-100,-214,285,390,'#E9CBA4',18);
+        choices.addComponent(BlockInputEvents);choices.on(Node.EventType.TOUCH_END,(e:any)=>e.propagationStopped=true);
+        ['全部',...QUALITY_NAMES].forEach((name,i)=>this.button(choices,name,0,160-i*64,273,60,()=>{quality=i-1;dropdown.destroy();draw();},quality===i-1?'#FFCE52':CREAM));
       },'#F4E2CA');
       this.text(p,items.length+'件',290,-427,130,50,29);
       const parts=[-1,0,3,4,5,1,2];
-      parts.forEach((slot,i)=>this.button(p,slot<0?'全部':EQUIPMENT[slot],-324+i*108,-535,100,90,()=>{part=slot;draw();},part===slot?'#FFCE52':'#F4E2CA'));
+      const art=[[77,376,98,85],[85,550,95,87],[84,725,91,85],[708,375,107,84],[702,550,113,83],[706,727,111,79]];
+      parts.forEach((slot,i)=>{
+        const tab=this.panel(p,-324+i*108,-555,100,140,part===slot?'#FFCE52':'#F4E2CA',18);
+        if(slot<0){const icon=this.nodeAt(tab,'All equipment icon',0,22,64,64),g=icon.addComponent(Graphics);g.fillColor=new Color().fromHEX(INK);
+          for(const x of [-27,5])for(const y of [-27,5]){g.roundRect(x,y,22,22,5);g.fill();}
+        }else{const [x,y,w,h]=art[slot];const icon=this.cut(x,y,w,h,0,24,72,66,tab);this.round(icon);}
+        this.text(tab,slot<0?'全部':EQUIPMENT[slot],0,-41,96,42,27);
+        tab.on(Node.EventType.TOUCH_END,()=>{part=slot;draw();});
+      });
     };
-    draw();this.text(layer,'点击空白处关闭',0,-760,650,50,27,'#FFF5E5');
+    draw();
   }
   private equipmentDetail(id:number,picker?:Node,refreshPicker?:()=>void){
     const b=this.model(),g=b.inventory.find(g=>g.id===id);if(!g)return;
@@ -82,8 +92,7 @@ export class HeroPage {
       this.text(card,'替换变化：生命 '+difference('hp')+' · 攻击 '+difference('attack')+'\n防御 '+difference('defense')+' · 技能效果 '+difference('power'),0,-85,730,110,27);
     }else this.text(card,'卸下后装备回到背包，可重新穿戴。',0,-85,730,90,27);
     const result=this.text(card,'',0,-200,710,85,27,'#B45B38');
-    this.button(card,picker?'返回列表':'关闭',-185,-332,290,72,()=>{if(picker)layer.destroy();else this.closeEquipment();},'#F4E2CA');
-    this.button(card,owner>=0?'卸下':'穿上',180,-332,290,72,()=>{
+    this.button(card,owner>=0?'卸下':'穿上',0,-332,290,72,()=>{
       const liveOwner=this.model().owner(id);
       if(liveOwner!==owner){result.string='装备归属已变化，请关闭后重试';return;}
       const error=this.mutate(b=>b.equip(owner>=0?owner:this.selected,owner>=0?null:id,g.slot));
