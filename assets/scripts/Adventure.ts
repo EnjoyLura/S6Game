@@ -1,3 +1,4 @@
+import {RecruitPage} from './RecruitPage';
 import {drawNavigation} from './GearView';
 import { _decorator, Component, Node, Canvas, UITransform, Camera, Layers, Color, Graphics, Label, Sprite, SpriteFrame, Texture2D, resources, Rect, view, ResolutionPolicy, tween, Vec3, UIOpacity, game, Game, profiler, Tween, Mask, sys } from 'cc';
 import { SquadBattleModel, HERO_CONFIG, MONSTERS, SquadHit, gearName, DROP_SECONDS, foregroundRewardDelta } from './SquadBattleModel';
@@ -17,7 +18,7 @@ export class Adventure extends Component {
   private heartIcons:Node[]=[]; private shields:Label[]=[];private shieldIcons:Node[]=[];private partyShields:Label[]=[];private partyShieldIcons:Node[]=[];private feedback!:BattleFeedback; private autoDot!:Graphics; private menu!:Node; private statsVisible=false; private foregroundPaused=false;
   private ui!:Texture2D; private heroTextures:Texture2D[]=[]; private monsters!:Texture2D; private enemyPortraits:Node[]=[]; private shownWave=0; private shownRegroup=false;
   private floating:{target:number;text:string;color:string}[]=[]; private floatTimer=0; private floatSerial=0; private effects=new Set<Node>();
-  private heroPage!:HeroPage; private bagPage!:BagPage; private currentPage:'adventure'|'hero'|'bag'='adventure'; private canvasRoot!:Node;
+  private recruitPage!:RecruitPage; private heroPage!:HeroPage; private bagPage!:BagPage; private currentPage:'adventure'|'hero'|'bag'|'recruit'='adventure'; private canvasRoot!:Node;
   private saves!:LocalSave<SquadBattleModel>; private saveClock=0; private background=false;
   private saveProgress=()=>{if(!this.saves)return false;const snapshot=this.model.snapshot();if(this.background)snapshot.paused=this.foregroundPaused;const ok=this.saves.save(snapshot);if(!ok&&this.notice)this.notice.string=this.saves.error;return ok;};
   private upgradeHero=(i:number)=>{const before=this.model.snapshot();const error=this.model.upgrade(i);if(error)return error;if(!this.saveProgress()){this.model=SquadBattleModel.restore(before)!;return this.saves.error+'，本次升级未扣经验';}return null;};
@@ -38,7 +39,7 @@ export class Adventure extends Component {
     this.root=this.base('Adventure page',0,0,887,1774,this.canvasRoot);
     this.panel('Page',0,0,887,1774,C.cream,0);
     game.on(Game.EVENT_HIDE,this.hide,this);game.on(Game.EVENT_SHOW,this.show,this);
-    Promise.all(['forest','hero-knight','hero-mage','hero-priest','monsters-4','adventure-ui-v5','hero-ui-v6','training-yard','bag-ui-v4'].map(n=>this.texture('art/'+n))).then(([forest,knight,mage,priest,monsters,ui,heroUI,yard,bagUI])=>{
+    Promise.all(['forest','hero-knight','hero-mage','hero-priest','monsters-4','adventure-ui-v5','hero-ui-v6','training-yard','bag-ui-v4','recruit-ui-v1'].map(n=>this.texture('art/'+n))).then(([forest,knight,mage,priest,monsters,ui,heroUI,yard,bagUI,recruitUI])=>{
       this.ui=ui;this.heroTextures=[knight,mage,priest];this.monsters=monsters;
       const bg=this.picture(forest,new Rect(0,0,forest.width,forest.height),0,277,887,1220,'Forest');bg.setSiblingIndex(1);
       this.heroTextures.forEach((t,i)=>{const [x,y]=this.positions[i];this.units.push(this.picture(t,new Rect(0,0,t.width,t.height),x,y,i===0?280:260,i===0?280:260,HERO_CONFIG[i].name));});
@@ -46,8 +47,9 @@ export class Adventure extends Component {
       this.model.enemies.forEach((e,j)=>{const [x,y]=this.positions[j+3];this.units.push(this.picture(monsters,this.monsterRect(j),x,y,260,260,'Monster '+j));});
       const fxLayer=this.base('Combat effects',0,0,887,1774);this.feedback=new BattleFeedback(this.units,this.positions,fxLayer,h=>this.impactText(h));this.resetFeedback();
       this.drawPage(heroUI,bagUI);this.ready=true;this.sync();this.pauseLabel.string=this.model.paused?'继续战斗':'暂停战斗';if(this.saves.error)this.notice.string=this.saves.error;
-      this.heroPage=new HeroPage(this.canvasRoot,heroUI,yard,knight,()=>this.openPage('adventure'),(slot,hero)=>{this.openPage('bag');if(slot!==undefined)this.bagPage.showSlot(slot,hero!);},this.heroTextures,ui,()=>({gold:this.model.gold,experience:this.model.heroes.map(h=>h.experience),levels:this.model.heroes.map(h=>h.level),stats:this.model.heroes.map((_,i)=>this.model.stats(i))}),this.upgradeHero,()=>this.model,this.mutateEquipment,bagUI);
+      this.heroPage=new HeroPage(this.canvasRoot,heroUI,yard,knight,()=>this.openPage('adventure'),(slot,hero)=>{this.openPage('bag');if(slot!==undefined)this.bagPage.showSlot(slot,hero!);},this.heroTextures,ui,()=>({gold:this.model.gold,experience:this.model.heroes.map(h=>h.experience),levels:this.model.heroes.map(h=>h.level),stats:this.model.heroes.map((_,i)=>this.model.stats(i))}),this.upgradeHero,()=>this.model,this.mutateEquipment,bagUI,()=>this.openPage('recruit'));
       this.bagPage=new BagPage(this.canvasRoot,bagUI,yard,(page)=>this.openPage(page),()=>this.model,this.mutateEquipment,heroUI);
+      this.recruitPage=new RecruitPage(this.canvasRoot,recruitUI,heroUI,bagUI,page=>this.openPage(page));
     }).catch(e=>{console.error(e);this.label('素材加载失败，请刷新重试',0,0,700,70,34);});
   }
   private texture(path:string):Promise<Texture2D>{return new Promise((resolve,reject)=>resources.load(path+'/texture',Texture2D,(e,t)=>e?reject(e):resolve(t)));}
@@ -115,7 +117,7 @@ export class Adventure extends Component {
         if(j===0){this.skillShades[i]=this.base('Cooldown '+i,x,-585,120,120).addComponent(Graphics);this.skillLabels[i]=this.label('',x,-585,110,70,30,'#FFFFFF');}
       }
     }
-    drawNavigation(this.root,navAtlas,bagAtlas,2,i=>{if(i===0)this.openPage('hero');else if(i===3)this.openPage('bag');else if(i!==2)this.toast(['英雄','招募','冒险','背包','副本'][i]+'暂未开放');});
+    drawNavigation(this.root,navAtlas,bagAtlas,2,i=>{if(i===0)this.openPage('hero');else if(i===1)this.openPage('recruit');else if(i===3)this.openPage('bag');else if(i!==2)this.toast(['英雄','招募','冒险','背包','副本'][i]+'暂未开放');});
     this.stats=this.label('',-25,425,600,155,25);this.stats.node.active=false;
     // Pause/retry belong in the hamburger menu, keeping the reference's battlefield clear.
     this.menu=this.panel('Battle menu',0,220,520,500,'#FFF6E4',30);
@@ -174,10 +176,10 @@ export class Adventure extends Component {
     tween(l.node).to(.10,{scale:new Vec3(1.08,1.08,1)}).to(.1,{scale:Vec3.ONE}).by(.65,{position:new Vec3(0,54,0)}).call(()=>{this.effects.delete(l.node);l.node.destroy();}).start();
     tween(o).delay(.48).to(.37,{opacity:0}).start();
   }
-  private openPage(page:'adventure'|'hero'|'bag'){if(!this.heroPage||!this.bagPage)return;this.currentPage=page;this.resetFeedback();this.floating=[];if(page==='hero')this.heroPage.refresh();if(page==='bag'){this.bagPage.setGold(this.model.gold);this.bagPage.refresh();}this.root.active=page==='adventure';this.heroPage.node.active=page==='hero';this.bagPage.node.active=page==='bag';}
+  private openPage(page:'adventure'|'hero'|'bag'|'recruit'){if(!this.heroPage||!this.bagPage||!this.recruitPage)return;this.currentPage=page;this.resetFeedback();this.floating=[];if(page==='hero')this.heroPage.refresh();if(page==='bag'){this.bagPage.setGold(this.model.gold);this.bagPage.refresh();}this.root.active=page==='adventure';this.heroPage.node.active=page==='hero';this.bagPage.node.active=page==='bag';this.recruitPage.node.active=page==='recruit';}
   update(dt:number){
     if(!this.ready)return;const nextId=this.model.nextGearId,oldCount=this.model.inventory.length,oldMaterials=this.model.materials;this.model.settleIdle(foregroundRewardDelta(dt));if(this.model.nextGearId>nextId){const saved=this.saveProgress(),kept=this.model.inventory.length-oldCount,recycled=this.model.nextGearId-nextId-kept;if(this.currentPage==='bag')this.bagPage.refresh();if(this.currentPage==='adventure')this.toast(!saved?this.saves.error:recycled?'自动分解 '+recycled+' 件 · 强化石 +'+(this.model.materials-oldMaterials)+(kept?' · 保留 '+kept+' 件':''):'获得 '+gearName(this.model.inventory[this.model.inventory.length-1])+' · 已进入背包');}this.saveClock+=dt;if(this.saveClock>=1){this.saveClock=0;this.saveProgress();}
-    if(this.currentPage==='hero'){this.heroPage.refreshIncome();return;}if(this.currentPage==='bag'){this.bagPage.setGold(this.model.gold);return;}
+    if(this.currentPage==='recruit')return;if(this.currentPage==='hero'){this.heroPage.refreshIncome();return;}if(this.currentPage==='bag'){this.bagPage.setGold(this.model.gold);return;}
     const visualDt=this.model.paused?0:Math.min(dt,.1)*this.speed;
     this.feedback.update(visualDt);for(const h of this.model.step(visualDt))this.feedback.play(h);this.updateFloats(this.model.paused?0:dt);this.sync();
   }

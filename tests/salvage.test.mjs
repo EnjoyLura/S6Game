@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {SquadBattleModel,gearStats,gearScore,salvageValue,enhanceCost,ENHANCE_CAP,foregroundRewardDelta} from '../assets/scripts/SquadBattleModel.ts';
 import {LocalSave,SAVE_KEY} from '../assets/scripts/LocalSave.ts';
 const gear=(id,extra={})=>({id,slot:0,quality:1,level:1,hp:100,attack:20,defense:10,power:20,locked:false,enhancement:0,...extra});
-const setup=()=>{const b=new SquadBattleModel();b.inventory=[gear(1),gear(2,{slot:4,locked:true}),gear(3,{slot:3}),gear(4,{slot:2,quality:3})];b.nextGearId=5;return b;};
+const setup=()=>{const b=new SquadBattleModel(0,()=>0);b.inventory=[gear(1),gear(2,{slot:4,locked:true}),gear(3,{slot:3}),gear(4,{slot:2,quality:3})];b.nextGearId=5;return b;};
 test('batch salvage previews exact yield, removes only chosen items, and cannot repeat rewards',()=>{
  const b=setup(),yieldSum=salvageValue(b.inventory[0])+salvageValue(b.inventory[3]);assert.equal(b.salvagePreview([1,4]).materials,yieldSum);assert.equal(b.inventory.length,4);
  assert.equal(b.salvage([1,4]),null);assert.equal(b.materials,yieldSum);assert.deepEqual(b.inventory.map(g=>g.id),[2,3]);assert.ok(b.salvage([1,4]));assert.equal(b.materials,yieldSum);
