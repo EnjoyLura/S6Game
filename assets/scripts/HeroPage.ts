@@ -1,5 +1,5 @@
-import { Node, UITransform, Graphics, Label, Color, Texture2D, SpriteFrame, Sprite, Rect, Layers, BlockInputEvents, Mask } from 'cc';
-import { HERO_CONFIG, upgradeCost, LEVEL_CAP, SquadBattleModel, gearName, gearDescription } from './SquadBattleModel';
+import { Node, UITransform, Graphics, Label, Color, Texture2D, SpriteFrame, Sprite, Rect, Layers, BlockInputEvents, Mask, ScrollView } from 'cc';
+import { HERO_CONFIG, upgradeCost, LEVEL_CAP, SquadBattleModel, gearName, gearDescription, gearStats, QUALITY_NAMES } from './SquadBattleModel';
 
 import {gearTile} from './GearView';
 
@@ -30,11 +30,67 @@ export class HeroPage {
     this.text(card,title,0,218,580,65,39);this.text(card,body,0,20,590,310,28);
     this.button(card,'知道了',0,-210,300,70,()=>{layer.destroy();this.dialog=null;});
   }
+  private closeEquipment(){this.dialog?.destroy();this.dialog=null;}
+  private equipmentLayer(title:string,height:number,parent=this.node){
+    const layer=this.nodeAt(parent,title,0,0,887,1774);layer.addComponent(BlockInputEvents);
+    const shade=layer.addComponent(Graphics);shade.fillColor=new Color(40,26,11,170);shade.rect(-444,-887,888,1774);shade.fill();
+    layer.on(Node.EventType.TOUCH_END,()=>{if(layer===this.dialog)this.closeEquipment();else layer.destroy();});
+    const card=this.panel(layer,0,0,820,height,CREAM,32);card.addComponent(BlockInputEvents);card.on(Node.EventType.TOUCH_END,(e:any)=>e.propagationStopped=true);
+    this.text(card,title,0,height/2-60,650,65,39);
+    this.button(card,'×',350,height/2-60,65,65,()=>{if(layer===this.dialog)this.closeEquipment();else layer.destroy();},'#F1D6AF');
+    return {layer,card};
+  }
   private equipmentInfo(slot:number){
-    const g=this.model().equipment(this.selected)[slot];this.info(EQUIPMENT[slot],g?gearName(g)+' Lv.'+g.level+'\n'+gearDescription(g)+'\n属性已计入当前英雄。':'该部位未穿戴装备。\n挂机掉落后可前往背包选择。');
-    const card=this.dialog!;
-    this.button(card,'选择装备',-170,-100,280,65,()=>{card.destroy();this.dialog=null;this.onBag(slot,this.selected);});
-    if(g)this.button(card,'卸下',170,-100,230,65,()=>{const error=this.mutate(b=>b.equip(this.selected,null,slot));card.destroy();this.dialog=null;this.render();if(error)this.info('装备操作',error);});
+    const g=this.model().equipment(this.selected)[slot];this.closeEquipment();
+    if(g)this.equipmentDetail(g.id);else this.equipmentPicker(slot);
+  }
+  private equipmentPicker(initialSlot:number){
+    let part=initialSlot,quality=-1,source=0;
+    const {layer,card}=this.equipmentLayer('装备选择',1370);this.dialog=layer;
+    let body:Node|null=null;
+    const draw=()=>{
+      body?.destroy();body=this.nodeAt(card,'Equipment picker content',0,-20,780,1180);const p=body!,b=this.model();
+      ['背包','英雄'].forEach((name,i)=>this.button(p,name,-190+i*380,525,350,76,()=>{source=i;draw();},source===i?'#FFCE52':'#F4E2CA'));
+      this.text(p,source===0?HEROES[this.selected]+' · 选择背包中的空闲装备':'英雄已穿戴装备 · 卸下后可分配',0,445,720,50,27);
+      const items=b.inventory.filter(g=>(source===0?b.owner(g.id)<0:b.owner(g.id)>=0)&&(part<0||g.slot===part)&&(quality<0||g.quality===quality)).slice().sort((a,b)=>b.quality-a.quality||b.level-a.level||b.id-a.id);
+      const viewport=this.nodeAt(p,'Equipment selection scroll',0,20,750,770);viewport.addComponent(Mask).type=Mask.Type.GRAPHICS_RECT;
+      const list=this.nodeAt(viewport,'Equipment choices',0,385,750,Math.max(770,Math.ceil(items.length/5)*150+20));list.getComponent(UITransform)!.setAnchorPoint(.5,1);
+      const scroll=viewport.addComponent(ScrollView);scroll.content=list;scroll.horizontal=false;scroll.vertical=true;scroll.cancelInnerEvents=true;
+      items.forEach((g,i)=>{const owner=b.owner(g.id),n=gearTile(list,this.bagAtlas,g,g.slot,-300+i%5*150,-80-Math.floor(i/5)*150,138,owner>=0?HEROES[owner]:'');n.on(Node.EventType.TOUCH_END,()=>this.equipmentDetail(g.id,layer,draw));});
+      if(!items.length)this.text(viewport,'没有符合条件的装备\n可调整部位或品质筛选',0,180,680,110,30,'#AA8060');
+      this.text(p,'品阶',-310,-427,100,50,29);
+      this.button(p,(quality<0?'全部':QUALITY_NAMES[quality])+' ▾',-100,-427,285,65,()=>{
+        const {layer:filter,card:choices}=this.equipmentLayer('品质筛选',680,layer);
+        ['全部',...QUALITY_NAMES].forEach((name,i)=>this.button(choices,name,0,225-i*78,570,62,()=>{quality=i-1;filter.destroy();draw();},quality===i-1?'#FFCE52':'#F4E2CA'));
+      },'#F4E2CA');
+      this.text(p,items.length+'件',290,-427,130,50,29);
+      const parts=[-1,0,3,4,5,1,2];
+      parts.forEach((slot,i)=>this.button(p,slot<0?'全部':EQUIPMENT[slot],-324+i*108,-535,100,90,()=>{part=slot;draw();},part===slot?'#FFCE52':'#F4E2CA'));
+    };
+    draw();this.text(layer,'点击空白处关闭',0,-760,650,50,27,'#FFF5E5');
+  }
+  private equipmentDetail(id:number,picker?:Node,refreshPicker?:()=>void){
+    const b=this.model(),g=b.inventory.find(g=>g.id===id);if(!g)return;
+    const owner=b.owner(id),current=b.equipment(this.selected)[g.slot];
+    const {layer,card}=this.equipmentLayer('装备详情',920,picker||this.node);if(!picker)this.dialog=layer;
+    gearTile(card,this.bagAtlas,g,g.slot,0,265,146,owner>=0?HEROES[owner]:'');
+    this.text(card,gearName(g)+' · Lv.'+g.level,0,155,730,55,32);
+    this.text(card,gearDescription(g),0,80,730,90,28);
+    this.text(card,owner>=0?'已穿戴：'+HEROES[owner]: '穿戴给：'+HEROES[this.selected],0,7,700,50,28);
+    if(owner<0){const values=gearStats(g),old=current?gearStats(current):{hp:0,attack:0,defense:0,power:0};
+      const difference=(key:'hp'|'attack'|'defense'|'power')=>{const n=values[key]-old[key];return (n>=0?'+':'')+n;};
+      this.text(card,'替换变化：生命 '+difference('hp')+' · 攻击 '+difference('attack')+'\n防御 '+difference('defense')+' · 技能效果 '+difference('power'),0,-85,730,110,27);
+    }else this.text(card,'卸下后装备回到背包，可重新穿戴。',0,-85,730,90,27);
+    const result=this.text(card,'',0,-200,710,85,27,'#B45B38');
+    this.button(card,picker?'返回列表':'关闭',-185,-332,290,72,()=>{if(picker)layer.destroy();else this.closeEquipment();},'#F4E2CA');
+    this.button(card,owner>=0?'卸下':'穿上',180,-332,290,72,()=>{
+      const liveOwner=this.model().owner(id);
+      if(liveOwner!==owner){result.string='装备归属已变化，请关闭后重试';return;}
+      const error=this.mutate(b=>b.equip(owner>=0?owner:this.selected,owner>=0?null:id,g.slot));
+      if(error){result.string=error;return;}
+      this.render();
+      if(picker){picker.setSiblingIndex(this.node.children.length-1);layer.destroy();refreshPicker?.();}else this.closeEquipment();
+    });
   }
   refresh(){this.render();}
   refreshIncome(){
