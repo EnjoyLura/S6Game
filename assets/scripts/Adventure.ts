@@ -1,3 +1,4 @@
+import {drawNavigation} from './GearView';
 import { _decorator, Component, Node, Canvas, UITransform, Camera, Layers, Color, Graphics, Label, Sprite, SpriteFrame, Texture2D, resources, Rect, view, ResolutionPolicy, tween, Vec3, UIOpacity, game, Game, profiler, Tween, Mask, sys } from 'cc';
 import { SquadBattleModel, HERO_CONFIG, MONSTERS, SquadHit, gearName, DROP_SECONDS, foregroundRewardDelta } from './SquadBattleModel';
 import { BattleFeedback } from './BattleFeedback';
@@ -44,9 +45,9 @@ export class Adventure extends Component {
       this.units[1].setSiblingIndex(this.units[0].getSiblingIndex());
       this.model.enemies.forEach((e,j)=>{const [x,y]=this.positions[j+3];this.units.push(this.picture(monsters,this.monsterRect(j),x,y,260,260,'Monster '+j));});
       const fxLayer=this.base('Combat effects',0,0,887,1774);this.feedback=new BattleFeedback(this.units,this.positions,fxLayer,h=>this.impactText(h));this.resetFeedback();
-      this.drawPage();this.ready=true;this.sync();this.pauseLabel.string=this.model.paused?'继续战斗':'暂停战斗';if(this.saves.error)this.notice.string=this.saves.error;
+      this.drawPage(heroUI,bagUI);this.ready=true;this.sync();this.pauseLabel.string=this.model.paused?'继续战斗':'暂停战斗';if(this.saves.error)this.notice.string=this.saves.error;
       this.heroPage=new HeroPage(this.canvasRoot,heroUI,yard,knight,()=>this.openPage('adventure'),(slot,hero)=>{this.openPage('bag');if(slot!==undefined)this.bagPage.showSlot(slot,hero!);},this.heroTextures,ui,()=>({gold:this.model.gold,experience:this.model.heroes.map(h=>h.experience),levels:this.model.heroes.map(h=>h.level),stats:this.model.heroes.map((_,i)=>this.model.stats(i))}),this.upgradeHero,()=>this.model,this.mutateEquipment,bagUI);
-      this.bagPage=new BagPage(this.canvasRoot,bagUI,yard,(page)=>this.openPage(page),()=>this.model,this.mutateEquipment);
+      this.bagPage=new BagPage(this.canvasRoot,bagUI,yard,(page)=>this.openPage(page),()=>this.model,this.mutateEquipment,heroUI);
     }).catch(e=>{console.error(e);this.label('素材加载失败，请刷新重试',0,0,700,70,34);});
   }
   private texture(path:string):Promise<Texture2D>{return new Promise((resolve,reject)=>resources.load(path+'/texture',Texture2D,(e,t)=>e?reject(e):resolve(t)));}
@@ -65,7 +66,7 @@ export class Adventure extends Component {
   // Only reusable UI pieces are sampled; combat and live values are real nodes.
   private cut(name:string,sx:number,sy:number,sw:number,sh:number,x:number,y:number,w=sw,h=sh){return this.picture(this.ui,new Rect(sx,sy,sw,sh),x,y,w,h,name);}
   private roundPortrait(n:Node){const size=n.getComponent(UITransform)!.contentSize;const holder=this.base(n.name+' mask',n.position.x,n.position.y,size.width,size.height);holder.addComponent(Mask).type=Mask.Type.GRAPHICS_ELLIPSE;n.parent=holder;n.setPosition(0,0);}
-  private drawPage(){
+  private drawPage(navAtlas:Texture2D,bagAtlas:Texture2D){
     // Match v5's 887 x 1774 layout: forest 0..1220, party 1220..1610, nav below.
     this.cut('Menu',17,30,68,63,-392,826).on(Node.EventType.TOUCH_END,()=>{this.menu.active=!this.menu.active;});
     this.label('镇外森林',0,811,500,82,60,'#542A12');
@@ -114,10 +115,7 @@ export class Adventure extends Component {
         if(j===0){this.skillShades[i]=this.base('Cooldown '+i,x,-585,120,120).addComponent(Graphics);this.skillLabels[i]=this.label('',x,-585,110,70,30,'#FFFFFF');}
       }
     }
-    this.cut('Navigation background',580,1585,8,22,0,-802,887,170);
-    const tabs=['英雄','招募','冒险','背包','副本'];
-    const regions=[[11,1622,169,136],[181,1622,176,136],[359,1622,173,136],[535,1622,172,136],[709,1622,171,136]];
-    tabs.forEach((text,i)=>{const r=regions[i];this.cut('Nav '+text,r[0],r[1],r[2],r[3],-348+i*174,-802,170,136).on(Node.EventType.TOUCH_END,()=>{if(i===0)this.openPage('hero');else if(i===3)this.openPage('bag');else if(i!==2)this.toast(text+'暂未开放，本轮仅验证冒险战斗');});});
+    drawNavigation(this.root,navAtlas,bagAtlas,2,i=>{if(i===0)this.openPage('hero');else if(i===3)this.openPage('bag');else if(i!==2)this.toast(['英雄','招募','冒险','背包','副本'][i]+'暂未开放');});
     this.stats=this.label('',-25,425,600,155,25);this.stats.node.active=false;
     // Pause/retry belong in the hamburger menu, keeping the reference's battlefield clear.
     this.menu=this.panel('Battle menu',0,220,520,500,'#FFF6E4',30);

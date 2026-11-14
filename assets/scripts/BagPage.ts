@@ -1,7 +1,7 @@
 import { Node, UITransform, Graphics, Label, Color, Texture2D, SpriteFrame, Sprite, Rect, Layers, BlockInputEvents, ScrollView, Mask, Vec2 } from 'cc';
 
 import {SquadBattleModel,HERO_CONFIG,gearName,gearDescription,DROP_SECONDS,gearStats,enhanceCost,ENHANCE_CAP,RetentionRules,QUALITY_NAMES,investedMaterials} from './SquadBattleModel';
-import {gearTile} from './GearView';
+import {gearTile,drawNavigation} from './GearView';
 
 const INK='#704124',CREAM='#FFF3E2';
 const PARTS=['全部','武器','戒指','项链','头盔','衣服','鞋子'];
@@ -12,7 +12,7 @@ export class BagPage {
   private savedOffsets=[0,0,0];private targetHero=0;private batch=false;private selected=new Set<number>();private batchIds:number[]=[];
   refresh(){this.save();this.render();if(this.modal)this.modal.setSiblingIndex(this.node.children.length-1);}
   showSlot(slot:number,hero:number){this.batch=false;this.selected.clear();this.lockedOnly=false;this.targetHero=hero;this.category=0;this.part=slot+1;this.savedOffsets[0]=0;this.render();}
-  constructor(parent:Node,private atlas:Texture2D,private yard:Texture2D,private navigate:(page:'hero'|'adventure')=>void,private model:()=>SquadBattleModel,private mutate:(fn:(b:SquadBattleModel)=>string|null)=>string|null){this.node=this.base(parent,'Bag page',0,0,887,1774);this.render();this.node.active=false;}
+  constructor(parent:Node,private atlas:Texture2D,private yard:Texture2D,private navigate:(page:'hero'|'adventure')=>void,private model:()=>SquadBattleModel,private mutate:(fn:(b:SquadBattleModel)=>string|null)=>string|null,private navAtlas:Texture2D){this.node=this.base(parent,'Bag page',0,0,887,1774);this.render();this.node.active=false;}
   private base(parent:Node,name:string,x:number,y:number,w:number,h:number){const n=new Node(name);n.parent=parent;n.layer=Layers.Enum.UI_2D;n.setPosition(x,y);n.addComponent(UITransform).setContentSize(w,h);return n;}
   private panel(parent:Node,x:number,y:number,w:number,h:number,color=CREAM,r=24){const n=this.base(parent,'Panel',x,y,w,h),g=n.addComponent(Graphics);g.fillColor=new Color().fromHEX(color);g.roundRect(-w/2,-h/2,w,h,r);g.fill();return n;}
   private text(parent:Node,t:string,x:number,y:number,w:number,h:number,size=28,color=INK){const l=this.base(parent,t,x,y,w,h).addComponent(Label);l.string=t;l.fontFamily='Microsoft YaHei';l.isBold=true;l.fontSize=size;l.lineHeight=size*1.4;l.color=new Color().fromHEX(color);l.horizontalAlign=Label.HorizontalAlign.CENTER;l.verticalAlign=Label.VerticalAlign.CENTER;l.overflow=Label.Overflow.SHRINK;return l;}
@@ -101,22 +101,29 @@ export class BagPage {
     else items=items.slice().reverse();
     const count=Math.max(35,Math.ceil((items.length+5)/5)*5);
     const contentHeight=Math.ceil(count/5)*158+20;list.getComponent(UITransform)!.setContentSize(800,contentHeight);
-    for(let slot=0;slot<count;slot++){
+    const visible=new Map<number,Node>();
+    const drawVisible=()=>{
+    const firstRow=Math.max(0,Math.floor(Math.max(0,this.scroll.getScrollOffset().y)/158)-1);
+    const start=firstRow*5,end=Math.min(count,start+50);
+    visible.forEach((node,index)=>{if(index<start||index>=end){node.removeFromParent();node.destroy();visible.delete(index);}});
+    for(let slot=start;slot<end;slot++){
+      if(visible.has(slot))continue;
       const x=-316+(slot%5)*158,y=-83-Math.floor(slot/5)*158,item=items[slot];
-      if(!item){if(this.category===1&&slot===0){const tile=this.panel(list,x,y,146,146,'#54BBEF',19);this.text(tile,'◆',0,15,130,80,64,'#E0F7FF');this.text(tile,String(model.materials),0,-48,135,35,26);tile.on(Node.EventType.TOUCH_END,()=>this.detail('强化石','持有 '+this.model().materials+'\n分解装备获得，用于装备详情中的强化。'));}else this.panel(list,x,y,146,146,'#C9BBAB',19);continue;}
+      if(!item){let empty:Node;if(this.category===1&&slot===0){const tile=this.panel(list,x,y,146,146,'#54BBEF',19);empty=tile;this.text(tile,'◆',0,15,130,80,64,'#E0F7FF');this.text(tile,String(model.materials),0,-48,135,35,26);tile.on(Node.EventType.TOUCH_END,()=>this.detail('强化石','持有 '+this.model().materials+'\n分解装备获得，用于装备详情中的强化。'));}else empty=this.panel(list,x,y,146,146,'#C9BBAB',19);visible.set(slot,empty!);continue;}
       const owner=model.owner(item.id),tile=gearTile(list,this.atlas,item,item.slot,x,y,146,owner>=0?HERO_CONFIG[owner].name:'');
+      visible.set(slot,tile);
       if(this.batch&&this.selected.has(item.id)){const check=this.panel(tile,-45,-43,46,40,'#FFDA54',12);this.text(check,'✓',0,0,42,38,30);}
       tile.on(Node.EventType.TOUCH_END,()=>{if(!this.batch){this.equipmentDetail(item.id);return;}if(item.locked||model.owner(item.id)>=0){this.detail('不可分解','锁定和已穿戴装备不能分解。');return;}if(this.selected.has(item.id))this.selected.delete(item.id);else this.selected.add(item.id);this.refresh();});
     }
+    };
     if(items.length===0&&this.category!==1)this.text(viewport,this.category===0?'没有符合条件的装备':this.category===1?'暂无材料':'暂无道具',0,360,640,58,32);
     const rail=this.panel(p,414,-42,8,990,'#F4DFC7',4);this.thumb=this.panel(rail,0,0,8,140,'#F3B64D',4);
-    const update=()=>{const max=Math.max(1,contentHeight-1000);const t=Math.max(0,Math.min(1,this.scroll.getScrollOffset().y/max));this.thumb.setPosition(0,425-t*850);};
+    const update=()=>{drawVisible();const max=Math.max(1,contentHeight-1000);const t=Math.max(0,Math.min(1,this.scroll.getScrollOffset().y/max));this.thumb.setPosition(0,425-t*850);};
     viewport.on(ScrollView.EventType.SCROLLING,update);this.scroll.scrollToOffset(new Vec2(0,Math.min(this.savedOffsets[this.category],Math.max(0,contentHeight-1000))),0);update();
     this.text(p,this.category===1?'强化石 '+model.materials:this.batch?'已选 '+this.selected.size+' 件':'共'+items.length+'件',-303,-621,230,55,30);
     this.text(p,this.batch?'预计 '+model.salvagePreview(Array.from(this.selected)).materials+' 强化石':this.category===0?'自动分解：'+(model.rules.enabled?'开启':'关闭'):this.category===1?'分解获得 · 强化消耗':'暂无物品',-303,-663,230,35,22,'#AA8060');
     this.button(p,this.batch?'按规则选':'保留规则',-10,-628,240,70,()=>{if(this.batch){this.selected=new Set(this.filteredItems().filter(g=>!model.retained(g)).map(g=>g.id));this.refresh();}else this.rulesDetail();});
     this.button(p,this.batch?'分解 '+this.selected.size+' 件':'批量分解',280,-628,285,70,()=>{if(this.batch){this.confirmSalvage();return;}this.category=0;this.batchIds=model.inventory.map(g=>g.id);this.batch=true;this.selected.clear();this.savedOffsets[0]=0;this.render();},true);
-    const nav=[[15,1494,182,130],[205,1494,181,130],[393,1494,175,130],[575,1494,182,130],[765,1494,177,130]];
-    nav.forEach((r,i)=>this.cut(r[0],r[1],r[2],r[3],-348+i*174,-806,170,130).on(Node.EventType.TOUCH_END,()=>{this.save();if(i===0)this.navigate('hero');else if(i===2)this.navigate('adventure');else if(i!==3)this.detail(i===1?'招募':'副本','此功能尚未开放。');}));
+    drawNavigation(p,this.navAtlas,this.atlas,3,i=>{this.save();if(i===0)this.navigate('hero');else if(i===2)this.navigate('adventure');else if(i!==3)this.detail(i===1?'招募':'副本','此功能尚未开放。');});
   }
 }

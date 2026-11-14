@@ -15,3 +15,14 @@ export function gearTile(parent:Node,atlas:Texture2D,gear:Gear|null,slot:number,
  if(owner){box(-size/2+36,size/2-17,68,30,'#FFF0CF');text(owner,-size/2+36,size/2-17,64,21,'#704124');}
  return n;
 }
+
+// Reuse existing full navigation buttons, keeping one layout and active state.
+export function drawNavigation(parent:Node,atlas:Texture2D,bagAtlas:Texture2D,selected:number,onSelect:(i:number)=>void){
+ const root=new Node('Navigation');root.parent=parent;root.layer=Layers.Enum.UI_2D;root.addComponent(UITransform).setContentSize(887,150);root.setPosition(0,-812);
+ const labels=['英雄','招募','冒险','背包','副本'];
+ const regions=[[10,1648,177,120],[190,1648,170,120],[362,1648,169,120],[534,1648,170,120],[707,1648,170,120]];
+ labels.forEach((name,i)=>{const n=new Node('Nav '+name);n.parent=root;n.layer=Layers.Enum.UI_2D;n.setPosition(-348+i*174,0);n.addComponent(UITransform).setContentSize(170,130);
+ const f=new SpriteFrame();const r=i===0&&selected!==0?[15,1494,182,130]:regions[i];f.texture=i===0&&selected!==0?bagAtlas:atlas;f.rect=new Rect(r[0],r[1],r[2],r[3]);const sp=n.addComponent(Sprite);sp.sizeMode=Sprite.SizeMode.CUSTOM;sp.spriteFrame=f;
+ if(i===selected&&i!==0)sp.color=new Color(255,211,114,255);
+ n.on(Node.EventType.TOUCH_END,()=>onSelect(i));});return root;
+}
