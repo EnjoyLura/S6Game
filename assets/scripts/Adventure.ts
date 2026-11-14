@@ -1,6 +1,7 @@
+import {ModalView,setModalSkin,modalButton,modalRow,modalSection,modalText} from './ModalView';
 import {SKILL_NAMES,SECOND_COOLDOWN} from './SquadBattleModel';
 import {RecruitPage} from './RecruitPage';
-import {drawNavigation} from './GearView';
+import {drawNavigation,gearTile} from './GearView';
 import { _decorator, Component, Node, Canvas, UITransform, Camera, Layers, Color, Graphics, Label, Sprite, SpriteFrame, Texture2D, resources, Rect, view, ResolutionPolicy, tween, Vec3, UIOpacity, game, Game, profiler, Tween, Mask, sys, BlockInputEvents } from 'cc';
 import { SquadBattleModel, HERO_CONFIG, MONSTERS, SquadHit, gearName, DROP_SECONDS, foregroundRewardDelta } from './SquadBattleModel';
 import { BattleFeedback } from './BattleFeedback';
@@ -41,12 +42,13 @@ export class Adventure extends Component {
     this.root=this.base('Adventure page',0,0,887,1774,this.canvasRoot);
     this.panel('Page',0,0,887,1774,C.cream,0);
     game.on(Game.EVENT_HIDE,this.hide,this);game.on(Game.EVENT_SHOW,this.show,this);
-    Promise.all(['forest','hero-knight','hero-mage','hero-priest','hero-archer','monsters-4','adventure-ui-v5','hero-ui-v6','training-yard','bag-ui-v4','recruit-ui-v1'].map(n=>this.texture('art/'+n))).then(([forest,knight,mage,priest,archer,monsters,ui,heroUI,yard,bagUI,recruitUI])=>{
+    Promise.all(['forest','hero-knight','hero-mage','hero-priest','hero-archer','monsters-4','adventure-ui-v5','hero-ui-v6','training-yard','bag-ui-v4','recruit-ui-v1','modal-skin-v1','modal-controls-9'].map(n=>this.texture('art/'+n))).then(([forest,knight,mage,priest,archer,monsters,ui,heroUI,yard,bagUI,recruitUI,modalSkin,modalControls])=>{
+      setModalSkin(modalSkin,modalControls);
       this.ui=ui;this.heroTextures=[knight,mage,priest,archer];this.monsters=monsters;
       this.battleArt=[forest,heroUI,bagUI];this.rebuildBattle();
       this.heroPage=new HeroPage(this.canvasRoot,heroUI,yard,knight,()=>this.openPage('adventure'),(slot,hero)=>{this.openPage('bag');if(slot!==undefined)this.bagPage.showSlot(slot,hero!);},this.heroTextures,ui,()=>({gold:this.model.gold,experience:this.model.heroes.map(h=>h.experience),levels:this.model.heroes.map(h=>h.level),stats:this.model.heroes.map((_,i)=>this.model.stats(i))}),this.upgradeHero,()=>this.model,this.mutateEquipment,bagUI,()=>this.openPage('recruit'));
       this.bagPage=new BagPage(this.canvasRoot,bagUI,yard,(page)=>this.openPage(page),()=>this.model,this.mutateEquipment,heroUI);
-      this.recruitPage=new RecruitPage(this.canvasRoot,recruitUI,heroUI,bagUI,page=>this.openPage(page),()=>this.model,this.mutateEquipment);this.showOffline();
+      this.recruitPage=new RecruitPage(this.canvasRoot,recruitUI,heroUI,bagUI,page=>this.openPage(page),()=>this.model,this.mutateEquipment,this.heroTextures);this.showOffline();
     }).catch(e=>{console.error(e);this.label('素材加载失败，请刷新重试',0,0,700,70,34);});
   }
   private rebuildBattle(){
@@ -102,7 +104,7 @@ export class Adventure extends Component {
     });
     this.speedLabel=this.button(this.speed+'×',385,512,80,65,()=>{this.speed=this.speed===1?2:1;this.speedLabel.string=this.speed+'×';});
     this.speedLabel.fontSize=40;
-    this.cut('Statistics button',788,421,81,84,385,424).on(Node.EventType.TOUCH_END,()=>{this.statsVisible=!this.statsVisible;this.stats.node.active=this.statsVisible;});
+    this.cut('Statistics button',788,421,81,84,385,424).on(Node.EventType.TOUCH_END,()=>this.showStatistics());
     this.cut('Auto skill button',788,519,83,86,385,325).on(Node.EventType.TOUCH_END,()=>{this.model.autoSkill=!this.model.autoSkill;this.sync();});
     this.autoDot=this.base('Auto state',416,361,26,26).addComponent(Graphics);
     this.positions.forEach(([x,y],i)=>{
@@ -130,16 +132,21 @@ export class Adventure extends Component {
     }
     drawNavigation(this.root,navAtlas,bagAtlas,2,i=>{if(i===0)this.openPage('hero');else if(i===1)this.openPage('recruit');else if(i===3)this.openPage('bag');else if(i!==2)this.toast(['英雄','招募','冒险','背包','副本'][i]+'暂未开放');});
     this.stats=this.label('',-25,425,600,155,25);this.stats.node.active=false;
-    // Pause/retry belong in the hamburger menu, keeping the reference's battlefield clear.
-    this.menu=this.panel('Battle menu',0,220,520,500,'#FFF6E4',30);
-    this.label('战斗设置',0,205,450,55,36,C.ink,this.menu);
-    const pause=this.button('暂停战斗',0,250,410,75,()=>{if(this.model.result!=='fighting')return;this.model.paused=!this.model.paused;this.pauseLabel.string=this.model.paused?'继续战斗':'暂停战斗';this.saveProgress();});
-    pause.node.parent!.parent=this.menu;pause.node.parent!.setPosition(0,110);this.pauseLabel=pause;
-    const retry=this.button('重新挑战',0,140,410,75,()=>{this.restart();this.menu.active=false;},C.gold);
-    retry.node.parent!.parent=this.menu;retry.node.parent!.setPosition(0,15);
-    const next=this.button('切换怪物并重试',0,0,410,75,()=>{this.restart((this.model.monsterIndex+1)%4);this.menu.active=false;},C.gold);next.node.parent!.parent=this.menu;next.node.parent!.setPosition(0,-80);
-    this.label('四种怪物 · 点击菜单收起',0,-190,450,36,21,C.muted,this.menu);
+    const menuView=new ModalView(this.root,'战斗设置',870,()=>{this.menu.active=false;});this.menu=menuView.layer;const card=menuView.card;
+    const pause=modalButton(card,'暂停战斗',0,145,520,78,()=>{if(this.model.result!=='fighting')return;this.model.paused=!this.model.paused;this.pauseLabel.string=this.model.paused?'继续战斗':'暂停战斗';this.saveProgress();});
+    this.pauseLabel=pause.children[pause.children.length-1].getComponent(Label)!;
+    modalButton(card,'重新挑战',0,30,520,78,()=>{this.restart();this.menu.active=false;},'peach');
+    modalText(card,'重新挑战会重置当前波战斗，保留成长与收益。',0,-95,680,85,25);
+    modalButton(card,'切换怪物并重试',0,-300,520,78,()=>{this.restart((this.model.monsterIndex+1)%4);this.menu.active=false;},'peach');
     this.menu.active=false;
+  }
+  private statisticsModal:Node|null=null;
+  private showStatistics(){
+    if(this.statisticsModal){this.statisticsModal.destroy();this.statisticsModal=null;return;}
+    const view=new ModalView(this.root,'战斗统计',920,()=>{view.layer.destroy();this.statisticsModal=null;});this.statisticsModal=view.layer;
+    modalSection(view.card,'输出与治疗',215);
+    this.stats=this.label('',0,5,680,300,31,C.ink,view.card);this.sync();
+    modalText(view.card,'统计当前挑战中的实际伤害、治疗与承伤。',0,-270,680,75,24);
   }
   private toast(s:string){this.notice.string=s;}
   private monsterRect(slot=0){const i=this.model.enemies[slot].kind;return new Rect((i%2)*this.monsters.width/2,Math.floor(i/2)*this.monsters.height/2,this.monsters.width/2,this.monsters.height/2);}
@@ -169,7 +176,7 @@ export class Adventure extends Component {
     });
     this.autoDot.clear();this.autoDot.fillColor=new Color().fromHEX('#FFFFFF');this.autoDot.circle(0,0,13);this.autoDot.fill();this.autoDot.fillColor=new Color().fromHEX(b.autoSkill?'#71C730':'#B8A789');this.autoDot.circle(0,0,10);this.autoDot.fill();
     this.turns.forEach((n,i)=>n.active=b.result==='fighting'&&b.waveDelay===0&&i===b.nextActor);
-    this.stats.string=b.party.map((h,i)=>b.battleStats(i).name+' '+h.damage+(b.formation[i]===2?' / 治疗 '+h.healing:'')).join('   ')+'\n承伤 '+b.received+' · '+b.elapsed.toFixed(1)+'秒';
+    if(this.stats&&this.stats.isValid)this.stats.string=b.party.map((h,i)=>b.battleStats(i).name+' '+h.damage+(b.formation[i]===2?' / 治疗 '+h.healing:'')).join('\n')+'\n承伤 '+b.received+' · '+b.elapsed.toFixed(1)+'秒';
   }
   private impactText(hit:SquadHit){
     if(hit.damage)this.floating.push({target:hit.target,text:(hit.skill&&hit.actor<3?SKILL_NAMES[this.model.formation[hit.actor]][hit.skillSlot||0]+' ':'−')+hit.damage,color:hit.actor>=3?'#EE7463':hit.skill?'#FFCD58':'#FFFFFF'});
@@ -199,16 +206,15 @@ export class Adventure extends Component {
   private offlineModal:Node|null=null;
   private showOffline(){
     if(!this.ready||!this.canvasRoot||this.offlineModal)return;const r=this.model.offline;if(!r)return;
-    const layer=this.panel('Offline backdrop',0,0,887,1774,'#000000',0,this.canvasRoot);this.offlineModal=layer;layer.getComponent(Graphics)!.fillColor=new Color(0,0,0,150);const g=layer.getComponent(Graphics)!;g.clear();g.rect(-443.5,-887,887,1774);g.fill();
-    const close=()=>{layer.destroy();this.offlineModal=null;};layer.on(Node.EventType.TOUCH_END,close);
-    const card=this.panel('Offline reward card',0,0,790,1000,C.cream,32,layer);card.addComponent(BlockInputEvents);
-    this.label('离线挂机收益',0,405,700,70,42,C.ink,card);
-    this.label('离线结算 '+r.seconds+'秒 · 上限8小时\n最高检查点 '+r.checkpoint,0,280,700,110,28,C.ink,card);
-    this.label('金币 +'+r.gold+'\n'+r.experience.map((v,i)=>v?HERO_CONFIG[i].name+'经验 +'+v:'').filter(Boolean).join('\n')+'\n装备 '+r.equipment.length+'件',0,30,700,360,32,C.ink,card);
-    this.label('装备按最高进度生成，领取时应用自动保留规则。\n未领取可关闭，点击冒险页“收益”再次打开。',0,-225,730,100,23,C.ink,card);
-    const claim=this.panel('Claim offline',0,-360,440,75,C.gold,22,card);const message=this.label('领取',0,0,420,65,30,C.ink,claim);
-    claim.on(Node.EventType.TOUCH_END,()=>{const error=this.mutateEquipment(b=>b.claimOffline());if(error){message.string=error;return;}close();if(this.currentPage==='bag')this.bagPage.refresh();if(this.currentPage==='hero')this.heroPage.refresh();this.toast('离线收益已领取并保存');});
-    const x=this.label('×',330,410,70,70,40,C.ink,card);x.node.on(Node.EventType.TOUCH_END,close);this.label('点击空白处关闭',0,-560,700,55,27,'#FFFFFF',layer);
+    const close=()=>{this.offlineModal?.destroy();this.offlineModal=null;};const view=new ModalView(this.canvasRoot,'离线收益',1320,close);this.offlineModal=view.layer;const card=view.card;
+    modalRow(card,'◷','离线时长',r.seconds+'秒',395);modalRow(card,'⚑','最高检查点',String(r.checkpoint),333);
+    modalRow(card,'●','金币','+'+r.gold,250);
+    r.experience.forEach((v,i)=>{if(v)modalRow(card,'✦',HERO_CONFIG[i].name+'经验','+'+v,175-i*62);});
+    modalSection(card,'装备 '+r.equipment.length+'件',-110);
+    r.equipment.slice(0,5).forEach((g,i)=>gearTile(card,this.battleArt[2],g,g.slot,-280+i*140,-210,125));
+    modalText(card,'离线收益上限8小时，按最高进度结算。\n领取时应用自动保留规则，其余装备分解。\n未领取可关闭，点击“收益”再次查看。',0,-350,690,130,25);
+    const claim=modalButton(card,'领取收益',0,-530,440,82,()=>{const error=this.mutateEquipment(b=>b.claimOffline());if(error){message.string=error;return;}close();if(this.currentPage==='bag')this.bagPage.refresh();if(this.currentPage==='hero')this.heroPage.refresh();this.toast('离线收益已领取并保存');});
+    const message=claim.children[claim.children.length-1].getComponent(Label)!;
   }
   private hide(){if(this.background)return;this.saveProgress();this.foregroundPaused=this.model.paused;this.background=true;this.model.paused=true;}
   private show(){if(!this.background)return;this.background=false;this.model.paused=this.foregroundPaused;this.model.prepareOffline(Date.now());this.saveProgress();this.showOffline();}

@@ -1,3 +1,5 @@
+import {equipmentHeader,equipmentStats} from './EquipmentModal';
+import {ModalView,modalIcon,inModal,modalButton,modalRow,modalSection,modalPanel,modalImage} from './ModalView';
 import { Node, UITransform, Graphics, Label, Color, Texture2D, SpriteFrame, Sprite, Rect, Layers, BlockInputEvents, Mask, ScrollView } from 'cc';
 import { TALENTS, SKILL_LEVELS, SKILL_NAMES, SECOND_COOLDOWN, STAR_CONFIG, HERO_CONFIG, upgradeCost, LEVEL_CAP, SquadBattleModel, gearName, gearDescription, gearStats, QUALITY_NAMES } from './SquadBattleModel';
 
@@ -20,24 +22,18 @@ export class HeroPage {
   private text(parent:Node,text:string,x:number,y:number,w:number,h:number,size=28,color=INK){const n=this.nodeAt(parent,text,x,y,w,h),l=n.addComponent(Label);l.string=text;l.fontFamily='Microsoft YaHei';l.isBold=true;l.fontSize=size;l.lineHeight=size*1.4;l.color=new Color().fromHEX(color);l.horizontalAlign=Label.HorizontalAlign.CENTER;l.verticalAlign=Label.VerticalAlign.CENTER;l.overflow=Label.Overflow.SHRINK;return l;}
   private sprite(parent:Node,t:Texture2D,rect:Rect,x:number,y:number,w:number,h:number){const n=this.nodeAt(parent,'Artwork',x,y,w,h),f=new SpriteFrame();f.texture=t;f.rect=rect;const s=n.addComponent(Sprite);s.sizeMode=Sprite.SizeMode.CUSTOM;s.spriteFrame=f;n.getComponent(UITransform)!.setContentSize(w,h);return n;}
   private cut(sx:number,sy:number,sw:number,sh:number,x:number,y:number,w=sw,h=sh,parent=this.content){return this.sprite(parent,this.atlas,new Rect(sx,sy,sw,sh),x,y,w,h);}
-  private button(parent:Node,text:string,x:number,y:number,w:number,h:number,fn:()=>void,color='#FFCE52'){const n=this.panel(parent,x,y,w,h,color,h/2);this.text(n,text,0,0,w-18,h-6,30);n.on(Node.EventType.TOUCH_END,fn);return n;}
+  private button(parent:Node,text:string,x:number,y:number,w:number,h:number,fn:()=>void,color='#FFCE52'){if(inModal(parent))return modalButton(parent,text,x,y,w,h,fn,color==='#E2D2B9'?'muted':color==='#FFCE52'?'gold':'peach');const n=this.panel(parent,x,y,w,h,color,h/2);this.text(n,text,0,0,w-18,h-6,30);n.on(Node.EventType.TOUCH_END,fn);return n;}
   private round(n:Node){const u=n.getComponent(UITransform)!;const h=this.nodeAt(n.parent!, 'Portrait mask',n.position.x,n.position.y,u.width,u.height);h.addComponent(Mask).type=Mask.Type.GRAPHICS_ELLIPSE;n.parent=h;n.setPosition(0,0);}
   private info(title:string,body:string){
     this.closeEquipment();
-    const {layer,card}=this.equipmentLayer(title,585);this.dialog=layer;
-    this.text(card,body,0,-20,690,370,28);
+    const {layer,card}=this.equipmentLayer(title,820);this.dialog=layer;
+    modalIcon(card,4,0,120,90);this.text(card,body,0,-80,680,260,28);
   }
 
   private closeEquipment(){this.dialog?.destroy();this.dialog=null;}
   private equipmentLayer(title:string,height:number,parent=this.node){
-    const layer=this.nodeAt(parent,title,0,0,887,1774);layer.addComponent(BlockInputEvents);
-    const shade=layer.addComponent(Graphics);shade.fillColor=new Color(40,26,11,170);shade.rect(-444,-887,888,1774);shade.fill();
-    layer.on(Node.EventType.TOUCH_END,()=>{if(layer===this.dialog)this.closeEquipment();else layer.destroy();});
-    const card=this.panel(layer,0,0,820,height,CREAM,32);card.addComponent(BlockInputEvents);card.on(Node.EventType.TOUCH_END,(e:any)=>e.propagationStopped=true);
-    this.text(card,title,0,height/2-60,650,65,39);
-    this.button(card,'×',350,height/2-60,65,65,()=>{if(layer===this.dialog)this.closeEquipment();else layer.destroy();},'#F1D6AF');
-    this.text(layer,'点击空白处关闭',0,-height/2-65,650,50,27,'#FFF5E5');
-    return {layer,card};
+    let view:ModalView;view=new ModalView(parent,title,height,()=>{if(view.layer===this.dialog)this.closeEquipment();else view.layer.destroy();});
+    return {layer:view.layer,card:view.card};
   }
   private equipmentInfo(slot:number){
     const g=this.model().equipment(this.selected)[slot];this.closeEquipment();
@@ -45,15 +41,16 @@ export class HeroPage {
   }
   private equipmentPicker(initialSlot:number){
     let part=initialSlot,quality=-1;
-    const {layer,card}=this.equipmentLayer('装备选择',1370);this.dialog=layer;
+    const {layer,card}=this.equipmentLayer('装备选择',1430);this.dialog=layer;
     let body:Node|null=null;
     const draw=()=>{
       body?.destroy();body=this.nodeAt(card,'Equipment picker content',0,-20,780,1180);const p=body!,b=this.model();
       const items=b.inventory.filter(g=>b.owner(g.id)<0&&(part<0||g.slot===part)&&(quality<0||g.quality===quality)).slice().sort((a,b)=>b.quality-a.quality||b.level-a.level||b.id-a.id);
-      const viewport=this.nodeAt(p,'Equipment selection scroll',0,95,750,920);viewport.addComponent(Mask).type=Mask.Type.GRAPHICS_RECT;
-      const list=this.nodeAt(viewport,'Equipment choices',0,460,750,Math.max(920,Math.ceil(items.length/5)*150+20));list.getComponent(UITransform)!.setAnchorPoint(.5,1);
+      const viewport=this.nodeAt(p,'Equipment selection scroll',0,95,750,850);viewport.addComponent(Mask).type=Mask.Type.GRAPHICS_RECT;
+      const list=this.nodeAt(viewport,'Equipment choices',0,425,750,Math.max(850,Math.ceil(items.length/5)*150+20));list.getComponent(UITransform)!.setAnchorPoint(.5,1);
       const scroll=viewport.addComponent(ScrollView);scroll.content=list;scroll.horizontal=false;scroll.vertical=true;scroll.cancelInnerEvents=true;
       items.forEach((g,i)=>{const owner=b.owner(g.id),n=gearTile(list,this.bagAtlas,g,g.slot,-300+i%5*150,-80-Math.floor(i/5)*150,138,owner>=0?HEROES[owner]:'');n.on(Node.EventType.TOUCH_END,()=>this.equipmentDetail(g.id,layer,draw));});
+      for(let i=items.length;i<Math.max(15,Math.ceil(items.length/5)*5);i++)this.panel(list,-300+i%5*150,-80-Math.floor(i/5)*150,138,138,'#E8D7BD',16);
       if(!items.length)this.text(viewport,'没有符合条件的装备\n可调整部位或品质筛选',0,180,680,110,30,'#AA8060');
       this.text(p,'品阶',-310,-427,100,50,29);
       this.button(p,(quality<0?'全部':QUALITY_NAMES[quality])+' ▾',-100,-427,285,65,()=>{
@@ -82,65 +79,77 @@ export class HeroPage {
   private equipmentDetail(id:number,picker?:Node,refreshPicker?:()=>void){
     const b=this.model(),g=b.inventory.find(g=>g.id===id);if(!g)return;
     const owner=b.owner(id),current=b.equipment(this.selected)[g.slot];
-    const {layer,card}=this.equipmentLayer('装备详情',920,picker||this.node);if(!picker)this.dialog=layer;
-    gearTile(card,this.bagAtlas,g,g.slot,0,265,146,owner>=0?HEROES[owner]:'');
-    this.text(card,gearName(g)+' · Lv.'+g.level,0,155,730,55,32);
-    this.text(card,gearDescription(g),0,80,730,90,28);
-    this.text(card,owner>=0?'已穿戴：'+HEROES[owner]: '穿戴给：'+HEROES[this.selected],0,7,700,50,28);
-    if(owner<0){const values=gearStats(g),old=current?gearStats(current):{hp:0,attack:0,defense:0,power:0};
-      const difference=(key:'hp'|'attack'|'defense'|'power')=>{const n=values[key]-old[key];return (n>=0?'+':'')+n;};
-      this.text(card,'替换变化：生命 '+difference('hp')+' · 攻击 '+difference('attack')+'\n防御 '+difference('defense')+' · 技能效果 '+difference('power'),0,-85,730,110,27);
-    }else this.text(card,'卸下后装备回到背包，可重新穿戴。',0,-85,730,90,27);
-    const result=this.text(card,'',0,-200,710,85,27,'#B45B38');
-    this.button(card,owner>=0?'卸下':'穿上',0,-332,290,72,()=>{
-      const liveOwner=this.model().owner(id);
-      if(liveOwner!==owner){result.string='装备归属已变化，请关闭后重试';return;}
-      const error=this.mutate(b=>b.equip(owner>=0?owner:this.selected,owner>=0?null:id,g.slot));
-      if(error){result.string=error;return;}
-      this.render();
-      if(picker){picker.setSiblingIndex(this.node.children.length-1);layer.destroy();refreshPicker?.();}else this.closeEquipment();
+    const {layer,card}=this.equipmentLayer('装备详情',1180,picker||this.node);if(!picker)this.dialog=layer;
+    equipmentHeader(card,this.bagAtlas,g,330);equipmentStats(card,g,200);
+    const values=gearStats(g),old=current?gearStats(current):{hp:0,attack:0,defense:0,power:0};
+    const difference=(key:'hp'|'attack'|'defense'|'power')=>{const n=values[key]-old[key];return (n>=0?'+':'')+n;};
+    this.text(card,owner>=0?'已穿戴：'+HEROES[owner]+' · 卸下后回到背包':'替换变化：生命 '+difference('hp')+' · 攻击 '+difference('attack')+'\n防御 '+difference('defense')+' · 技能效果 '+difference('power'),0,-170,690,100,27);
+    this.text(card,owner<0?'穿戴给：'+HEROES[this.selected]:'',0,-252,690,45,27);
+    const result=this.text(card,'',0,-350,680,70,25,'#B45B38');
+    this.button(card,owner>=0?'卸下':'穿戴',0,-460,360,78,()=>{
+      if(this.model().owner(id)!==owner){result.string='装备归属已变化，请关闭后重试';return;}
+      const error=this.mutate(b=>b.equip(owner>=0?owner:this.selected,owner>=0?null:id,g.slot));if(error){result.string=error;return;}
+      this.render();if(picker){picker.setSiblingIndex(this.node.children.length-1);layer.destroy();refreshPicker?.();}else this.closeEquipment();
     });
   }
-  private talentDialog(){
+  private talentDialog(selected=2){
     const id=this.selected,b=this.model();if(!b.owns(id)){this.info('天赋树','请先招募该英雄');return;}
-    this.closeEquipment();const {layer,card}=this.equipmentLayer(HEROES[id]+' · 天赋树',1120);this.dialog=layer;
-    this.text(card,'可用 '+b.talentPoints(id)+'点 · 升级每级获得1点',0,425,740,60,30);
-    this.text(card,'生命分支     攻击分支     技能分支 → 技能流转',0,350,760,50,25);
-    TALENTS.forEach((c,j)=>{const y=245-j*135,r=b.heroes[id].talents[j];
-      this.text(card,c.name+' '+r+'/'+c.max,-210,y,310,50,31);
-      this.text(card,c.description,-70,y-48,600,50,24);
-      this.button(card,r===c.max?'已满级':'投入 '+c.cost+'点',265,y,200,55,()=>{const error=this.mutate(m=>m.trainTalent(id,j));if(error){this.info('天赋培养',error);return;}this.render();this.talentDialog();},r===c.max?'#E2D2B9':'#FFCE52');
+    this.closeEquipment();const {layer,card}=this.equipmentLayer('英雄天赋',1260);this.dialog=layer;
+    this.text(card,HEROES[id]+' · Lv.'+b.heroes[id].level,0,365,680,55,34);
+    this.text(card,'可用天赋点 '+b.talentPoints(id),0,305,680,48,29);
+    const positions=[[0,200],[-190,40],[190,40],[190,-125]];
+    const lines=this.nodeAt(card,'Talent connections',0,0,700,450).addComponent(Graphics);lines.strokeColor=new Color().fromHEX('#D7AE68');lines.lineWidth=5;
+    for(const [a,z] of [[0,1],[0,2],[2,3]]){lines.moveTo(positions[a][0],positions[a][1]);lines.lineTo(positions[z][0],positions[z][1]);lines.stroke();}
+    TALENTS.forEach((c,j)=>{const [x,y]=positions[j],rank=b.heroes[id].talents[j],n=modalPanel(card,x,y,170,122,selected===j?'#FFD464':'#FBE1C2',22);
+      this.text(n,['♥','⚔','✦','◷'][j],-48,15,66,60,46);this.text(n,c.name,22,25,104,48,24);this.text(n,rank+'/'+c.max,22,-23,110,38,25);
+      n.on(Node.EventType.TOUCH_END,()=>this.talentDialog(j));
     });
-    this.button(card,'重置 · 返还全部天赋点',0,-400,520,65,()=>{const error=this.mutate(m=>m.resetTalents(id));if(error){this.info('天赋重置',error);return;}this.render();this.talentDialog();});
-    this.text(card,'测试配置 · 免费重置 · 保持生命比例，不重置战斗冷却',0,-480,770,50,22);
+    const c=TALENTS[selected],rank=b.heroes[id].talents[selected];modalSection(card,c.name,-235);
+    this.text(card,c.description+'\n消耗 '+c.cost+'点'+(selected===3?' · 需要技能强化1级':''),0,-315,680,90,26);
+    this.button(card,'重置天赋',-177,-500,290,78,()=>{const error=this.mutate(m=>m.resetTalents(id));if(error){this.info('天赋重置',error);return;}this.render();this.talentDialog(selected);},'#FFB98D');
+    this.button(card,rank===c.max?'已满级':'学习节点',177,-500,290,78,()=>{const error=this.mutate(m=>m.trainTalent(id,selected));if(error){this.info('天赋培养',error);return;}this.render();this.talentDialog(selected);},rank===c.max?'#E2D2B9':'#FFCE52');
   }
   private starDialog(){
     const id=this.selected,p=this.model().starPreview(id);if(!p){this.info('英雄升星','请先招募该英雄');return;}
-    this.closeEquipment();const {layer,card}=this.equipmentLayer(HEROES[id]+' · 升星',950);this.dialog=layer;
-    const max=p.stars===STAR_CONFIG.cap;
-    this.text(card,max?'★★★★★ · 已满星':p.stars+'星 → '+(p.stars+1)+'星',0,315,700,65,39);
-    this.text(card,'可用重复份数 '+p.available+(max?'':' / 需要 '+p.cost+'份'),0,230,720,55,30);
-    this.text(card,'保留角色本体，只消耗同名英雄重复份数',0,172,720,50,25);
-    const line=(name:string,a:number,b:number)=>name+'  '+a+(max?'':' → '+b);
-    this.text(card,[line('生命',p.before.hp,p.after.hp),line('攻击',p.before.attack,p.after.attack),line(p.before.skill+'效果',p.before.power,p.after.power)].join('\n'),0,20,730,200,32);
-    this.text(card,'测试配置：每星基础生命/攻击 +15%\n招牌技能效果 +25%，装备加成独立叠加。\n保持当前生命比例，不复活、不重置技能冷却。',0,-175,730,150,25);
-    if(!max)this.button(card,p.available>=p.cost?'升星 · 消耗'+p.cost+'份':'份数不足',0,-350,420,75,()=>{
-      const error=this.mutate(b=>b.starUp(id));if(error){this.info('英雄升星',error);return;}
-      this.render();this.starDialog();
-    },p.available>=p.cost?'#FFCE52':'#E2D2B9');
+    this.closeEquipment();const {layer,card}=this.equipmentLayer('英雄升星',1110);this.dialog=layer;
+    const max=p.stars===STAR_CONFIG.cap,t=this.heroTextures[id];modalImage(card,t,new Rect(0,0,t.width,t.height),-235,285,160,160);
+    this.text(card,HEROES[id],65,320,400,55,35);this.text(card,max?'★★★★★ · 已满星':p.stars+'星 → '+(p.stars+1)+'星',65,255,400,65,37);
+    this.text(card,'可用重复份数 '+p.available+(max?'':' / 需要 '+p.cost+'份'),0,160,680,50,29);modalSection(card,'提升预览',80);
+    const values=[[p.before.hp,p.after.hp],[p.before.attack,p.after.attack],[p.before.power,p.after.power]];
+    values.forEach((v,i)=>modalRow(card,['♥','⚔','✦'][i],['生命','攻击','招牌技能'][i],v[0]+(max?'':' → '+v[1]),5-i*65));
+    this.text(card,'保留角色本体，只消耗同名英雄重复份数。\n每星基础生命/攻击+15%，招牌技能效果+25%。\n装备独立叠加；保持生命比例与战斗冷却。',0,-240,680,140,24);
+    if(!max)this.button(card,p.available>=p.cost?'升星 · 消耗'+p.cost+'份':'份数不足',0,-425,390,80,()=>{const error=this.mutate(b=>b.starUp(id));if(error){this.info('英雄升星',error);return;}this.render();this.starDialog();},p.available>=p.cost?'#FFCE52':'#E2D2B9');
   }
   private formationPicker(){
-    this.closeEquipment();const {layer,card}=this.equipmentLayer('队伍编成',950);this.dialog=layer;
-    let draft=this.model().formation.slice();const rows=this.nodeAt(card,'Formation draft',0,0,760,700);
-    const draw=()=>{rows.destroyAllChildren();
-      this.text(rows,'选择1至3位英雄 · 点击移除或加入',0,320,710,50,29);
-      this.text(rows,'当前：'+draft.map(i=>HEROES[i]).join(' / '),0,250,720,60,28);
-      HEROES.forEach((name,i)=>{const owned=this.model().owns(i),slot=draft.indexOf(i);
-        this.button(rows,name+' · Lv.'+this.model().heroes[i].level+(slot>=0?'  ✓ '+(slot+1)+'号位':owned?'  未上阵':'  未招募'),0,145-i*100,650,80,()=>{if(!owned)return;if(slot>=0)draft.splice(slot,1);else if(draft.length<3)draft.push(i);draw();},slot>=0?'#FFCE52':owned?'#F4E2CA':'#D8D0C5');
+    this.closeEquipment();const {layer,card}=this.equipmentLayer('队伍编队',1180);this.dialog=layer;
+    let draft=this.model().formation.slice();const rows=this.nodeAt(card,'Formation draft',0,0,760,900);
+    const face=(parent:Node,id:number,x:number,y:number,size:number)=>{const t=this.heroTextures[id];modalImage(parent,t,new Rect(0,0,t.width,t.height),x,y,size,size);};
+    const draw=()=>{rows.destroyAllChildren();modalSection(rows,'当前上阵',365);
+      for(let slot=0;slot<3;slot++){const id=draft[slot],x=-225+slot*225,n=modalPanel(rows,x,240,200,180,'#FBE1C2',24);
+        if(id!==undefined){face(n,id,0,10,145);this.text(n,HEROES[id],0,-62,180,42,25);n.on(Node.EventType.TOUCH_END,()=>{draft.splice(slot,1);draw();});}
+        else this.text(n,'＋',0,0,160,100,60,'#B49770');this.text(rows,slot===0?'前排':'后排',x,128,190,42,25);
+      }
+      modalSection(rows,'可选英雄',45);
+      HEROES.forEach((name,id)=>{const owned=this.model().owns(id),slot=draft.indexOf(id),x=-265+id*176,n=modalPanel(rows,x,-75,160,145,slot>=0?'#FFDA76':'#FBE1C2',20);
+        if(owned)face(n,id,0,10,110);this.text(n,owned?name:'未招募',0,-50,150,38,23);if(slot>=0)this.text(n,'✓',55,48,42,36,27);
+        n.on(Node.EventType.TOUCH_END,()=>{if(!owned)return;if(slot>=0)draft.splice(slot,1);else if(draft.length<3)draft.push(id);draw();});
       });
-      this.text(rows,'满员时先移除一位，再加入新英雄。\n第一位前排受击权重较高；换阵重新挑战当前波。',0,-250,710,90,25);
-      this.button(rows,'保存阵容',0,-360,300,70,()=>{const error=this.mutate(b=>b.setFormation(draft));if(error){this.info('编队',error);return;}this.closeEquipment();this.render();});
+      this.text(rows,'最多上阵3位，同一英雄不能重复。\n满员请先移除一位；第一位为前排。\n保存变更后重新挑战当前波。',0,-260,680,145,26);
+      this.button(rows,'保存阵容',0,-460,390,80,()=>{const error=this.mutate(b=>b.setFormation(draft));if(error){this.info('编队',error);return;}this.closeEquipment();this.render();});
     };draw();
+  }
+  private skillDialog(index:number){
+    const id=this.selected,b=this.model(),config=b.stats(id),open=b.unlocked(id,index),passive=index%2===1;
+    this.closeEquipment();const {layer,card}=this.equipmentLayer('技能详情',1100);this.dialog=layer;
+    if(id===3)modalImage(card,this.bagAtlas,new Rect(405,618,120,85),-235,290,150,150);
+    else modalImage(card,this.battleUI,new Rect([28,316,612][id],1413,120,120),-235,290,150,150);
+    this.text(card,SKILL_NAMES[id][index],85,320,415,58,35);this.text(card,(passive?'被动':'主动')+' · '+SKILL_LEVELS[index]+'级解锁',85,255,415,45,28);
+    const effect=index===1?['防御 +25','主动技能效果 +15%','主动治疗效果 +15%','普攻攻击 +15%'][id]:index===3?'两个主动技能效果 +20%（包含招牌技能升星加成）':index===0?(id===0?'获得护盾 '+config.power:id===2?'治疗生命比例最低的存活队友，最多 '+config.power:'造成伤害 '+config.power):id===2?'治疗生命比例最低的存活队友，最多 '+Math.round(config.power*1.4):'造成伤害 '+Math.round(config.power*1.4)+'，定向攻击'+(id===0?'攻击最高的敌人':'生命比例最低的敌人');
+    modalSection(card,'技能效果',155);this.text(card,effect,0,60,680,110,29);
+    modalRow(card,'✦','解锁状态',open?'已解锁':'未解锁',-45);
+    modalRow(card,'◷','冷却',passive?'自动生效':(index===0?config.cooldown:b.secondCooldown(id))+'秒',-110);
+    this.text(card,passive?'解锁后自动生效，无需释放。':'冷却仅在战斗中推进，非战斗期间暂停。\n可手动点击排队释放或开启自动技能。\n每次技能占用一次行动。'+(id===2?'满血不释放。':''),0,-225,680,120,26);
+    SKILL_LEVELS.forEach((lv,i)=>{const x=-255+i*170,n=modalPanel(card,x,-400,148,92,b.unlocked(id,i)?'#FFDB7E':'#DDD0BD',18);this.text(n,i%2?'被动':'主动',0,14,135,36,24);this.text(n,b.unlocked(id,i)?'已解锁':lv+'级解锁',0,-23,135,32,22);n.on(Node.EventType.TOUCH_END,()=>this.skillDialog(i));});
   }
   refresh(){this.render();}
   refreshIncome(){
@@ -199,11 +208,7 @@ export class HeroPage {
       this.panel(p,x,-165,87,30,'#F6D6A6',15);this.text(p,i%2===0?'主动':'被动',x,-165,100,33,24);
       const open=this.model().unlocked(this.selected,i);
       const n=open?(this.selected===3?this.sprite(p,this.bagAtlas,new Rect(405,618,120,85),x,-232,104,104):this.sprite(p,this.battleUI,new Rect([28,316,612][this.selected],1413,120,120),x,-232,104,104)):this.cut(535,1073,111,94,x,-232,112,100);
-      n.on(Node.EventType.TOUCH_END,()=>{
-        const passive=i%2===1;
-        const effect=i===1?['防御 +25','主动技能效果 +15%','主动治疗效果 +15%','普攻攻击 +15%'][this.selected]:i===3?'两个主动技能效果 +20%（包含招牌技能升星加成）':i===0?(this.selected===0?'获得护盾 '+config.power:this.selected===2?'治疗生命比例最低的存活队友，最多 '+config.power:'造成伤害 '+config.power):this.selected===2?'治疗生命比例最低的存活队友，最多 '+Math.round(config.power*1.4):'造成伤害 '+Math.round(config.power*1.4)+'，定向攻击'+(this.selected===0?'攻击最高的敌人':'生命比例最低的敌人');
-        this.info(skillNames[i],(passive?'被动技能':'主动技能')+' · '+SKILL_LEVELS[i]+'级解锁 · '+(open?'已解锁':'未解锁')+'\n'+effect+(passive?'\n解锁后自动生效，无需释放。':'\n冷却 '+(i===0?config.cooldown:this.model().secondCooldown(this.selected))+'秒，仅战斗中推进。\n可自动释放或手动排队，每次占用一次行动。'+(this.selected===2?'满血时不释放。':''))+'\n测试配置，数值可后续调整。');
-      });
+      n.on(Node.EventType.TOUCH_END,()=>this.skillDialog(i));
       this.text(p,skillNames[i],x,-295,145,42,27);this.text(p,open?'已解锁':SKILL_LEVELS[i]+'级解锁',x,-327,145,32,23);
     });
     this.cut(702,1040,131,132,327,-221,132,132).on(Node.EventType.TOUCH_END,()=>this.talentDialog());

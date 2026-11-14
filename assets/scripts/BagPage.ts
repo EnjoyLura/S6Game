@@ -1,3 +1,5 @@
+import {equipmentHeader,equipmentStats} from './EquipmentModal';
+import {ModalView,modalSelect,modalPanel,modalIcon,inModal,modalButton,modalRow,modalSection,modalImage} from './ModalView';
 import { Node, UITransform, Graphics, Label, Color, Texture2D, SpriteFrame, Sprite, Rect, Layers, BlockInputEvents, ScrollView, Mask, Vec2 } from 'cc';
 
 import {SquadBattleModel,HERO_CONFIG,gearName,gearDescription,DROP_SECONDS,gearStats,enhanceCost,ENHANCE_CAP,RetentionRules,QUALITY_NAMES,investedMaterials} from './SquadBattleModel';
@@ -18,64 +20,60 @@ export class BagPage {
   private text(parent:Node,t:string,x:number,y:number,w:number,h:number,size=28,color=INK){const l=this.base(parent,t,x,y,w,h).addComponent(Label);l.string=t;l.fontFamily='Microsoft YaHei';l.isBold=true;l.fontSize=size;l.lineHeight=size*1.4;l.color=new Color().fromHEX(color);l.horizontalAlign=Label.HorizontalAlign.CENTER;l.verticalAlign=Label.VerticalAlign.CENTER;l.overflow=Label.Overflow.SHRINK;return l;}
   private image(parent:Node,t:Texture2D,r:Rect,x:number,y:number,w:number,h:number){const n=this.base(parent,'UI image',x,y,w,h),f=new SpriteFrame();f.texture=t;f.rect=r;const s=n.addComponent(Sprite);s.sizeMode=Sprite.SizeMode.CUSTOM;s.spriteFrame=f;n.getComponent(UITransform)!.setContentSize(w,h);return n;}
   private cut(sx:number,sy:number,sw:number,sh:number,x:number,y:number,w=sw,h=sh,parent=this.content){return this.image(parent,this.atlas,new Rect(sx,sy,sw,sh),x,y,w,h);}
-  private button(parent:Node,t:string,x:number,y:number,w:number,h:number,fn:()=>void,active=false){this.panel(parent,x,y-4,w,h,active?'#E9A63A':'#E5C6A4',h/2);const n=this.panel(parent,x,y,w,h,active?'#FFDA54':CREAM,h/2);this.text(n,t,0,0,w-12,h-6,30);n.on(Node.EventType.TOUCH_END,fn);return n;}
-  private detail(title:string,body:string){const p=this.modalCard(title,530);this.text(p,body,0,-20,660,300,28);}
+  private button(parent:Node,t:string,x:number,y:number,w:number,h:number,fn:()=>void,active=false){if(inModal(parent))return modalButton(parent,t,x,y,w,h,fn,active?'gold':'peach');this.panel(parent,x,y-4,w,h,active?'#E9A63A':'#E5C6A4',h/2);const n=this.panel(parent,x,y,w,h,active?'#FFDA54':CREAM,h/2);this.text(n,t,0,0,w-12,h-6,30);n.on(Node.EventType.TOUCH_END,fn);return n;}
+  private detail(title:string,body:string){const p=this.modalCard(title,820);modalIcon(p,4,0,120,90);this.text(p,body,0,-80,660,260,28);}
   private equipmentDetail(id:number){
     const b=this.model(),g=b.inventory.find(g=>g.id===id);if(!g)return;
-    const p=this.modalCard(gearName(g)+' · Lv.'+g.level,920);
-    gearTile(p,this.atlas,g,g.slot,0,265,146);
-    this.text(p,gearDescription(g),0,148,710,65,28);
-    const owner=b.owner(id);this.text(p,owner>=0?'穿戴中：'+HERO_CONFIG[owner].name:'未穿戴 · 可分配给任意已拥有英雄',0,94,710,50,26);
-    HERO_CONFIG.forEach((h,i)=>this.button(p,h.name,-285+i*190,15,180,62,()=>{this.targetHero=i;this.equipmentDetail(id);},this.targetHero===i));
-    const current=b.equipment(this.targetHero)[g.slot];
-    this.text(p,'当前：'+(current?gearName(current)+' Lv.'+current.level:'空槽位'),0,-58,700,48,27);
-    const diff=(key:'hp'|'attack'|'defense'|'power')=>{const d=gearStats(g)[key]-(current?gearStats(current)[key]:0);return (d>=0?'+':'')+d;};
-    this.text(p,'替换变化：生命 '+diff('hp')+'   攻击 '+diff('attack')+'\n防御 '+diff('defense')+'   技能效果 '+diff('power'),0,-137,700,105,28);
+    const p=this.modalCard('装备详情',1280),owner=b.owner(id);
     const run=(fn:(b:SquadBattleModel)=>string|null)=>{const error=this.mutate(fn);if(error){this.detail('装备操作',error);return;}this.refresh();this.equipmentDetail(id);};
-    this.button(p,g.locked?'解锁装备':'锁定装备',-177,-254,290,66,()=>run(b=>b.toggleLock(id)));
-    this.button(p,owner===this.targetHero?'卸下':'穿戴给'+HERO_CONFIG[this.targetHero].name,166,-254,332,66,()=>run(b=>b.equip(this.targetHero,owner===this.targetHero?null:id,g.slot)),true);
+    equipmentHeader(p,this.atlas,g,380,()=>run(b=>b.toggleLock(id)));equipmentStats(p,g,250);
+    const current=b.equipment(this.targetHero)[g.slot];
+    const diff=(key:'hp'|'attack'|'defense'|'power')=>{const d=gearStats(g)[key]-(current?gearStats(current)[key]:0);return (d>=0?'+':'')+d;};
+    this.text(p,'替换变化：生命 '+diff('hp')+' · 攻击 '+diff('attack')+'\n防御 '+diff('defense')+' · 技能效果 '+diff('power'),0,-112,690,90,26);
+    this.text(p,owner>=0?'穿戴中：'+HERO_CONFIG[owner].name:'未穿戴 · 选择穿戴英雄',0,-186,690,44,26);
+    HERO_CONFIG.forEach((h,i)=>this.button(p,h.name,-264+i*176,-248,166,58,()=>{this.targetHero=i;this.equipmentDetail(id);},this.targetHero===i));
     const capped=(g.enhancement||0)>=ENHANCE_CAP;
-    this.text(p,'强化石 '+b.materials+' · 当前 +'+(g.enhancement||0)+' / +'+ENHANCE_CAP,0,-326,710,45,26);
-    this.button(p,capped?'已满级':'强化 · '+enhanceCost(g)+'石',0,-392,350,65,()=>this.enhancementDetail(id),!capped);
+    this.text(p,'强化石 '+b.materials+' · 当前 +'+(g.enhancement||0)+' / +'+ENHANCE_CAP,0,-365,690,45,26);
+    this.button(p,capped?'已满级':'强化',-174,-490,295,76,()=>this.enhancementDetail(id),!capped);
+    this.button(p,owner===this.targetHero?'卸下':'穿戴给'+HERO_CONFIG[this.targetHero].name,174,-490,310,76,()=>run(b=>b.equip(this.targetHero,owner===this.targetHero?null:id,g.slot)),true);
   }
-  private modalCard(title:string,height=900){
-    this.modal?.destroy();const m=this.base(this.node,title,0,0,887,1774);this.modal=m;m.addComponent(BlockInputEvents);const shade=m.addComponent(Graphics);shade.fillColor=new Color(35,24,12,165);shade.rect(-444,-887,888,1774);shade.fill();
-    m.on(Node.EventType.TOUCH_END,()=>this.closeModal());
-    const p=this.panel(m,0,0,790,height);p.addComponent(BlockInputEvents);p.on(Node.EventType.TOUCH_END,(e:any)=>e.propagationStopped=true);
-    this.text(p,title,-25,height/2-65,600,65,38);
-    this.button(p,'×',330,height/2-65,65,65,()=>this.closeModal());
-    this.text(m,'点击空白处关闭',0,-height/2-65,650,50,27,'#FFF5E5');return p;
+  private modalCard(title:string,height=1000){
+    this.closeModal();const view=new ModalView(this.node,title,height,()=>this.closeModal());this.modal=view.layer;return view.card;
   }
   private closeModal(){this.modal?.destroy();this.modal=null;}
   private enhancementDetail(id:number){
     const b=this.model(),g=b.inventory.find(g=>g.id===id);if(!g)return;
-    const p=this.modalCard('装备强化',800),level=g.enhancement||0,capped=level>=ENHANCE_CAP;
-    this.text(p,gearName(g)+' · Lv.'+g.level,0,255,690,50,30);
+    const p=this.modalCard('装备强化',1140),level=g.enhancement||0,capped=level>=ENHANCE_CAP;
+    equipmentHeader(p,this.atlas,g,310);this.text(p,'+'+level+'  →  +'+Math.min(ENHANCE_CAP,level+1),0,157,680,72,43);
     const before=gearStats(g),after=gearStats({...g,enhancement:Math.min(ENHANCE_CAP,level+1)});
-    this.text(p,['生命','攻击','防御','技能效果'].map((name,i)=>{const key=['hp','attack','defense','power'][i];return name+'  '+before[key]+' → '+after[key];}).join('\n'),0,85,650,200,31);
-    this.text(p,capped?'已达到 +'+ENHANCE_CAP:'+'+level+' → +'+(level+1)+' · 消耗 '+enhanceCost(g)+' 强化石',0,-80,700,50,30);
-    this.text(p,'持有 '+b.materials+' 强化石\n每级提升基础词条10%，穿戴中也可强化',0,-155,690,85,25);
-    this.button(p,capped?'已满级':'确认强化',0,-295,300,70,()=>{const error=this.mutate(b=>b.enhance(id));if(error){this.detail('强化未完成',error);return;}this.refresh();this.enhancementDetail(id);},!capped);
+    (['hp','attack','defense','power'] as const).forEach((key,i)=>modalRow(p,['♥','⚔','◈','✦'][i],['生命','攻击','防御','技能效果'][i],before[key]+' → '+after[key],62-i*62));
+    modalRow(p,'◆','强化石',b.materials+' / '+(capped?0:enhanceCost(g)),-220);
+    this.text(p,'每级提升基础词条10%，穿戴中也可强化',0,-305,690,65,24);
+    this.button(p,capped?'已满级':'确认强化',0,-445,390,80,()=>{const error=this.mutate(b=>b.enhance(id));if(error){this.detail('强化未完成',error);return;}this.refresh();this.enhancementDetail(id);},!capped);
   }
   private rulesDetail(draft:RetentionRules=this.model().rules){
-    const r={...draft,attributes:draft.attributes.slice()},p=this.modalCard('自动保留规则',1020);
-    this.text(p,'满足任一条件就保留，其余新掉落自动分解',0,360,710,55,26);
-    this.button(p,r.enabled?'自动分解：开启':'自动分解：关闭',0,280,620,65,()=>{r.enabled=!r.enabled;this.rulesDetail(r);},r.enabled);
-    this.button(p,'品质：'+(r.minQuality===5?'不按品质保留':QUALITY_NAMES[r.minQuality]+'及以上'),0,185,620,65,()=>{r.minQuality=(r.minQuality+1)%6;this.rulesDetail(r);});
-    this.button(p,'装备等级：'+(r.minLevel?r.minLevel+'级及以上':'不按等级保留'),0,90,620,65,()=>{const levels=[0,5,10,20,50,100];r.minLevel=levels[(levels.indexOf(r.minLevel)+1)%levels.length];this.rulesDetail(r);});
-    this.text(p,'含指定属性就保留（可多选）',0,5,650,45,27);
-    (['hp','attack','defense','power'] as const).forEach((key,i)=>this.button(p,(r.attributes.indexOf(key)>=0?'✓ ':'')+['生命','攻击','防御','技能效果'][i],i%2?170:-170,-70-Math.floor(i/2)*80,300,60,()=>{const index=r.attributes.indexOf(key);if(index>=0)r.attributes.splice(index,1);else r.attributes.push(key);this.rulesDetail(r);},r.attributes.indexOf(key)>=0));
-    this.text(p,'锁定、已穿戴、已强化：始终自动保留\n保存规则只影响新掉落，不分解已有装备',0,-255,710,90,26);
-    this.button(p,'保存规则',0,-405,300,70,()=>{const error=this.mutate(b=>b.setRules(r));if(error){this.detail('规则未保存',error);return;}this.refresh();this.detail('规则已保存',r.enabled?'新掉落将按规则保留或分解。\n已有装备不会自动处理。':'自动分解已关闭。\n新掉落全部进入背包。');},true);
+    const r={...draft,attributes:draft.attributes.slice()},p=this.modalCard('自动保留规则',1360);
+    modalSection(p,'自动分解',440);this.button(p,r.enabled?'开启 ✓':'关闭',220,440,190,62,()=>{r.enabled=!r.enabled;this.rulesDetail(r);},r.enabled);
+    this.text(p,'满足任一条件就保留，其余新掉落自动分解',0,350,690,55,25);
+    this.text(p,'品质保留',-215,260,240,55,29);
+    modalSelect(p,r.minQuality===5?'不按品质保留':QUALITY_NAMES[r.minQuality]+'及以上',140,260,355,[...QUALITY_NAMES.map(q=>q+'及以上'),'不按品质保留'],r.minQuality,i=>{r.minQuality=i;this.rulesDetail(r);});
+    this.text(p,'等级保留',-215,165,240,55,29);const levels=[0,5,10,20,50,100];
+    modalSelect(p,r.minLevel?r.minLevel+'级及以上':'不按等级保留',140,165,355,levels.map(l=>l?l+'级及以上':'不按等级保留'),levels.indexOf(r.minLevel),i=>{r.minLevel=levels[i];this.rulesDetail(r);});
+    modalSection(p,'指定属性',65);this.text(p,'含任一选中属性就保留（可多选）',0,3,690,45,24);
+    (['hp','attack','defense','power'] as const).forEach((key,i)=>{const checked=r.attributes.indexOf(key)>=0,n=modalRow(p,['♥','⚔','◈','✦'][i],['生命','攻击','防御','技能效果'][i],checked?'✓':'□',-65-i*62);n.on(Node.EventType.TOUCH_END,()=>{const j=r.attributes.indexOf(key);if(j>=0)r.attributes.splice(j,1);else r.attributes.push(key);this.rulesDetail(r);});});
+    this.text(p,'锁定、已穿戴、已强化：始终自动保留。\n保存只影响新掉落，不分解已有装备。',0,-365,690,90,25);
+    this.button(p,'保存规则',0,-550,390,80,()=>{const error=this.mutate(b=>b.setRules(r));if(error){this.detail('规则未保存',error);return;}this.refresh();this.detail('规则已保存',r.enabled?'新掉落将按规则保留或分解。\n已有装备不会自动处理。':'自动分解已关闭。\n新掉落全部进入背包。');},true);
   }
   private confirmSalvage(){
     const ids=Array.from(this.selected),preview=this.model().salvagePreview(ids);if(preview.error){this.detail('无法分解',preview.error);return;}
-    const p=this.modalCard('确认批量分解',870);
-    this.text(p,'已选择 '+ids.length+' 件装备',0,278,700,55,34);
-    this.text(p,preview.items.slice(0,4).map(g=>gearName(g)+' Lv.'+g.level).join('\n')+(ids.length>4?'\n另有 '+(ids.length-4)+' 件':''),0,132,690,205,27);
+    const p=this.modalCard('批量分解',1180);
+    preview.items.slice(0,10).forEach((g,i)=>gearTile(p,this.atlas,g,g.slot,-280+i%5*140,300-Math.floor(i/5)*140,126));
+    modalRow(p,'▣','已选择',ids.length+'件装备',25);
+    this.text(p,'锁定和已穿戴的装备不能分解',0,-47,680,55,27);modalSection(p,'分解预览',-130);
+    modalRow(p,'◆','强化石','+'+preview.materials,-200);
     const refund=preview.items.reduce((n,g)=>n+investedMaterials(g),0);
-    this.text(p,'获得 '+preview.materials+' 强化石'+(refund?'\n含强化投入返还 '+refund:'')+'\n分解后装备消失，锁定和穿戴装备不可分解',0,-80,700,150,28);
-    this.button(p,'确认分解',0,-305,300,70,()=>{const error=this.mutate(b=>b.salvage(ids));if(error){this.detail('分解未完成',error);return;}this.batch=false;this.selected.clear();this.refresh();this.detail('分解完成','分解 '+ids.length+' 件装备\n获得 '+preview.materials+' 强化石\n已保存');},true);
+    this.text(p,(refund?'含强化投入返还 '+refund+' 强化石。\n':'')+'分解后装备消失，请确认选择。',0,-285,680,90,25);
+    this.button(p,'确认分解',0,-460,390,80,()=>{const error=this.mutate(b=>b.salvage(ids));if(error){this.detail('分解未完成',error);return;}this.batch=false;this.selected.clear();this.refresh();this.detail('分解完成','分解 '+ids.length+' 件装备\n获得 '+preview.materials+' 强化石\n已保存');},true);
   }
   private filteredItems(){const b=this.model();return b.inventory.filter(g=>(!this.batch||this.batchIds.indexOf(g.id)>=0)&&(this.part===0||g.slot===this.part-1)&&(!this.lockedOnly||g.locked));}
   private save(){if(this.scroll)this.savedOffsets[this.category]=this.scroll.getScrollOffset().y;}
