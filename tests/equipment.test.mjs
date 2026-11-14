@@ -34,7 +34,7 @@ test('attack, defense and skill power alter actual damage, shield and healing',(
  b.equip(0,null,3);assert.equal(b.stats(0).defense,0);assert.ok(b.heroes[0].shield<=b.stats(0).power);
 });
 test('v1 migration preserves progression, starts empty inventory and does not award historical drops',()=>{
- const b=new SquadBattleModel();b.settleIdle(90);b.upgrade(0);const v1=b.snapshot();v1.version=1;
+ const b=new SquadBattleModel();b.settleIdle(90);b.upgrade(0);const v1=b.snapshot();v1.version=1;v1.heroes=v1.heroes.slice(0,3);v1.loadouts=v1.loadouts.slice(0,3);
  for(const key of ['inventory','loadouts','nextGearId','dropRemainder','highestWave'])delete v1[key];
  const c=SquadBattleModel.restore(v1);assert.ok(c);assert.equal(c.heroes[0].level,2);assert.equal(c.gold,b.gold);assert.equal(c.inventory.length,0);assert.equal(c.dropRemainder,0);c.settleIdle(29);assert.equal(c.inventory.length,0);c.settleIdle(1);assert.equal(c.inventory.length,1);
 });
@@ -46,5 +46,5 @@ test('malformed inventory, duplicate IDs, wrong slots and shared equipment inval
  for(const mutate of [d=>d.inventory.push({...d.inventory[0]}),d=>d.inventory[0].attack=-1,d=>d.inventory[0].level=0,d=>d.inventory[0].slot=6,d=>d.loadouts[1][0]=1,d=>d.loadouts[0][0]=999,d=>d.loadouts[0][1]=1,d=>d.dropRemainder=30,d=>d.nextGearId=1,d=>d.highestWave=0]){const raw=b.snapshot();mutate(raw);assert.equal(SquadBattleModel.restore(raw),null);}
 });
 test('failed persistence keeps the previous valid equipment save intact',()=>{
- const map=new Map(),port={getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,v)},save=new LocalSave(port,SquadBattleModel.restore),b=new SquadBattleModel();b.settleIdle(60);assert.equal(save.save(b.snapshot()),true);const good=map.get(SAVE_KEY);b.autoEquip(0);port.setItem=()=>{throw Error('quota');};assert.equal(save.save(b.snapshot()),false);assert.equal(map.get(SAVE_KEY),good);assert.deepEqual(SquadBattleModel.restore(JSON.parse(good)).loadouts,Array.from({length:3},()=>Array(6).fill(null)));
+ const map=new Map(),port={getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,v)},save=new LocalSave(port,SquadBattleModel.restore),b=new SquadBattleModel();b.settleIdle(60);assert.equal(save.save(b.snapshot()),true);const good=map.get(SAVE_KEY);b.autoEquip(0);port.setItem=()=>{throw Error('quota');};assert.equal(save.save(b.snapshot()),false);assert.equal(map.get(SAVE_KEY),good);assert.deepEqual(SquadBattleModel.restore(JSON.parse(good)).loadouts,Array.from({length:4},()=>Array(6).fill(null)));
 });

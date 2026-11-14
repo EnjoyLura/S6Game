@@ -38,7 +38,7 @@ test('three enemies act, each death counts once, waves continue and cooldown fre
  b.step(.6);assert.equal(b.wave,2);assert.equal(b.enemies.length,3);assert.ok(b.enemies.every(e=>e.hp===e.maxHp));assert.equal(b.gold,0);
 });
 test('continuous defeat automatically regroups without phantom rewards',()=>{
- const b=new SquadBattleModel(0,()=>0,3,true);b.autoSkill=false;b.heroes.forEach(h=>h.hp=1);b.step(6);
+ const b=new SquadBattleModel(0,()=>0,3,true);b.autoSkill=false;b.party.forEach(h=>h.hp=1);b.step(6);
  assert.equal(b.regrouping,true);assert.equal(b.kills,0);assert.equal(b.gold,0);b.step(2);
  assert.equal(b.wave,1);assert.equal(b.regrouping,false);assert.deepEqual(b.heroes.map(h=>h.hp),HERO_CONFIG.map(c=>c.hp));
 });

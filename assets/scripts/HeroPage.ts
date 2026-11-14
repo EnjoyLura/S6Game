@@ -6,7 +6,7 @@ import {gearTile,drawNavigation} from './GearView';
 const INK='#704124', CREAM='#FFF5E5';
 const HEROES=['骑士','法师','牧师','弓箭手'];
 const EQUIPMENT=['武器','戒指','项链','头盔','衣服','鞋子'];
-// Three heroes are available for the squad prototype; the archer remains locked.
+// Roster progression is independent of the three battle positions.
 export class HeroPage {
   readonly node:Node;
   private selected=0; private balance!:Label; private experienceLabel!:Label; private experienceFill!:Graphics; private upgradeButton!:Node;
@@ -101,9 +101,22 @@ export class HeroPage {
       if(picker){picker.setSiblingIndex(this.node.children.length-1);layer.destroy();refreshPicker?.();}else this.closeEquipment();
     });
   }
+  private formationPicker(){
+    this.closeEquipment();const {layer,card}=this.equipmentLayer('队伍编成',950);this.dialog=layer;
+    let draft=this.model().formation.slice();const rows=this.nodeAt(card,'Formation draft',0,0,760,700);
+    const draw=()=>{rows.destroyAllChildren();
+      this.text(rows,'选择1至3位英雄 · 点击移除或加入',0,320,710,50,29);
+      this.text(rows,'当前：'+draft.map(i=>HEROES[i]).join(' / '),0,250,720,60,28);
+      HEROES.forEach((name,i)=>{const owned=this.model().owns(i),slot=draft.indexOf(i);
+        this.button(rows,name+' · Lv.'+this.model().heroes[i].level+(slot>=0?'  ✓ '+(slot+1)+'号位':owned?'  未上阵':'  未招募'),0,145-i*100,650,80,()=>{if(!owned)return;if(slot>=0)draft.splice(slot,1);else if(draft.length<3)draft.push(i);draw();},slot>=0?'#FFCE52':owned?'#F4E2CA':'#D8D0C5');
+      });
+      this.text(rows,'满员时先移除一位，再加入新英雄。\n第一位前排受击权重较高；换阵重新挑战当前波。',0,-250,710,90,25);
+      this.button(rows,'保存阵容',0,-360,300,70,()=>{const error=this.mutate(b=>b.setFormation(draft));if(error){this.info('编队',error);return;}this.closeEquipment();this.render();});
+    };draw();
+  }
   refresh(){this.render();}
   refreshIncome(){
-    const state=this.progress(),owned=this.selected<3,level=state.levels[this.selected],max=level>=LEVEL_CAP,cost=upgradeCost(level),xp=state.experience[this.selected];
+    const state=this.progress(),owned=this.model().owns(this.selected),level=state.levels[this.selected],max=level>=LEVEL_CAP,cost=upgradeCost(level),xp=state.experience[this.selected];
     this.balance.string=String(state.gold);this.experienceLabel.string=owned?'经验 '+xp+' / '+(max?'满级':cost):'经验 —';
     const g=this.experienceFill;g.clear();if(owned&&xp>0){const w=380*(max?1:Math.min(1,xp/cost));g.fillColor=new Color().fromHEX('#FFCB4D');g.roundRect(-190,-8,Math.max(2,w),16,Math.min(8,w/2));g.fill();}
     this.upgradeButton.getComponent(Graphics)!.fillColor=new Color().fromHEX(owned&&!max&&xp>=cost?'#FFCE52':'#E2D2B9');
@@ -111,7 +124,7 @@ export class HeroPage {
   }
   private render(){
     this.content?.destroy();this.content=this.nodeAt(this.node,'Hero content',0,0,887,1774);
-    const p=this.content;const owned=this.selected<3,name=HEROES[this.selected],config=this.progress().stats[this.selected],level=this.progress().levels[this.selected];
+    const p=this.content;const owned=this.model().owns(this.selected),name=HEROES[this.selected],config=this.progress().stats[this.selected],level=this.progress().levels[this.selected];
     this.panel(p,0,0,887,1774,'#F8E6CF',0);
     this.sprite(p,this.forest,new Rect(0,0,this.forest.width,this.forest.height),0,439,887,896);
     this.cut(20,17,158,66,-345,837);this.panel(p,-145,837,188,62);this.cut(204,20,52,55,-207,837);this.balance=this.text(p,String(this.progress().gold),-128,837,110,52,35);
@@ -121,10 +134,11 @@ export class HeroPage {
     const copies=this.model().recruitment.counts[this.selected];
     this.text(p,owned?name+' · Lv.'+level:name+(copies?' · 已招募':' · 未招募'),0,589,530,65,44);
     this.text(p,'持有 '+copies+' 份',310,589,220,45,24);
+    this.button(p,this.model().formation.indexOf(this.selected)>=0?'已上阵 · 编队':'上阵 / 编队',-325,589,190,52,()=>this.formationPicker(), '#F4DEB7');
     for(let i=0;i<5;i++)this.cut(owned&&i===0?303:425,334,40,40,-122+i*42,535,40,40);
     this.cut(533,324,62,62,120,535).on(Node.EventType.TOUCH_END,()=>this.info('升星',owned?'升星可提高属性并强化招牌技能。\n当前为1星展示，尚无英雄碎片。\n升星成本与验证范围待定。':(copies?'该英雄已招募，升星功能待开放。':'获得该英雄后可查看升星。')));
     const roles=[['战士','坦克','输出'],['法师','输出'],['牧师','治疗'],['弓箭手','输出']][this.selected];
-    const roleRow=this.nodeAt(p,'Roles',0,478,430,45);roles.forEach((role,i)=>{const x=(i-(roles.length-1)/2)*140;this.cut(role==='坦克'?394:role==='输出'?514:275,393,36,37,x-42,0,32,33,roleRow);this.text(roleRow,role,x+12,0,91,40,28);});roleRow.on(Node.EventType.TOUCH_END,()=>this.info('职业与定位',roles.join(' / ')+'\n职业决定技能特色，定位说明队伍职责。\n骑士、法师、牧师共同参与冒险战斗。'));
+    const roleRow=this.nodeAt(p,'Roles',0,478,430,45);roles.forEach((role,i)=>{const x=(i-(roles.length-1)/2)*140;this.cut(role==='坦克'?394:role==='输出'?514:275,393,36,37,x-42,0,32,33,roleRow);this.text(roleRow,role,x+12,0,91,40,28);});roleRow.on(Node.EventType.TOUCH_END,()=>this.info('职业与定位',roles.join(' / ')+'\n职业决定技能特色，定位说明队伍职责。\n可选择至多三位不同英雄上阵，第一位为前排。'));
     const equipmentRegions=[[48,345],[48,518],[48,691],[678,345],[678,518],[678,691]];
     equipmentRegions.forEach((r,i)=>{
       const x=i<3?-315:315,y=465-(i%3)*173;
@@ -150,13 +164,13 @@ export class HeroPage {
     this.panel(p,0,-222,859,265,'#FFF5E7',34);
     this.panel(p,0,-555,859,365,'#FFF5E7',34);
     this.text(p,'技能',-337,-120,130,52,40);
-    const skillNames=[['守护姿态','坚韧','盾击','不屈'],['火焰','被动技能','主动技能','被动技能'],['治愈','被动技能','主动技能','被动技能'],['招牌技能','被动技能','主动技能','被动技能']][this.selected];
+    const skillNames=[['守护姿态','坚韧','盾击','不屈'],['火焰','被动技能','主动技能','被动技能'],['治愈','被动技能','主动技能','被动技能'],['精准射击','被动技能','主动技能','被动技能']][this.selected];
     const skillX=[-320,-165,-8,145];
     skillX.forEach((x,i)=>{
       this.panel(p,x,-165,87,30,'#F6D6A6',15);this.text(p,i%2===0?'主动':'被动',x,-165,100,33,24);
       const open=owned&&i===0;
-      const n=open?this.sprite(p,this.battleUI,new Rect([28,316,612][this.selected],1413,120,120),x,-232,104,104):this.cut(535,1073,111,94,x,-232,112,100);
-      n.on(Node.EventType.TOUCH_END,()=>this.info(skillNames[i],open?'主动技能 · 随英雄等级成长\n'+(this.selected===0?'产生'+config.power+'点护盾':this.selected===1?'造成'+config.power+'点伤害':'为存活且血量比例最低的队友恢复至多'+config.power+'生命，满血时不释放')+'\n冷却'+config.cooldown+'秒，仅战斗中推进。\n可自动释放或手动排队，占用一次行动。':'按英雄等级依次解锁：\n主动 → 被动 → 主动 → 被动。\n具体解锁等级尚待确定。'));
+      const n=open?(this.selected===3?this.sprite(p,this.bagAtlas,new Rect(405,618,120,85),x,-232,104,104):this.sprite(p,this.battleUI,new Rect([28,316,612][this.selected],1413,120,120),x,-232,104,104)):this.cut(535,1073,111,94,x,-232,112,100);
+      n.on(Node.EventType.TOUCH_END,()=>this.info(skillNames[i],open?'主动技能 · 随英雄等级成长\n'+(this.selected===0?'产生'+config.power+'点护盾':this.selected===1||this.selected===3?'造成'+config.power+'点伤害':'为存活且血量比例最低的队友恢复至多'+config.power+'生命，满血时不释放')+'\n冷却'+config.cooldown+'秒，仅战斗中推进。\n可自动释放或手动排队，占用一次行动。':'按英雄等级依次解锁：\n主动 → 被动 → 主动 → 被动。\n具体解锁等级尚待确定。'));
       this.text(p,skillNames[i],x,-295,145,42,27);this.text(p,open?'随英雄成长':'等级解锁',x,-327,145,32,23);
     });
     this.cut(702,1040,131,132,327,-221,132,132).on(Node.EventType.TOUCH_END,()=>this.info('天赋树','可用天赋点：0\n等级成长可获得天赋点。\n属性、技能伤害与机制分支。\n具体节点与点数规则尚未配置。\n天赋重置入口将放在此弹窗内。'));

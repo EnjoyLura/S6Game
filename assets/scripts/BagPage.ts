@@ -26,7 +26,7 @@ export class BagPage {
     gearTile(p,this.atlas,g,g.slot,0,265,146);
     this.text(p,gearDescription(g),0,148,710,65,28);
     const owner=b.owner(id);this.text(p,owner>=0?'穿戴中：'+HERO_CONFIG[owner].name:'未穿戴 · 可分配给任意已拥有英雄',0,94,710,50,26);
-    HERO_CONFIG.forEach((h,i)=>this.button(p,h.name,-242+i*242,15,214,62,()=>{this.targetHero=i;this.equipmentDetail(id);},this.targetHero===i));
+    HERO_CONFIG.forEach((h,i)=>this.button(p,h.name,-285+i*190,15,180,62,()=>{this.targetHero=i;this.equipmentDetail(id);},this.targetHero===i));
     const current=b.equipment(this.targetHero)[g.slot];
     this.text(p,'当前：'+(current?gearName(current)+' Lv.'+current.level:'空槽位'),0,-58,700,48,27);
     const diff=(key:'hp'|'attack'|'defense'|'power')=>{const d=gearStats(g)[key]-(current?gearStats(current)[key]:0);return (d>=0?'+':'')+d;};

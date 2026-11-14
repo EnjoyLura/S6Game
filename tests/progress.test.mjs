@@ -5,7 +5,7 @@ import {LocalSave,SAVE_KEY,BACKUP_KEY} from '../assets/scripts/LocalSave.ts';
 const storage=()=>{const map=new Map();return {getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,v),map};};
 test('upgrade spends only selected hero XP and changes real damage, not other heroes',()=>{
  const b=new SquadBattleModel();b.settleIdle(25);const old=b.stats(1);assert.equal(b.upgrade(1),null);
- assert.deepEqual(b.heroes.map(h=>h.level),[1,2,1]);assert.deepEqual(b.heroes.map(h=>h.experience),[40,0,40]);
+ assert.deepEqual(b.heroes.map(h=>h.level),[1,2,1,1]);assert.deepEqual(b.heroes.map(h=>h.experience),[40,0,40,0]);
  assert.equal(b.stats(1).hp,1232);assert.equal(b.stats(1).attack,160);assert.equal(b.stats(1).power,319);
  assert.equal(b.step(1)[0].damage,319);assert.ok(b.stats(1).attack>old.attack);assert.equal(b.heroes[0].hp,1980);
 });
@@ -17,7 +17,7 @@ test('insufficient XP / invalid hero / cap cannot spend, and upgrading never rev
 test('upgraded shield and heal use level-scaled power; retries keep level and XP',()=>{
  const b=new SquadBattleModel();b.heroes.forEach(h=>h.experience=40);b.upgrade(0);b.upgrade(2);b.heroes[1].hp=500;
  const hits=b.step(3);assert.equal(b.heroes[0].shield,242);assert.equal(hits[2].heal,264);
- const c=new SquadBattleModel();c.inheritIncome(b);assert.deepEqual(c.heroes.map(h=>h.level),[2,1,2]);assert.equal(c.heroes[0].hp,2178);
+ const c=new SquadBattleModel();c.inheritIncome(b);assert.deepEqual(c.heroes.map(h=>h.level),[2,1,2,1]);assert.equal(c.heroes[0].hp,2178);
 });
 test('complete battle/progression snapshot survives round-trip without extra income',()=>{
  const b=new SquadBattleModel(2,()=>0,3,true);b.settleIdle(28.5);b.upgrade(0);b.step(12.4);b.requestSkill(1);b.autoSkill=false;
