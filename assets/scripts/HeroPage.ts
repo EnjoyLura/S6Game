@@ -118,9 +118,11 @@ export class HeroPage {
     // Portrait tabs are individual click targets with a live selection highlight.
     const tabSources=[[24,140,215,114],[246,142,197,114],[450,141,200,115],[655,142,215,115]];
     tabSources.forEach((r,i)=>{const x=-330+i*220;const tab=this.panel(p,x,680,210,94,i===this.selected?'#FFCE52':CREAM,26);const t=this.heroTextures[i];const face=t?this.sprite(tab,t,new Rect(0,0,t.width,t.height),-52,8,108,108):this.cut(r[0]+5,r[1],108,110,-52,8,103,105,tab);this.round(face);this.text(tab,HEROES[i],48,0,105,55,28);tab.on(Node.EventType.TOUCH_END,()=>{if(this.selected!==i){this.selected=i;this.render();}});if(i===this.selected)this.panel(p,x,620,162,6,'#F3AC21',3);});
-    this.text(p,owned?name+' · Lv.'+level:name+' · 未招募',0,589,530,65,44);
+    const copies=this.model().recruitment.counts[this.selected];
+    this.text(p,owned?name+' · Lv.'+level:name+(copies?' · 已招募':' · 未招募'),0,589,530,65,44);
+    this.text(p,'持有 '+copies+' 份',310,589,220,45,24);
     for(let i=0;i<5;i++)this.cut(owned&&i===0?303:425,334,40,40,-122+i*42,535,40,40);
-    this.cut(533,324,62,62,120,535).on(Node.EventType.TOUCH_END,()=>this.info('升星',owned?'升星可提高属性并强化招牌技能。\n当前为1星展示，尚无英雄碎片。\n升星成本与验证范围待定。':'获得该英雄后可查看升星。'));
+    this.cut(533,324,62,62,120,535).on(Node.EventType.TOUCH_END,()=>this.info('升星',owned?'升星可提高属性并强化招牌技能。\n当前为1星展示，尚无英雄碎片。\n升星成本与验证范围待定。':(copies?'该英雄已招募，升星功能待开放。':'获得该英雄后可查看升星。')));
     const roles=[['战士','坦克','输出'],['法师','输出'],['牧师','治疗'],['弓箭手','输出']][this.selected];
     const roleRow=this.nodeAt(p,'Roles',0,478,430,45);roles.forEach((role,i)=>{const x=(i-(roles.length-1)/2)*140;this.cut(role==='坦克'?394:role==='输出'?514:275,393,36,37,x-42,0,32,33,roleRow);this.text(roleRow,role,x+12,0,91,40,28);});roleRow.on(Node.EventType.TOUCH_END,()=>this.info('职业与定位',roles.join(' / ')+'\n职业决定技能特色，定位说明队伍职责。\n骑士、法师、牧师共同参与冒险战斗。'));
     const equipmentRegions=[[48,345],[48,518],[48,691],[678,345],[678,518],[678,691]];
@@ -128,16 +130,16 @@ export class HeroPage {
       const x=i<3?-315:315,y=465-(i%3)*173;
       const gear=owned?this.model().equipment(this.selected)[i]:null;
       const slot=gearTile(p,this.bagAtlas,gear,i,x,y,152);
-      slot.on(Node.EventType.TOUCH_END,()=>{if(!owned){this.info(EQUIPMENT[i],'尚未招募该英雄。');return;}this.equipmentInfo(i);});
+      slot.on(Node.EventType.TOUCH_END,()=>{if(!owned){this.info(EQUIPMENT[i],copies?'该英雄已招募，装备与上阵功能待开放。':'尚未招募该英雄。');return;}this.equipmentInfo(i);});
     });
     if(owned){const t=this.heroTextures[this.selected];this.sprite(p,t,new Rect(0,0,t.width,t.height),0,245,495,495);}
-    else{const r=tabSources[this.selected];const n=this.cut(r[0]+5,r[1],108,110,0,245,285,290);n.getComponent(Sprite)!.grayscale=true;this.round(n);this.text(p,'未招募',0,62,300,55,34);}
+    else{const r=tabSources[this.selected];const n=this.cut(r[0]+5,r[1],108,110,0,245,285,290);n.getComponent(Sprite)!.grayscale=!this.model().recruitment.counts[this.selected];this.round(n);this.text(p,this.model().recruitment.counts[this.selected]?'已招募 · 培养/上阵待开放':'未招募',0,62,420,55,26);}
     this.experienceLabel=this.text(p,owned?'经验 '+this.progress().experience[this.selected]+' / —':'经验 —',-270,13,260,44,24);
     this.panel(p,60,13,390,23,'#C4B8A6',12);this.experienceFill=this.nodeAt(p,'Experience fill',60,13,380,16).addComponent(Graphics);
     this.cut(728,850,51,47,310,13).on(Node.EventType.TOUCH_END,()=>this.info('经验重置','每位英雄使用独立经验。\n重置后回到1级并返还已投入经验。\n当前版本暂未开放经验重置。'));
-    this.button(p,'一键换装',-143,-46,267,64,()=>{const before=owned?this.model().loadouts[this.selected].slice():[];const error=this.mutate(b=>b.autoEquip(this.selected));if(error){this.info('一键换装',error);return;}const changes=this.model().loadouts[this.selected].filter((id,i)=>id!==before[i]).length;this.render();this.info('一键换装',changes?'已更换'+changes+'件装备，属性已生效并保存。':'没有更合适的空闲装备。\n不会取走其他英雄正在穿戴的装备。');});
-    this.upgradeButton=this.button(p,owned?(level>=LEVEL_CAP?'已满级':'升级 · '+upgradeCost(level)+'经验'):'未招募',145,-46,267,64,()=>{
-      if(!owned){this.info('英雄升级','请先招募该英雄。');return;}
+    this.button(p,'一键换装',-143,-46,267,64,()=>{if(!owned){this.info('一键换装',copies?'该英雄已招募，装备功能待开放。':'请先招募该英雄。');return;}const before=owned?this.model().loadouts[this.selected].slice():[];const error=this.mutate(b=>b.autoEquip(this.selected));if(error){this.info('一键换装',error);return;}const changes=this.model().loadouts[this.selected].filter((id,i)=>id!==before[i]).length;this.render();this.info('一键换装',changes?'已更换'+changes+'件装备，属性已生效并保存。':'没有更合适的空闲装备。\n不会取走其他英雄正在穿戴的装备。');});
+    this.upgradeButton=this.button(p,owned?(level>=LEVEL_CAP?'已满级':'升级 · '+upgradeCost(level)+'经验'):(copies?'培养待开放':'未招募'),145,-46,267,64,()=>{
+      if(!owned){this.info('英雄升级',copies?'该英雄已招募，培养与上阵功能待开放。':'请先招募该英雄。');return;}
       const old=this.progress().stats[this.selected],error=this.onUpgrade(this.selected);
       if(error){this.info('英雄升级',error);return;}
       this.render();const now=this.progress().stats[this.selected];

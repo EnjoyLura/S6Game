@@ -1,3 +1,27 @@
+export const RECRUIT_CONFIG={initialTickets:60,epicPity:10,legendPity:30,legendRate:.05,epicRate:.2,upMageRate:.5};
+export const RECRUIT_HEROES=['骑士','法师','牧师','弓箭手'];
+export type RecruitResult={id:number;pool:number;hero:number;rarity:number;fresh:boolean};
+export function initialRecruit(){return {tickets:RECRUIT_CONFIG.initialTickets,counts:[1,1,1,0],pity:[{epic:0,legend:0,total:0},{epic:0,legend:0,total:0}],history:[] as RecruitResult[],last:[] as RecruitResult[]};}
+export type RecruitState=ReturnType<typeof initialRecruit>;
+export function validRecruit(r:RecruitState){const integer=(v:any,max=1e9)=>Number.isInteger(v)&&v>=0&&v<=max;
+ if(!r||!integer(r.tickets)||!Array.isArray(r.counts)||r.counts.length!==4||!r.counts.every(n=>integer(n))||r.counts.slice(0,3).some(n=>n<1)||!Array.isArray(r.pity)||r.pity.length!==2||!r.pity.every(p=>p&&integer(p.epic,9)&&integer(p.legend,29)&&integer(p.total)))return false;
+ const total=r.pity[0].total+r.pity[1].total;
+ const valid=(a:any)=>Array.isArray(a)&&a.every((x,i)=>x&&integer(x.id,total)&&x.id>0&&integer(x.pool,1)&&integer(x.hero,3)&&integer(x.rarity,2)&&typeof x.fresh==='boolean'&&(i===0||x.id>a[i-1].id));
+ return valid(r.history)&&r.history.length===Math.min(total,100)&&valid(r.last)&&(total===0?r.last.length===0:[1,10].indexOf(r.last.length)>=0)&&JSON.stringify(r.last)===JSON.stringify(r.history.slice(-r.last.length||r.history.length))&&r.counts.reduce((a,b)=>a+b,0)===total+3;
+}
+export function recruit(state:RecruitState,pool:number,n:number,random= Math.random):string|null{
+ if([0,1].indexOf(pool)<0||[1,10].indexOf(n)<0)return '无效的招募请求';
+ if(state.tickets<n)return '招募券不足，需要'+n+'张，当前'+state.tickets+'张';
+ const next=JSON.parse(JSON.stringify(state)) as RecruitState,p=next.pity[pool];next.last=[];
+ const roll=()=>{const v=random();if(!Number.isFinite(v)||v<0||v>=1)throw Error('invalid random');return v;};
+ try{for(let i=0;i<n;i++){
+ const r=roll();const rarity=p.legend+1>=RECRUIT_CONFIG.legendPity||r<RECRUIT_CONFIG.legendRate?2:p.epic+1>=RECRUIT_CONFIG.epicPity||r<RECRUIT_CONFIG.legendRate+RECRUIT_CONFIG.epicRate?1:0;
+ const hero=pool===1&&rarity===2?1:pool===1&&roll()<RECRUIT_CONFIG.upMageRate?1:Math.floor(roll()*4);
+ const result={id:next.pity[0].total+next.pity[1].total+1,pool,hero,rarity,fresh:next.counts[hero]===0};next.counts[hero]++;p.total++;p.epic=rarity>=1?0:p.epic+1;p.legend=rarity===2?0:p.legend+1;next.last.push(result);next.history.push(result);
+ }}catch{return '招募随机数据异常，未扣券';}
+ next.tickets-=n;next.history=next.history.slice(-100);Object.assign(state,next);return null;
+}
+
 // Temporary tuning for the three-hero integration, not final progression values.
 export const HERO_CONFIG = [
   { name:'骑士', hp:1980, attack:128, speed:100, skill:'守护', cooldown:8, power:220 },
@@ -46,6 +70,7 @@ export type SquadHit = {actor:number;target:number;damage:number;blocked:number;
 // Indices 0..2 are heroes; 3..5 are enemies. Only battle time advances cooldowns.
 export class SquadBattleModel {
   materials=0;autoSalvaged=0;rules:RetentionRules={enabled:false,minQuality:2,minLevel:0,attributes:[]};
+  recruitment=initialRecruit();
   inventory:Gear[]=[];loadouts:(number|null)[][]=Array.from({length:3},()=>Array(6).fill(null));nextGearId=1;dropRemainder=0;highestWave=1;
   heroes=HERO_CONFIG.map(c=>({hp:c.hp,shield:0,cooldown:0,queued:false,damage:0,healing:0,experience:0,level:1}));
   enemies:{kind:number;hp:number;maxHp:number;attack:number}[]=[];
@@ -116,18 +141,19 @@ export class SquadBattleModel {
   private target(){const alive=this.heroes.map((_,i)=>i).filter(i=>this.heroes[i].hp>0);const total=alive.reduce((s,i)=>s+(i===0?6:2),0);let roll=this.random()*total;for(const i of alive){roll-=i===0?6:2;if(roll<0)return i;}return alive[alive.length-1];}
   inheritIncome(previous:SquadBattleModel){
     this.materials=previous.materials;this.autoSalvaged=previous.autoSalvaged;this.rules={...previous.rules,attributes:previous.rules.attributes.slice()};
+    this.recruitment=JSON.parse(JSON.stringify(previous.recruitment));
     this.inventory=previous.inventory.map(g=>({...g}));this.loadouts=previous.loadouts.map(s=>s.slice());this.nextGearId=previous.nextGearId;this.dropRemainder=previous.dropRemainder;this.highestWave=previous.highestWave;
     this.gold=previous.gold;this.kills=previous.kills;this.idleElapsed=previous.idleElapsed;this.incomeRemainder=previous.incomeRemainder;
     this.heroes.forEach((h,i)=>{h.experience=previous.heroes[i].experience;h.level=previous.heroes[i].level;h.hp=this.stats(i).hp;});
   }
-  snapshot(){return {version:3,materials:this.materials,autoSalvaged:this.autoSalvaged,rules:{...this.rules,attributes:this.rules.attributes.slice()},inventory:this.inventory.map(g=>({...g,enhancement:g.enhancement||0})),loadouts:this.loadouts.map(s=>s.slice()),nextGearId:this.nextGearId,dropRemainder:this.dropRemainder,highestWave:this.highestWave,heroes:this.heroes.map(h=>({...h})),enemies:this.enemies.map(e=>({...e})),gold:this.gold,kills:this.kills,wave:this.wave,clearedWaves:this.clearedWaves,idleElapsed:this.idleElapsed,incomeRemainder:this.incomeRemainder,elapsed:this.elapsed,actions:this.actions,damage:this.damage,received:this.received,autoSkill:this.autoSkill,paused:this.paused,waveDelay:this.waveDelay,regrouping:this.regrouping,result:this.result,cursor:this.cursor,timer:this.timer,monsterIndex:this.monsterIndex,count:this.count,continuous:this.continuous};}
+  snapshot(){return {version:4,recruitment:JSON.parse(JSON.stringify(this.recruitment)) as typeof this.recruitment,materials:this.materials,autoSalvaged:this.autoSalvaged,rules:{...this.rules,attributes:this.rules.attributes.slice()},inventory:this.inventory.map(g=>({...g,enhancement:g.enhancement||0})),loadouts:this.loadouts.map(s=>s.slice()),nextGearId:this.nextGearId,dropRemainder:this.dropRemainder,highestWave:this.highestWave,heroes:this.heroes.map(h=>({...h})),enemies:this.enemies.map(e=>({...e})),gold:this.gold,kills:this.kills,wave:this.wave,clearedWaves:this.clearedWaves,idleElapsed:this.idleElapsed,incomeRemainder:this.incomeRemainder,elapsed:this.elapsed,actions:this.actions,damage:this.damage,received:this.received,autoSkill:this.autoSkill,paused:this.paused,waveDelay:this.waveDelay,regrouping:this.regrouping,result:this.result,cursor:this.cursor,timer:this.timer,monsterIndex:this.monsterIndex,count:this.count,continuous:this.continuous};}
   static restore(value:unknown):SquadBattleModel|null{
     // Reject malformed or future saves as a whole; never partially apply balances.
     try{
       const d=value as ReturnType<SquadBattleModel['snapshot']>;
       const num=(v:unknown,max=1e12)=>typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=max;
       const integer=(v:unknown,max=1e12)=>num(v,max)&&Number.isInteger(v);
-      if(!d||(d.version!==1&&d.version!==2&&d.version!==3)||!integer(d.monsterIndex,3)||!integer(d.count,3)||d.count<1||typeof d.continuous!=='boolean')return null;
+      if(!d||(d.version!==1&&d.version!==2&&d.version!==3&&d.version!==4)||!integer(d.monsterIndex,3)||!integer(d.count,3)||d.count<1||typeof d.continuous!=='boolean')return null;
       if(!Array.isArray(d.heroes)||d.heroes.length!==3||!Array.isArray(d.enemies)||d.enemies.length!==d.count)return null;
       if(!['gold','kills','wave','clearedWaves','actions','damage','received'].every(k=>integer(d[k as keyof typeof d]))||d.wave<1)return null;
       if(!['idleElapsed','elapsed'].every(k=>num(d[k as keyof typeof d]))||!num(d.incomeRemainder,5)||d.incomeRemainder>=5||!num(d.timer,1)||d.timer>=1||!num(d.waveDelay,2))return null;
@@ -136,11 +162,12 @@ export class SquadBattleModel {
       if(d.version>=2){
         if(!Array.isArray(d.inventory)||!Array.isArray(d.loadouts)||d.loadouts.length!==3||!integer(d.nextGearId)||d.nextGearId<1||!num(d.dropRemainder,DROP_SECONDS)||d.dropRemainder>=DROP_SECONDS||!integer(d.highestWave)||d.highestWave<d.wave)return null;
         const ids=new Set<number>();
-        for(const g of d.inventory){if(!g||!integer(g.id)||g.id<1||g.id>=d.nextGearId||ids.has(g.id)||!integer(g.slot,5)||!integer(g.quality,4)||!integer(g.level,100)||g.level<1||typeof g.locked!=='boolean'||!['hp','attack','defense','power'].every(k=>integer(g[k],1000000)))return null;if(d.version===3&&!integer(g.enhancement,ENHANCE_CAP))return null;ids.add(g.id);}
+        for(const g of d.inventory){if(!g||!integer(g.id)||g.id<1||g.id>=d.nextGearId||ids.has(g.id)||!integer(g.slot,5)||!integer(g.quality,4)||!integer(g.level,100)||g.level<1||typeof g.locked!=='boolean'||!['hp','attack','defense','power'].every(k=>integer(g[k],1000000)))return null;if(d.version>=3&&!integer(g.enhancement,ENHANCE_CAP))return null;ids.add(g.id);}
         const used=new Set<number>();for(const slots of d.loadouts){if(!Array.isArray(slots)||slots.length!==6)return null;for(let slot=0;slot<6;slot++){const id=slots[slot];if(id===null)continue;const g=d.inventory.find(g=>g.id===id);if(!g||g.slot!==slot||used.has(id))return null;used.add(id);}}
-        b.inventory=d.inventory.map(g=>({...g,enhancement:d.version===3?g.enhancement:0}));b.loadouts=d.loadouts.map(s=>s.slice());b.nextGearId=d.nextGearId;b.dropRemainder=d.dropRemainder;b.highestWave=d.highestWave;
+        b.inventory=d.inventory.map(g=>({...g,enhancement:d.version>=3?g.enhancement:0}));b.loadouts=d.loadouts.map(s=>s.slice());b.nextGearId=d.nextGearId;b.dropRemainder=d.dropRemainder;b.highestWave=d.highestWave;
       }else b.highestWave=d.wave;
-      if(d.version===3){if(!integer(d.materials)||!integer(d.autoSalvaged)||!validRules(d.rules))return null;b.materials=d.materials;b.autoSalvaged=d.autoSalvaged;b.rules={...d.rules,attributes:d.rules.attributes.slice()};}
+      if(d.version>=3){if(!integer(d.materials)||!integer(d.autoSalvaged)||!validRules(d.rules))return null;b.materials=d.materials;b.autoSalvaged=d.autoSalvaged;b.rules={...d.rules,attributes:d.rules.attributes.slice()};}
+      if(d.version===4){if(!validRecruit(d.recruitment))return null;b.recruitment=JSON.parse(JSON.stringify(d.recruitment));}
       for(let i=0;i<3;i++){const h=d.heroes[i];if(!h||!integer(h.level,LEVEL_CAP)||h.level<1||!integer(h.experience)||!integer(h.hp)||!integer(h.shield)||!num(h.cooldown,HERO_CONFIG[i].cooldown)||typeof h.queued!=='boolean'||!integer(h.damage)||!integer(h.healing))return null;
         b.heroes[i]={...h};if(h.hp>b.stats(i).hp||h.shield>b.stats(i).power)return null;
       }

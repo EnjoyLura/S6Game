@@ -22,7 +22,7 @@ export class Adventure extends Component {
   private saves!:LocalSave<SquadBattleModel>; private saveClock=0; private background=false;
   private saveProgress=()=>{if(!this.saves)return false;const snapshot=this.model.snapshot();if(this.background)snapshot.paused=this.foregroundPaused;const ok=this.saves.save(snapshot);if(!ok&&this.notice)this.notice.string=this.saves.error;return ok;};
   private upgradeHero=(i:number)=>{const before=this.model.snapshot();const error=this.model.upgrade(i);if(error)return error;if(!this.saveProgress()){this.model=SquadBattleModel.restore(before)!;return this.saves.error+'，本次升级未扣经验';}return null;};
-  private mutateEquipment=(fn:(b:SquadBattleModel)=>string|null)=>{const before=this.model.snapshot();const error=fn(this.model);if(error)return error;if(!this.saveProgress()){this.model=SquadBattleModel.restore(before)!;return this.saves.error+'，装备操作已撤销';}this.resetFeedback();return null;};
+  private mutateEquipment=(fn:(b:SquadBattleModel)=>string|null)=>{const before=this.model.snapshot();const error=fn(this.model);if(error)return error;if(!this.saveProgress()){this.model=SquadBattleModel.restore(before)!;return this.saves.error+'，本次操作已撤销';}this.resetFeedback();return null;};
   onLoad() {
     this.saves=new LocalSave(sys.localStorage,SquadBattleModel.restore);this.model=this.saves.load()||this.model;
     if(typeof window!=='undefined')window.addEventListener('beforeunload',this.saveProgress);
@@ -49,7 +49,7 @@ export class Adventure extends Component {
       this.drawPage(heroUI,bagUI);this.ready=true;this.sync();this.pauseLabel.string=this.model.paused?'继续战斗':'暂停战斗';if(this.saves.error)this.notice.string=this.saves.error;
       this.heroPage=new HeroPage(this.canvasRoot,heroUI,yard,knight,()=>this.openPage('adventure'),(slot,hero)=>{this.openPage('bag');if(slot!==undefined)this.bagPage.showSlot(slot,hero!);},this.heroTextures,ui,()=>({gold:this.model.gold,experience:this.model.heroes.map(h=>h.experience),levels:this.model.heroes.map(h=>h.level),stats:this.model.heroes.map((_,i)=>this.model.stats(i))}),this.upgradeHero,()=>this.model,this.mutateEquipment,bagUI,()=>this.openPage('recruit'));
       this.bagPage=new BagPage(this.canvasRoot,bagUI,yard,(page)=>this.openPage(page),()=>this.model,this.mutateEquipment,heroUI);
-      this.recruitPage=new RecruitPage(this.canvasRoot,recruitUI,heroUI,bagUI,page=>this.openPage(page));
+      this.recruitPage=new RecruitPage(this.canvasRoot,recruitUI,heroUI,bagUI,page=>this.openPage(page),()=>this.model,this.mutateEquipment);
     }).catch(e=>{console.error(e);this.label('素材加载失败，请刷新重试',0,0,700,70,34);});
   }
   private texture(path:string):Promise<Texture2D>{return new Promise((resolve,reject)=>resources.load(path+'/texture',Texture2D,(e,t)=>e?reject(e):resolve(t)));}

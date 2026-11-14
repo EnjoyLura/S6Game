@@ -1,0 +1,16 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {SquadBattleModel,initialRecruit,recruit,validRecruit} from '../assets/scripts/SquadBattleModel.ts';
+import {LocalSave} from '../assets/scripts/LocalSave.ts';
+test('single and ten recruit debit exact cost and persist collection and results',()=>{
+ const b=new SquadBattleModel();assert.equal(recruit(b.recruitment,0,1,()=>.99),null);assert.equal(b.recruitment.tickets,59);assert.equal(b.recruitment.counts[3],1);assert.equal(b.recruitment.last[0].fresh,true);
+ recruit(b.recruitment,0,10,()=>.99);assert.equal(b.recruitment.tickets,49);assert.equal(b.recruitment.last.length,10);assert.equal(b.recruitment.counts[3],11);assert.equal(b.recruitment.last.filter(x=>x.rarity===1).length,1);assert.ok(validRecruit(b.recruitment));assert.deepEqual(SquadBattleModel.restore(b.snapshot()).recruitment,b.recruitment);
+});
+test('independent 10/30 pity and UP legendary mage; no ten-pull reset',()=>{
+ const r=initialRecruit();for(let i=0;i<29;i++)recruit(r,0,1,()=>.99);assert.equal(r.pity[0].legend,29);recruit(r,1,10,()=>.99);assert.equal(r.pity[0].legend,29);assert.equal(r.pity[1].legend,10);recruit(r,0,1,()=>.99);assert.equal(r.last[0].rarity,2);assert.equal(r.pity[0].legend,0);
+ r.tickets=100;for(let i=0;i<20;i++)recruit(r,1,1,()=>.99);assert.equal(r.last[0].hero,1);assert.equal(r.last[0].rarity,2);assert.equal(r.pity[1].legend,0);assert.equal(r.pity[1].epic,0);
+});
+test('insufficient tickets and invalid requests are atomic',()=>{const r=initialRecruit();r.tickets=9;const before=structuredClone(r);assert.ok(recruit(r,0,10));assert.ok(recruit(r,2,1));assert.ok(recruit(r,0,2));assert.ok(recruit(r,0,1,()=>NaN));assert.deepEqual(r,before);});
+test('legacy save grants tickets once, retry and v4 reload retain state',()=>{const b=new SquadBattleModel(),old=b.snapshot();old.version=3;delete old.recruitment;const migrated=SquadBattleModel.restore(old);assert.equal(migrated.recruitment.tickets,60);recruit(migrated.recruitment,1,10,()=>0);const retry=new SquadBattleModel();retry.inheritIncome(migrated);assert.deepEqual(retry.recruitment,migrated.recruitment);assert.equal(SquadBattleModel.restore(retry.snapshot()).recruitment.tickets,50);});
+test('invalid recruit payload is rejected and bounded history survives reload',()=>{const b=new SquadBattleModel();for(const bad of [-1,1.5,NaN]){const raw=b.snapshot();raw.recruitment.tickets=bad;assert.equal(SquadBattleModel.restore(raw),null);}b.recruitment.tickets=200;for(let i=0;i<12;i++)recruit(b.recruitment,0,10,()=>.99);assert.equal(b.recruitment.history.length,100);assert.ok(SquadBattleModel.restore(b.snapshot()));const raw=b.snapshot();raw.recruitment.counts[3]++;assert.equal(SquadBattleModel.restore(raw),null);});
+test('save failure permits restoring complete pre-recruit transaction',()=>{const b=new SquadBattleModel(),before=b.snapshot();const saves=new LocalSave({getItem(){return null},setItem(){throw Error('quota')}},SquadBattleModel.restore);recruit(b.recruitment,0,10,()=>.99);assert.equal(saves.save(b.snapshot()),false);const rolled=SquadBattleModel.restore(before);assert.equal(rolled.recruitment.tickets,60);assert.equal(rolled.recruitment.history.length,0);assert.equal(rolled.recruitment.counts[3],0);});
