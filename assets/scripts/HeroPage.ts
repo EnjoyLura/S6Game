@@ -1,5 +1,5 @@
 import { Node, UITransform, Graphics, Label, Color, Texture2D, SpriteFrame, Sprite, Rect, Layers, BlockInputEvents, Mask, ScrollView } from 'cc';
-import { SKILL_LEVELS, SKILL_NAMES, SECOND_COOLDOWN, STAR_CONFIG, HERO_CONFIG, upgradeCost, LEVEL_CAP, SquadBattleModel, gearName, gearDescription, gearStats, QUALITY_NAMES } from './SquadBattleModel';
+import { TALENTS, SKILL_LEVELS, SKILL_NAMES, SECOND_COOLDOWN, STAR_CONFIG, HERO_CONFIG, upgradeCost, LEVEL_CAP, SquadBattleModel, gearName, gearDescription, gearStats, QUALITY_NAMES } from './SquadBattleModel';
 
 import {gearTile,drawNavigation} from './GearView';
 
@@ -101,6 +101,19 @@ export class HeroPage {
       if(picker){picker.setSiblingIndex(this.node.children.length-1);layer.destroy();refreshPicker?.();}else this.closeEquipment();
     });
   }
+  private talentDialog(){
+    const id=this.selected,b=this.model();if(!b.owns(id)){this.info('天赋树','请先招募该英雄');return;}
+    this.closeEquipment();const {layer,card}=this.equipmentLayer(HEROES[id]+' · 天赋树',1120);this.dialog=layer;
+    this.text(card,'可用 '+b.talentPoints(id)+'点 · 升级每级获得1点',0,425,740,60,30);
+    this.text(card,'生命分支     攻击分支     技能分支 → 技能流转',0,350,760,50,25);
+    TALENTS.forEach((c,j)=>{const y=245-j*135,r=b.heroes[id].talents[j];
+      this.text(card,c.name+' '+r+'/'+c.max,-210,y,310,50,31);
+      this.text(card,c.description,-70,y-48,600,50,24);
+      this.button(card,r===c.max?'已满级':'投入 '+c.cost+'点',265,y,200,55,()=>{const error=this.mutate(m=>m.trainTalent(id,j));if(error){this.info('天赋培养',error);return;}this.render();this.talentDialog();},r===c.max?'#E2D2B9':'#FFCE52');
+    });
+    this.button(card,'重置 · 返还全部天赋点',0,-400,520,65,()=>{const error=this.mutate(m=>m.resetTalents(id));if(error){this.info('天赋重置',error);return;}this.render();this.talentDialog();});
+    this.text(card,'测试配置 · 免费重置 · 保持生命比例，不重置战斗冷却',0,-480,770,50,22);
+  }
   private starDialog(){
     const id=this.selected,p=this.model().starPreview(id);if(!p){this.info('英雄升星','请先招募该英雄');return;}
     this.closeEquipment();const {layer,card}=this.equipmentLayer(HEROES[id]+' · 升星',950);this.dialog=layer;
@@ -189,12 +202,12 @@ export class HeroPage {
       n.on(Node.EventType.TOUCH_END,()=>{
         const passive=i%2===1;
         const effect=i===1?['防御 +25','主动技能效果 +15%','主动治疗效果 +15%','普攻攻击 +15%'][this.selected]:i===3?'两个主动技能效果 +20%（包含招牌技能升星加成）':i===0?(this.selected===0?'获得护盾 '+config.power:this.selected===2?'治疗生命比例最低的存活队友，最多 '+config.power:'造成伤害 '+config.power):this.selected===2?'治疗生命比例最低的存活队友，最多 '+Math.round(config.power*1.4):'造成伤害 '+Math.round(config.power*1.4)+'，定向攻击'+(this.selected===0?'攻击最高的敌人':'生命比例最低的敌人');
-        this.info(skillNames[i],(passive?'被动技能':'主动技能')+' · '+SKILL_LEVELS[i]+'级解锁 · '+(open?'已解锁':'未解锁')+'\n'+effect+(passive?'\n解锁后自动生效，无需释放。':'\n冷却 '+(i===0?config.cooldown:SECOND_COOLDOWN)+'秒，仅战斗中推进。\n可自动释放或手动排队，每次占用一次行动。'+(this.selected===2?'满血时不释放。':''))+'\n测试配置，数值可后续调整。');
+        this.info(skillNames[i],(passive?'被动技能':'主动技能')+' · '+SKILL_LEVELS[i]+'级解锁 · '+(open?'已解锁':'未解锁')+'\n'+effect+(passive?'\n解锁后自动生效，无需释放。':'\n冷却 '+(i===0?config.cooldown:this.model().secondCooldown(this.selected))+'秒，仅战斗中推进。\n可自动释放或手动排队，每次占用一次行动。'+(this.selected===2?'满血时不释放。':''))+'\n测试配置，数值可后续调整。');
       });
       this.text(p,skillNames[i],x,-295,145,42,27);this.text(p,open?'已解锁':SKILL_LEVELS[i]+'级解锁',x,-327,145,32,23);
     });
-    this.cut(702,1040,131,132,327,-221,132,132).on(Node.EventType.TOUCH_END,()=>this.info('天赋树','可用天赋点：0\n等级成长可获得天赋点。\n属性、技能伤害与机制分支。\n具体节点与点数规则尚未配置。\n天赋重置入口将放在此弹窗内。'));
-    this.text(p,'天赋树',327,-295,145,42,29);this.text(p,'0点',327,-327,145,32,23);
+    this.cut(702,1040,131,132,327,-221,132,132).on(Node.EventType.TOUCH_END,()=>this.talentDialog());
+    this.text(p,'天赋树',327,-295,145,42,29);this.text(p,this.model().talentPoints(this.selected)+'点',327,-327,145,32,23);
     this.text(p,'英雄属性',-290,-398,235,52,40);
     const names=[['生命','攻击','防御','移速','暴击率','暴击伤害','连击率'],['破甲率','冷却缩减','治疗加成','护盾加成','普攻伤害','技能伤害','闪避率']];
     const values=[[String(config?.hp||0),String(config?.attack||0),String(owned?this.model().stats(this.selected).defense:0),String(config?.speed||0),'0%','150%','0%'],['0%','0%','0%','0%','0%','0%','0%']];

@@ -163,7 +163,7 @@ export class Adventure extends Component {
       for(const l of [this.shields[i],this.partyShields[i]]){l.string=String(shield);l.node.active=shield>0&&hp>0;}
       this.shieldIcons[i].active=this.partyShieldIcons[i].active=shield>0&&hp>0;
       for(let j=0;j<2;j++){const cd=j?h.cooldown2:h.cooldown,q=j?h.queued2:h.queued,open=b.unlocked(b.formation[i],j*2);this.skillLabels[i*2+j].string=!open?'':h.hp<=0?'已倒下':q?'已排队':cd>0?cd.toFixed(1):'';
-      const g=this.skillShades[i*2+j];g.clear();if(cd>0||h.hp<=0){g.fillColor=new Color(15,34,62,155);g.roundRect(-60,-60,120,h.hp<=0?120:Math.max(1,120*cd/(j?SECOND_COOLDOWN:b.battleStats(i).cooldown)),10);g.fill();}}
+      const g=this.skillShades[i*2+j];g.clear();if(cd>0||h.hp<=0){g.fillColor=new Color(15,34,62,155);g.roundRect(-60,-60,120,h.hp<=0?120:Math.max(1,120*cd/(j?b.secondCooldown(b.formation[i]):b.battleStats(i).cooldown)),10);g.fill();}}
 
     });
     this.autoDot.clear();this.autoDot.fillColor=new Color().fromHEX('#FFFFFF');this.autoDot.circle(0,0,13);this.autoDot.fill();this.autoDot.fillColor=new Color().fromHEX(b.autoSkill?'#71C730':'#B8A789');this.autoDot.circle(0,0,10);this.autoDot.fill();
