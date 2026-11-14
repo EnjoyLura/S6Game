@@ -1,3 +1,4 @@
+import {SKILL_NAMES,SECOND_COOLDOWN} from './SquadBattleModel';
 import {RecruitPage} from './RecruitPage';
 import {drawNavigation} from './GearView';
 import { _decorator, Component, Node, Canvas, UITransform, Camera, Layers, Color, Graphics, Label, Sprite, SpriteFrame, Texture2D, resources, Rect, view, ResolutionPolicy, tween, Vec3, UIOpacity, game, Game, profiler, Tween, Mask, sys } from 'cc';
@@ -120,10 +121,10 @@ export class Adventure extends Component {
       this.partyBars[i]=this.bar(xs[i]+128,-450);this.statusIcon('heart',xs[i]+42,-478,'#72E843');this.partyHP[i]=this.valueLabel('',xs[i]+135,-478,150,24);this.partyShields[i]=this.valueLabel('',xs[i]+135,-512,150,23);this.partyShieldIcons[i]=this.statusIcon('shield',xs[i]+42,-512,'#6EDBFF');
       for(let j=0;j<2;j++){
         const x=-355+i*295+j*133;
-        const n=j===0?(id===3?this.picture(bagAtlas,new Rect(405,618,120,85),x,-585,120,120,'Archer skill'):this.cut('Skill '+i,[28,316,612][id],1413,120,120,x,-585)):this.cut('Locked '+i,161,1413,116,120,x,-585);
-        n.on(Node.EventType.TOUCH_END,()=>{if(j===0){this.toast(this.model.requestSkill(i)?HERO_CONFIG[id].skill+'已排队':HERO_CONFIG[id].name+'技能冷却中、已排队或已倒下');this.sync();}else this.toast('第二主动技能尚未解锁');});
-        this.label(j===0?HERO_CONFIG[id].skill:'待解锁',x,-669,135,48,30,j===0?C.ink:C.muted);
-        if(j===0){this.skillShades[i]=this.base('Cooldown '+i,x,-585,120,120).addComponent(Graphics);this.skillLabels[i]=this.label('',x,-585,110,70,30,'#FFFFFF');}
+        const n=this.model.unlocked(id,j*2)?(id===3?this.picture(bagAtlas,new Rect(405,618,120,85),x,-585,120,120,'Archer skill'):this.cut('Skill '+i,[28,316,612][id],1413,120,120,x,-585)):this.cut('Locked '+i,161,1413,116,120,x,-585);
+        n.on(Node.EventType.TOUCH_END,()=>{this.toast(this.model.requestSkill(i,j)?SKILL_NAMES[id][j*2]+'已排队':'技能未解锁、冷却中、已排队或已倒下');this.sync();});
+        this.label(this.model.unlocked(id,j*2)?SKILL_NAMES[id][j*2]:j===1?'5级解锁':'待解锁',x,-669,135,48,30,C.ink);
+        this.skillShades[i*2+j]=this.base('Cooldown '+i+' '+j,x,-585,120,120).addComponent(Graphics);this.skillLabels[i*2+j]=this.label('',x,-585,110,70,30,'#FFFFFF');
       }
     }
     drawNavigation(this.root,navAtlas,bagAtlas,2,i=>{if(i===0)this.openPage('hero');else if(i===1)this.openPage('recruit');else if(i===3)this.openPage('bag');else if(i!==2)this.toast(['英雄','招募','冒险','背包','副本'][i]+'暂未开放');});
@@ -161,18 +162,19 @@ export class Adventure extends Component {
       this.paintBar(this.bars[i],hp,b.battleStats(i).hp,'#9AF032',shield);this.paintBar(this.partyBars[i],hp,b.battleStats(i).hp,'#9AF032',shield);
       for(const l of [this.shields[i],this.partyShields[i]]){l.string=String(shield);l.node.active=shield>0&&hp>0;}
       this.shieldIcons[i].active=this.partyShieldIcons[i].active=shield>0&&hp>0;
-      this.skillLabels[i].string=h.hp<=0?'已倒下':h.queued?'已排队':h.cooldown>0?h.cooldown.toFixed(1):'';
-      const g=this.skillShades[i];g.clear();if(h.cooldown>0||h.hp<=0){g.fillColor=new Color(15,34,62,155);g.roundRect(-60,-60,120,h.hp<=0?120:Math.max(1,120*h.cooldown/b.battleStats(i).cooldown),10);g.fill();}
+      for(let j=0;j<2;j++){const cd=j?h.cooldown2:h.cooldown,q=j?h.queued2:h.queued,open=b.unlocked(b.formation[i],j*2);this.skillLabels[i*2+j].string=!open?'':h.hp<=0?'已倒下':q?'已排队':cd>0?cd.toFixed(1):'';
+      const g=this.skillShades[i*2+j];g.clear();if(cd>0||h.hp<=0){g.fillColor=new Color(15,34,62,155);g.roundRect(-60,-60,120,h.hp<=0?120:Math.max(1,120*cd/(j?SECOND_COOLDOWN:b.battleStats(i).cooldown)),10);g.fill();}}
+
     });
     this.autoDot.clear();this.autoDot.fillColor=new Color().fromHEX('#FFFFFF');this.autoDot.circle(0,0,13);this.autoDot.fill();this.autoDot.fillColor=new Color().fromHEX(b.autoSkill?'#71C730':'#B8A789');this.autoDot.circle(0,0,10);this.autoDot.fill();
     this.turns.forEach((n,i)=>n.active=b.result==='fighting'&&b.waveDelay===0&&i===b.nextActor);
     this.stats.string=b.party.map((h,i)=>b.battleStats(i).name+' '+h.damage+(b.formation[i]===2?' / 治疗 '+h.healing:'')).join('   ')+'\n承伤 '+b.received+' · '+b.elapsed.toFixed(1)+'秒';
   }
   private impactText(hit:SquadHit){
-    if(hit.damage)this.floating.push({target:hit.target,text:(hit.skill&&hit.actor<3?this.model.battleStats(hit.actor).skill+' ':'−')+hit.damage,color:hit.actor>=3?'#EE7463':hit.skill?'#FFCD58':'#FFFFFF'});
+    if(hit.damage)this.floating.push({target:hit.target,text:(hit.skill&&hit.actor<3?SKILL_NAMES[this.model.formation[hit.actor]][hit.skillSlot||0]+' ':'−')+hit.damage,color:hit.actor>=3?'#EE7463':hit.skill?'#FFCD58':'#FFFFFF'});
     if(hit.blocked)this.floating.push({target:hit.target,text:'吸收 '+hit.blocked,color:'#8BD8FF'});
     if(hit.heal)this.floating.push({target:hit.target,text:'+'+hit.heal,color:'#95EF72'});
-    if(hit.skill&&hit.actor<3&&this.model.formation[hit.actor]===0)this.floating.push({target:hit.actor,text:'护盾 +'+this.model.battleStats(hit.actor).power,color:'#8BD8FF'});
+    if(hit.skill&&!hit.damage&&hit.actor<3&&this.model.formation[hit.actor]===0)this.floating.push({target:hit.actor,text:'护盾 +'+this.model.battleStats(hit.actor).power,color:'#8BD8FF'});
 
     this.floatTimer=0;
     if(this.floating.length>18)this.floating.splice(0,this.floating.length-18);

@@ -47,7 +47,7 @@ export class BattleFeedback {
       this.hp[h.target]=h.hpAfter;this.shields[h.target]=h.shieldAfter;
       const p=this.positions[h.target],a=this.positions[h.actor],dx=p[0]-a[0],dy=p[1]-a[1],length=Math.hypot(dx,dy)||1;
       if(h.damage||h.blocked)this.motions.set(h.target,{kind:h.killed||h.hpAfter===0?'death':'hurt',age:0,life:(h.killed||h.hpAfter===0) ? .38 : .32,dx:dx/length,dy:dy/length,strong:h.skill&&h.damage>0});
-      this.effect(h.heal?'heal':h.skill&&h.hero===0||h.blocked&&!h.damage?'shield':h.skill?'burst':h.hero===0?'slash':'hit',p[0],p[1]+14,p[0],p[1]+14,.34,h.heal?'#A4F77D':h.blocked&&!h.damage||h.hero===0&&h.skill?'#79DDFE':h.skill?'#FFB950':'#FFE5AD');
+      this.effect(h.heal?'heal':h.skill&&!h.damage&&h.hero===0||h.blocked&&!h.damage?'shield':h.skill?'burst':h.hero===0?'slash':'hit',p[0],p[1]+14,p[0],p[1]+14,.34,h.heal?'#A4F77D':h.blocked&&!h.damage||h.hero===0&&h.skill&&!h.damage?'#79DDFE':h.skill?'#FFB950':'#FFE5AD');
       this.impact(h);
     }
     this.units.forEach((n,i)=>{

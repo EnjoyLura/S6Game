@@ -1,5 +1,5 @@
 import { Node, UITransform, Graphics, Label, Color, Texture2D, SpriteFrame, Sprite, Rect, Layers, BlockInputEvents, Mask, ScrollView } from 'cc';
-import { STAR_CONFIG, HERO_CONFIG, upgradeCost, LEVEL_CAP, SquadBattleModel, gearName, gearDescription, gearStats, QUALITY_NAMES } from './SquadBattleModel';
+import { SKILL_LEVELS, SKILL_NAMES, SECOND_COOLDOWN, STAR_CONFIG, HERO_CONFIG, upgradeCost, LEVEL_CAP, SquadBattleModel, gearName, gearDescription, gearStats, QUALITY_NAMES } from './SquadBattleModel';
 
 import {gearTile,drawNavigation} from './GearView';
 
@@ -180,14 +180,18 @@ export class HeroPage {
     this.panel(p,0,-222,859,265,'#FFF5E7',34);
     this.panel(p,0,-555,859,365,'#FFF5E7',34);
     this.text(p,'技能',-337,-120,130,52,40);
-    const skillNames=[['守护姿态','坚韧','盾击','不屈'],['火焰','被动技能','主动技能','被动技能'],['治愈','被动技能','主动技能','被动技能'],['精准射击','被动技能','主动技能','被动技能']][this.selected];
+    const skillNames=SKILL_NAMES[this.selected];
     const skillX=[-320,-165,-8,145];
     skillX.forEach((x,i)=>{
       this.panel(p,x,-165,87,30,'#F6D6A6',15);this.text(p,i%2===0?'主动':'被动',x,-165,100,33,24);
-      const open=owned&&i===0;
+      const open=this.model().unlocked(this.selected,i);
       const n=open?(this.selected===3?this.sprite(p,this.bagAtlas,new Rect(405,618,120,85),x,-232,104,104):this.sprite(p,this.battleUI,new Rect([28,316,612][this.selected],1413,120,120),x,-232,104,104)):this.cut(535,1073,111,94,x,-232,112,100);
-      n.on(Node.EventType.TOUCH_END,()=>this.info(skillNames[i],open?'主动技能 · 随英雄等级成长\n'+(this.selected===0?'产生'+config.power+'点护盾':this.selected===1||this.selected===3?'造成'+config.power+'点伤害':'为存活且血量比例最低的队友恢复至多'+config.power+'生命，满血时不释放')+'\n冷却'+config.cooldown+'秒，仅战斗中推进。\n可自动释放或手动排队，占用一次行动。':'按英雄等级依次解锁：\n主动 → 被动 → 主动 → 被动。\n具体解锁等级尚待确定。'));
-      this.text(p,skillNames[i],x,-295,145,42,27);this.text(p,open?'随英雄成长':'等级解锁',x,-327,145,32,23);
+      n.on(Node.EventType.TOUCH_END,()=>{
+        const passive=i%2===1;
+        const effect=i===1?['防御 +25','主动技能效果 +15%','主动治疗效果 +15%','普攻攻击 +15%'][this.selected]:i===3?'两个主动技能效果 +20%（包含招牌技能升星加成）':i===0?(this.selected===0?'获得护盾 '+config.power:this.selected===2?'治疗生命比例最低的存活队友，最多 '+config.power:'造成伤害 '+config.power):this.selected===2?'治疗生命比例最低的存活队友，最多 '+Math.round(config.power*1.4):'造成伤害 '+Math.round(config.power*1.4)+'，定向攻击'+(this.selected===0?'攻击最高的敌人':'生命比例最低的敌人');
+        this.info(skillNames[i],(passive?'被动技能':'主动技能')+' · '+SKILL_LEVELS[i]+'级解锁 · '+(open?'已解锁':'未解锁')+'\n'+effect+(passive?'\n解锁后自动生效，无需释放。':'\n冷却 '+(i===0?config.cooldown:SECOND_COOLDOWN)+'秒，仅战斗中推进。\n可自动释放或手动排队，每次占用一次行动。'+(this.selected===2?'满血时不释放。':''))+'\n测试配置，数值可后续调整。');
+      });
+      this.text(p,skillNames[i],x,-295,145,42,27);this.text(p,open?'已解锁':SKILL_LEVELS[i]+'级解锁',x,-327,145,32,23);
     });
     this.cut(702,1040,131,132,327,-221,132,132).on(Node.EventType.TOUCH_END,()=>this.info('天赋树','可用天赋点：0\n等级成长可获得天赋点。\n属性、技能伤害与机制分支。\n具体节点与点数规则尚未配置。\n天赋重置入口将放在此弹窗内。'));
     this.text(p,'天赋树',327,-295,145,42,29);this.text(p,'0点',327,-327,145,32,23);
