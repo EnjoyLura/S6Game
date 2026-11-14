@@ -1,5 +1,5 @@
 import { _decorator, Component, Node, Canvas, UITransform, Camera, Layers, Color, Graphics, Label, Sprite, SpriteFrame, Texture2D, resources, Rect, view, ResolutionPolicy, tween, Vec3, UIOpacity, game, Game, profiler, Tween, Mask, sys } from 'cc';
-import { SquadBattleModel, HERO_CONFIG, MONSTERS, SquadHit, gearName, DROP_SECONDS } from './SquadBattleModel';
+import { SquadBattleModel, HERO_CONFIG, MONSTERS, SquadHit, gearName, DROP_SECONDS, foregroundRewardDelta } from './SquadBattleModel';
 import { BattleFeedback } from './BattleFeedback';
 import { LocalSave } from './LocalSave';
 import { HeroPage } from './HeroPage';
@@ -178,7 +178,7 @@ export class Adventure extends Component {
   }
   private openPage(page:'adventure'|'hero'|'bag'){if(!this.heroPage||!this.bagPage)return;this.currentPage=page;this.resetFeedback();this.floating=[];if(page==='hero')this.heroPage.refresh();if(page==='bag'){this.bagPage.setGold(this.model.gold);this.bagPage.refresh();}this.root.active=page==='adventure';this.heroPage.node.active=page==='hero';this.bagPage.node.active=page==='bag';}
   update(dt:number){
-    if(!this.ready)return;const count=this.model.inventory.length;this.model.settleIdle(dt);if(this.model.inventory.length>count){this.saveProgress();if(this.currentPage==='bag')this.bagPage.refresh();if(this.currentPage==='adventure')this.toast('获得 '+gearName(this.model.inventory[this.model.inventory.length-1])+' · 已进入背包');}this.saveClock+=dt;if(this.saveClock>=1){this.saveClock=0;this.saveProgress();}
+    if(!this.ready)return;const nextId=this.model.nextGearId,oldCount=this.model.inventory.length,oldMaterials=this.model.materials;this.model.settleIdle(foregroundRewardDelta(dt));if(this.model.nextGearId>nextId){const saved=this.saveProgress(),kept=this.model.inventory.length-oldCount,recycled=this.model.nextGearId-nextId-kept;if(this.currentPage==='bag')this.bagPage.refresh();if(this.currentPage==='adventure')this.toast(!saved?this.saves.error:recycled?'自动分解 '+recycled+' 件 · 强化石 +'+(this.model.materials-oldMaterials)+(kept?' · 保留 '+kept+' 件':''):'获得 '+gearName(this.model.inventory[this.model.inventory.length-1])+' · 已进入背包');}this.saveClock+=dt;if(this.saveClock>=1){this.saveClock=0;this.saveProgress();}
     if(this.currentPage==='hero'){this.heroPage.refreshIncome();return;}if(this.currentPage==='bag'){this.bagPage.setGold(this.model.gold);return;}
     const visualDt=this.model.paused?0:Math.min(dt,.1)*this.speed;
     this.feedback.update(visualDt);for(const h of this.model.step(visualDt))this.feedback.play(h);this.updateFloats(this.model.paused?0:dt);this.sync();

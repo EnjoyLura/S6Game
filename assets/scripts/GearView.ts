@@ -10,7 +10,7 @@ export function gearTile(parent:Node,atlas:Texture2D,gear:Gear|null,slot:number,
  const exact=GEAR_ART.findIndex(a=>a[0]===gear.slot&&a[1]===gear.quality),index=exact>=0?exact:GEAR_ART.findIndex(a=>a[0]===gear.slot),row=Math.floor(index/5),col=index%5;
  const pic=new Node('Equipment artwork');pic.parent=n;pic.layer=Layers.Enum.UI_2D;pic.addComponent(UITransform).setContentSize(size-4,size-4);const f=new SpriteFrame();f.texture=atlas;f.rect=new Rect([50,225,398,570,742][col],[432,595,752,907][row],[162,160,158,158,162][col],row===0?146:row===1?139:row===2?140:134);const sp=pic.addComponent(Sprite);sp.sizeMode=Sprite.SizeMode.CUSTOM;sp.spriteFrame=f;
  // Replace baked concept-image badges with actual inventory state.
- box(0,-size/2+19,size-6,36,color);text('Lv.'+gear.level,0,-size/2+19,size-12,25);
+ box(0,-size/2+19,size-6,36,color);text('Lv.'+gear.level+(gear.enhancement?' +'+gear.enhancement:''),0,-size/2+19,size-12,25);
  box(size/2-22,size/2-21,38,38,color);if(gear.locked)text('锁',size/2-22,size/2-21,35,23);
  if(owner){box(-size/2+36,size/2-17,68,30,'#FFF0CF');text(owner,-size/2+36,size/2-17,64,21,'#704124');}
  return n;
