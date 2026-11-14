@@ -1,7 +1,7 @@
 import {SKILL_NAMES,SECOND_COOLDOWN} from './SquadBattleModel';
 import {RecruitPage} from './RecruitPage';
 import {drawNavigation} from './GearView';
-import { _decorator, Component, Node, Canvas, UITransform, Camera, Layers, Color, Graphics, Label, Sprite, SpriteFrame, Texture2D, resources, Rect, view, ResolutionPolicy, tween, Vec3, UIOpacity, game, Game, profiler, Tween, Mask, sys } from 'cc';
+import { _decorator, Component, Node, Canvas, UITransform, Camera, Layers, Color, Graphics, Label, Sprite, SpriteFrame, Texture2D, resources, Rect, view, ResolutionPolicy, tween, Vec3, UIOpacity, game, Game, profiler, Tween, Mask, sys, BlockInputEvents } from 'cc';
 import { SquadBattleModel, HERO_CONFIG, MONSTERS, SquadHit, gearName, DROP_SECONDS, foregroundRewardDelta } from './SquadBattleModel';
 import { BattleFeedback } from './BattleFeedback';
 import { LocalSave } from './LocalSave';
@@ -22,11 +22,11 @@ export class Adventure extends Component {
   private floating:{target:number;text:string;color:string}[]=[]; private floatTimer=0; private floatSerial=0; private effects=new Set<Node>();
   private recruitPage!:RecruitPage; private heroPage!:HeroPage; private bagPage!:BagPage; private currentPage:'adventure'|'hero'|'bag'|'recruit'='adventure'; private canvasRoot!:Node;
   private saves!:LocalSave<SquadBattleModel>; private saveClock=0; private background=false;
-  private saveProgress=()=>{if(!this.saves)return false;const snapshot=this.model.snapshot();if(this.background)snapshot.paused=this.foregroundPaused;const ok=this.saves.save(snapshot);if(!ok&&this.notice)this.notice.string=this.saves.error;return ok;};
+  private saveProgress=()=>{if(!this.saves)return false;if(!this.background)this.model.markSeen(Date.now());const snapshot=this.model.snapshot();if(this.background)snapshot.paused=this.foregroundPaused;const ok=this.saves.save(snapshot);if(!ok&&this.notice)this.notice.string=this.saves.error;return ok;};
   private upgradeHero=(i:number)=>{const before=this.model.snapshot();const error=this.model.upgrade(i);if(error)return error;if(!this.saveProgress()){this.model=SquadBattleModel.restore(before)!;return this.saves.error+'，本次升级未扣经验';}return null;};
   private mutateEquipment=(fn:(b:SquadBattleModel)=>string|null)=>{const before=this.model.snapshot();const error=fn(this.model);if(error)return error;if(!this.saveProgress()){this.model=SquadBattleModel.restore(before)!;return this.saves.error+'，本次操作已撤销';}this.resetFeedback();return null;};
   onLoad() {
-    this.saves=new LocalSave(sys.localStorage,SquadBattleModel.restore);this.model=this.saves.load()||this.model;
+    this.saves=new LocalSave(sys.localStorage,SquadBattleModel.restore);this.model=this.saves.load()||this.model;this.model.prepareOffline(Date.now());this.saveProgress();
     if(typeof window!=='undefined')window.addEventListener('beforeunload',this.saveProgress);
     profiler.hideStats();
     view.setDesignResolutionSize(887,1774,ResolutionPolicy.SHOW_ALL);
@@ -46,7 +46,7 @@ export class Adventure extends Component {
       this.battleArt=[forest,heroUI,bagUI];this.rebuildBattle();
       this.heroPage=new HeroPage(this.canvasRoot,heroUI,yard,knight,()=>this.openPage('adventure'),(slot,hero)=>{this.openPage('bag');if(slot!==undefined)this.bagPage.showSlot(slot,hero!);},this.heroTextures,ui,()=>({gold:this.model.gold,experience:this.model.heroes.map(h=>h.experience),levels:this.model.heroes.map(h=>h.level),stats:this.model.heroes.map((_,i)=>this.model.stats(i))}),this.upgradeHero,()=>this.model,this.mutateEquipment,bagUI,()=>this.openPage('recruit'));
       this.bagPage=new BagPage(this.canvasRoot,bagUI,yard,(page)=>this.openPage(page),()=>this.model,this.mutateEquipment,heroUI);
-      this.recruitPage=new RecruitPage(this.canvasRoot,recruitUI,heroUI,bagUI,page=>this.openPage(page),()=>this.model,this.mutateEquipment);
+      this.recruitPage=new RecruitPage(this.canvasRoot,recruitUI,heroUI,bagUI,page=>this.openPage(page),()=>this.model,this.mutateEquipment);this.showOffline();
     }).catch(e=>{console.error(e);this.label('素材加载失败，请刷新重试',0,0,700,70,34);});
   }
   private rebuildBattle(){
@@ -94,6 +94,7 @@ export class Adventure extends Component {
     this.label('⚑',183,717,70,55,48,'#AC9368');
     this.incomeLabel=this.label('击杀 0 · 每位英雄经验 +0',0,678,700,42,25);
     this.label('行动顺序',-332,611,220,48,28);
+    this.cut('Offline rewards',17,30,68,63,-392,510).on(Node.EventType.TOUCH_END,()=>this.showOffline());this.label('收益',-392,457,95,40,23);
     this.model.order.forEach((id,i)=>{const x=-200+i*99;this.turns[id]=this.panel('Turn '+id,x,611,85,85,'#FFD34F',42);
       const t=id>=3?this.monsters:this.heroTextures[this.model.formation[id]];const rect=id>=3?this.monsterRect(id-3):new Rect(0,0,t.width,t.height);
       const portrait=this.picture(t,rect,x,611,82,82,'Initiative '+id);if(id>=3)this.enemyPortraits[id-3]=portrait;
@@ -190,12 +191,26 @@ export class Adventure extends Component {
   }
   private openPage(page:'adventure'|'hero'|'bag'|'recruit'){if(!this.heroPage||!this.bagPage||!this.recruitPage)return;this.currentPage=page;if(page==='adventure'&&this.shownFormation!==this.model.formation.join())this.rebuildBattle();this.resetFeedback();this.floating=[];if(page==='hero')this.heroPage.refresh();if(page==='bag'){this.bagPage.setGold(this.model.gold);this.bagPage.refresh();}this.root.active=page==='adventure';this.heroPage.node.active=page==='hero';this.bagPage.node.active=page==='bag';this.recruitPage.node.active=page==='recruit';}
   update(dt:number){
-    if(!this.ready)return;const nextId=this.model.nextGearId,oldCount=this.model.inventory.length,oldMaterials=this.model.materials;this.model.settleIdle(foregroundRewardDelta(dt));if(this.model.nextGearId>nextId){const saved=this.saveProgress(),kept=this.model.inventory.length-oldCount,recycled=this.model.nextGearId-nextId-kept;if(this.currentPage==='bag')this.bagPage.refresh();if(this.currentPage==='adventure')this.toast(!saved?this.saves.error:recycled?'自动分解 '+recycled+' 件 · 强化石 +'+(this.model.materials-oldMaterials)+(kept?' · 保留 '+kept+' 件':''):'获得 '+gearName(this.model.inventory[this.model.inventory.length-1])+' · 已进入背包');}this.saveClock+=dt;if(this.saveClock>=1){this.saveClock=0;this.saveProgress();}
+    if(!this.ready||this.background)return;const nextId=this.model.nextGearId,oldCount=this.model.inventory.length,oldMaterials=this.model.materials;this.model.settleIdle(foregroundRewardDelta(dt));if(this.model.nextGearId>nextId){const saved=this.saveProgress(),kept=this.model.inventory.length-oldCount,recycled=this.model.nextGearId-nextId-kept;if(this.currentPage==='bag')this.bagPage.refresh();if(this.currentPage==='adventure')this.toast(!saved?this.saves.error:recycled?'自动分解 '+recycled+' 件 · 强化石 +'+(this.model.materials-oldMaterials)+(kept?' · 保留 '+kept+' 件':''):'获得 '+gearName(this.model.inventory[this.model.inventory.length-1])+' · 已进入背包');}this.saveClock+=dt;if(this.saveClock>=1){this.saveClock=0;this.saveProgress();}
     if(this.currentPage==='recruit')return;if(this.currentPage==='hero'){this.heroPage.refreshIncome();return;}if(this.currentPage==='bag'){this.bagPage.setGold(this.model.gold);return;}
     const visualDt=this.model.paused?0:Math.min(dt,.1)*this.speed;
     this.feedback.update(visualDt);for(const h of this.model.step(visualDt))this.feedback.play(h);this.updateFloats(this.model.paused?0:dt);this.sync();
   }
-  private hide(){this.saveProgress();this.foregroundPaused=this.model.paused;this.background=true;this.model.paused=true;}
-  private show(){this.background=false;this.model.paused=this.foregroundPaused;}
+  private offlineModal:Node|null=null;
+  private showOffline(){
+    if(!this.ready||!this.canvasRoot||this.offlineModal)return;const r=this.model.offline;if(!r)return;
+    const layer=this.panel('Offline backdrop',0,0,887,1774,'#000000',0,this.canvasRoot);this.offlineModal=layer;layer.getComponent(Graphics)!.fillColor=new Color(0,0,0,150);const g=layer.getComponent(Graphics)!;g.clear();g.rect(-443.5,-887,887,1774);g.fill();
+    const close=()=>{layer.destroy();this.offlineModal=null;};layer.on(Node.EventType.TOUCH_END,close);
+    const card=this.panel('Offline reward card',0,0,790,1000,C.cream,32,layer);card.addComponent(BlockInputEvents);
+    this.label('离线挂机收益',0,405,700,70,42,C.ink,card);
+    this.label('离线结算 '+r.seconds+'秒 · 上限8小时\n最高检查点 '+r.checkpoint,0,280,700,110,28,C.ink,card);
+    this.label('金币 +'+r.gold+'\n'+r.experience.map((v,i)=>v?HERO_CONFIG[i].name+'经验 +'+v:'').filter(Boolean).join('\n')+'\n装备 '+r.equipment.length+'件',0,30,700,360,32,C.ink,card);
+    this.label('装备按最高进度生成，领取时应用自动保留规则。\n未领取可关闭，点击冒险页“收益”再次打开。',0,-225,730,100,23,C.ink,card);
+    const claim=this.panel('Claim offline',0,-360,440,75,C.gold,22,card);const message=this.label('领取',0,0,420,65,30,C.ink,claim);
+    claim.on(Node.EventType.TOUCH_END,()=>{const error=this.mutateEquipment(b=>b.claimOffline());if(error){message.string=error;return;}close();if(this.currentPage==='bag')this.bagPage.refresh();if(this.currentPage==='hero')this.heroPage.refresh();this.toast('离线收益已领取并保存');});
+    const x=this.label('×',330,410,70,70,40,C.ink,card);x.node.on(Node.EventType.TOUCH_END,close);this.label('点击空白处关闭',0,-560,700,55,27,'#FFFFFF',layer);
+  }
+  private hide(){if(this.background)return;this.saveProgress();this.foregroundPaused=this.model.paused;this.background=true;this.model.paused=true;}
+  private show(){if(!this.background)return;this.background=false;this.model.paused=this.foregroundPaused;this.model.prepareOffline(Date.now());this.saveProgress();this.showOffline();}
   onDestroy(){if(typeof window!=='undefined')window.removeEventListener('beforeunload',this.saveProgress);game.off(Game.EVENT_HIDE,this.hide,this);game.off(Game.EVENT_SHOW,this.show,this);}
 }

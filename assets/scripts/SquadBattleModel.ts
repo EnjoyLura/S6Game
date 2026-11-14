@@ -41,6 +41,8 @@ export const TALENTS=[
 export const SECOND_COOLDOWN=12;
 export const EQUIPMENT_PARTS=['武器','戒指','项链','头盔','衣服','鞋子'];
 export const QUALITY_NAMES=['普通','优秀','稀有','史诗','传说'];
+export const OFFLINE_CONFIG={capSeconds:8*60*60,tickSeconds:5,goldPerTick:10,experiencePerTick:8,gearSeconds:30};
+export type OfflineReward={seconds:number;gold:number;experience:number[];equipment:Gear[];checkpoint:number};
 export const DROP_SECONDS=30;
 // Runtime resume/stall gaps are not offline reward time. Model tests may still settle explicit durations.
 export const foregroundRewardDelta=(seconds:number)=>Number.isFinite(seconds)&&seconds>0&&seconds<=60?seconds:0;
@@ -82,6 +84,26 @@ export const FIRE_TARGET:EnemyTargetRule='random';
 export type SquadHit = {actor:number;hero?:number;target:number;damage:number;blocked:number;heal:number;skill:boolean;skillSlot?:number;killed?:boolean;hpAfter:number;shieldAfter:number};
 // Combat indices 0..2 are formation slots, not roster IDs; 3..5 are enemies.
 export class SquadBattleModel {
+  lastSeen=0;offline:OfflineReward|null=null;
+  markSeen(now:number){if(Number.isFinite(now)&&now>0)this.lastSeen=Math.max(this.lastSeen,Math.floor(now));}
+  prepareOffline(now:number){
+    if(!Number.isFinite(now)||now<=0)return false;now=Math.floor(now);
+    if(!this.lastSeen){this.markSeen(now);return false;}
+    const seconds=Math.min(OFFLINE_CONFIG.capSeconds-(this.offline?.seconds||0),Math.max(0,Math.floor((now-this.lastSeen)/1000)));
+    this.markSeen(now);const ticks=Math.floor(seconds/OFFLINE_CONFIG.tickSeconds);if(!ticks)return false;
+    const checkpoint=this.highestWave,scale=1+Math.floor((checkpoint-1)/5),earned=ticks*OFFLINE_CONFIG.tickSeconds;
+    const reward=this.offline||{seconds:0,gold:0,experience:[0,0,0,0],equipment:[],checkpoint};
+    reward.seconds+=earned;reward.gold+=ticks*OFFLINE_CONFIG.goldPerTick*scale;reward.checkpoint=Math.max(reward.checkpoint,checkpoint);
+    reward.experience=reward.experience.map((v,i)=>v+(this.owns(i)?ticks*OFFLINE_CONFIG.experiencePerTick*scale:0));
+    const drops=Math.floor(reward.seconds/OFFLINE_CONFIG.gearSeconds)-Math.floor((reward.seconds-earned)/OFFLINE_CONFIG.gearSeconds);
+    for(let n=0;n<drops;n++)reward.equipment.push(generateGear(this.nextGearId++,Math.min(100,1+Math.floor((checkpoint-1)/3))));
+    this.offline=reward;return true;
+  }
+  claimOffline(){
+    const r=this.offline;if(!r)return '没有待领取收益';this.gold+=r.gold;r.experience.forEach((v,i)=>this.heroes[i].experience+=v);
+    for(const gear of r.equipment){this.inventory.push({...gear});if(this.rules.enabled&&!this.retained(gear)){this.salvage([gear.id]);this.autoSalvaged++;}}
+    this.offline=null;return null;
+  }
   materials=0;autoSalvaged=0;rules:RetentionRules={enabled:false,minQuality:2,minLevel:0,attributes:[]};
   recruitment=initialRecruit();
   formation=[0,1,2];
@@ -179,20 +201,20 @@ export class SquadBattleModel {
   private patient(){return this.party.map((_,i)=>i).filter(i=>this.party[i].hp>0&&this.party[i].hp<this.battleStats(i).hp).sort((a,b)=>this.party[a].hp/this.battleStats(a).hp-this.party[b].hp/this.battleStats(b).hp)[0];}
   private target(){const alive=this.party.map((_,i)=>i).filter(i=>this.party[i].hp>0);const total=alive.reduce((s,i)=>s+(i===0?6:2),0);let roll=this.random()*total;for(const i of alive){roll-=i===0?6:2;if(roll<0)return i;}return alive[alive.length-1];}
   inheritIncome(previous:SquadBattleModel){
-    this.formation=previous.formation.slice();this.buildOrder();this.materials=previous.materials;this.autoSalvaged=previous.autoSalvaged;this.rules={...previous.rules,attributes:previous.rules.attributes.slice()};
+    this.lastSeen=previous.lastSeen;this.offline=previous.offline?JSON.parse(JSON.stringify(previous.offline)):null;this.formation=previous.formation.slice();this.buildOrder();this.materials=previous.materials;this.autoSalvaged=previous.autoSalvaged;this.rules={...previous.rules,attributes:previous.rules.attributes.slice()};
     this.recruitment=JSON.parse(JSON.stringify(previous.recruitment));
     this.inventory=previous.inventory.map(g=>({...g}));this.loadouts=previous.loadouts.map(s=>s.slice());this.nextGearId=previous.nextGearId;this.dropRemainder=previous.dropRemainder;this.highestWave=previous.highestWave;
     this.gold=previous.gold;this.kills=previous.kills;this.idleElapsed=previous.idleElapsed;this.incomeRemainder=previous.incomeRemainder;
     this.heroes.forEach((h,i)=>{h.experience=previous.heroes[i].experience;h.level=previous.heroes[i].level;h.stars=previous.heroes[i].stars;h.talents=previous.heroes[i].talents.slice();h.hp=this.stats(i).hp;});
   }
-  snapshot(){return {version:8,formation:this.formation.slice(),recruitment:JSON.parse(JSON.stringify(this.recruitment)) as typeof this.recruitment,materials:this.materials,autoSalvaged:this.autoSalvaged,rules:{...this.rules,attributes:this.rules.attributes.slice()},inventory:this.inventory.map(g=>({...g,enhancement:g.enhancement||0})),loadouts:this.loadouts.map(s=>s.slice()),nextGearId:this.nextGearId,dropRemainder:this.dropRemainder,highestWave:this.highestWave,heroes:this.heroes.map(h=>({...h,talents:h.talents.slice()})),enemies:this.enemies.map(e=>({...e})),gold:this.gold,kills:this.kills,wave:this.wave,clearedWaves:this.clearedWaves,idleElapsed:this.idleElapsed,incomeRemainder:this.incomeRemainder,elapsed:this.elapsed,actions:this.actions,damage:this.damage,received:this.received,autoSkill:this.autoSkill,paused:this.paused,waveDelay:this.waveDelay,regrouping:this.regrouping,result:this.result,cursor:this.cursor,timer:this.timer,monsterIndex:this.monsterIndex,count:this.count,continuous:this.continuous};}
+  snapshot(){return {version:9,lastSeen:this.lastSeen,offline:this.offline?JSON.parse(JSON.stringify(this.offline)) as OfflineReward:null,formation:this.formation.slice(),recruitment:JSON.parse(JSON.stringify(this.recruitment)) as typeof this.recruitment,materials:this.materials,autoSalvaged:this.autoSalvaged,rules:{...this.rules,attributes:this.rules.attributes.slice()},inventory:this.inventory.map(g=>({...g,enhancement:g.enhancement||0})),loadouts:this.loadouts.map(s=>s.slice()),nextGearId:this.nextGearId,dropRemainder:this.dropRemainder,highestWave:this.highestWave,heroes:this.heroes.map(h=>({...h,talents:h.talents.slice()})),enemies:this.enemies.map(e=>({...e})),gold:this.gold,kills:this.kills,wave:this.wave,clearedWaves:this.clearedWaves,idleElapsed:this.idleElapsed,incomeRemainder:this.incomeRemainder,elapsed:this.elapsed,actions:this.actions,damage:this.damage,received:this.received,autoSkill:this.autoSkill,paused:this.paused,waveDelay:this.waveDelay,regrouping:this.regrouping,result:this.result,cursor:this.cursor,timer:this.timer,monsterIndex:this.monsterIndex,count:this.count,continuous:this.continuous};}
   static restore(value:unknown):SquadBattleModel|null{
     // Reject malformed or future saves as a whole; never partially apply balances.
     try{
       const d=value as ReturnType<SquadBattleModel['snapshot']>;
       const num=(v:unknown,max=1e12)=>typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=max;
       const integer=(v:unknown,max=1e12)=>num(v,max)&&Number.isInteger(v);
-      if(!d||(d.version!==1&&d.version!==2&&d.version!==3&&d.version!==4&&d.version!==5&&d.version!==6&&d.version!==7&&d.version!==8)||!integer(d.monsterIndex,3)||!integer(d.count,3)||d.count<1||typeof d.continuous!=='boolean')return null;
+      if(!d||(d.version!==1&&d.version!==2&&d.version!==3&&d.version!==4&&d.version!==5&&d.version!==6&&d.version!==7&&d.version!==8&&d.version!==9)||!integer(d.monsterIndex,3)||!integer(d.count,3)||d.count<1||typeof d.continuous!=='boolean')return null;
       if(!Array.isArray(d.heroes)||d.heroes.length!==(d.version>=5?4:3)||!Array.isArray(d.enemies)||d.enemies.length!==d.count)return null;
       if(!['gold','kills','wave','clearedWaves','actions','damage','received'].every(k=>integer(d[k as keyof typeof d]))||d.wave<1)return null;
       if(!['idleElapsed','elapsed'].every(k=>num(d[k as keyof typeof d]))||!num(d.incomeRemainder,5)||d.incomeRemainder>=5||!num(d.timer,1)||d.timer>=1||!num(d.waveDelay,2))return null;
@@ -216,6 +238,14 @@ export class SquadBattleModel {
         const talents=d.version>=8?h.talents:[0,0,0,0];
         if(!Array.isArray(talents)||talents.length!==4||!talents.every((r,j)=>integer(r,TALENTS[j].max))||(talents[3]>0&&talents[2]===0)||talents.reduce((n,r,j)=>n+r*TALENTS[j].cost,0)>h.level-1)return null;
         b.heroes[i]={...h,stars,talents:talents.slice(),cooldown2:d.version>=7?h.cooldown2:0,queued2:d.version>=7?h.queued2:false};if(h.hp>b.stats(i).hp||h.shield>b.stats(i).power)return null;
+      }
+      if(d.version>=9){
+        if(!integer(d.lastSeen,1e15))return null;b.lastSeen=d.lastSeen;
+        if(d.offline!==null){const r=d.offline;
+          if(!r||!integer(r.seconds,OFFLINE_CONFIG.capSeconds)||r.seconds<5||r.seconds%5||!integer(r.gold)||!integer(r.checkpoint)||r.checkpoint<1||r.checkpoint>b.highestWave||!Array.isArray(r.experience)||r.experience.length!==4||!r.experience.every((v,i)=>integer(v)&&(b.owns(i)||v===0))||!Array.isArray(r.equipment)||r.equipment.length!==Math.floor(r.seconds/30))return null;
+          const ids=new Set(b.inventory.map(g=>g.id));for(const g of r.equipment){if(!g||!integer(g.id)||g.id<1||g.id>=b.nextGearId||ids.has(g.id)||!integer(g.slot,5)||!integer(g.quality,4)||!integer(g.level,100)||g.level<1||g.locked!==false||(g.enhancement||0)!==0||!['hp','attack','defense','power'].every(k=>integer(g[k],1000000)))return null;ids.add(g.id);}
+          b.offline=JSON.parse(JSON.stringify(r));
+        }
       }
       for(const e of d.enemies)if(!e||!integer(e.kind,3)||!integer(e.maxHp,1000000)||e.maxHp<1||!integer(e.hp,e.maxHp)||!integer(e.attack,100000))return null;
       if(d.result==='fighting'&&d.waveDelay===0&&(b.party.every(h=>h.hp===0)||d.enemies.every(e=>e.hp===0)))return null;
