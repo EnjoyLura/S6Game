@@ -16,3 +16,21 @@ test('v9 migration preserves progress and gives full initial stamina; invalid an
 
 test('defeat cannot settle rewards; all difficulties share one daily counter',()=>{const b=begun(4,2),trial=SquadBattleModel.restore(b.dungeon.run.battle);for(let i=0;i<600&&trial.result==='fighting';i++)trial.step(1);assert.equal(trial.result,'defeat');const s=trial.snapshot();s.version=9;delete s.dungeon;b.dungeon.run.battle=s;assert.ok(b.finishDungeon());assert.equal(b.gold,0);b.abandonDungeon();assert.equal(b.dungeon.stamina,100);assert.equal(b.dungeon.dailyUsed,1);assert.ok(SquadBattleModel.restore(b.snapshot()));});
 test('trial uses upgraded talent/equipment stats without mutating adventure health and reward gear obeys retention',()=>{const b=new SquadBattleModel();b.heroes[0].level=8;b.heroes[0].talents=[1,1,1,1];b.heroes[0].hp=b.stats(0).hp;b.heroes[0].hp-=100;const hp=b.heroes[0].hp;b.startDungeon(3,0,now);const trial=SquadBattleModel.restore(b.dungeon.run.battle);assert.deepEqual(trial.stats(0),b.stats(0));assert.equal(trial.heroes[0].hp,b.stats(0).hp);assert.equal(b.heroes[0].hp,hp);b.rules.enabled=true;b.rules.minQuality=5;complete(b);b.finishDungeon();assert.equal(b.inventory.length,0);assert.ok(b.materials>0);assert.equal(b.autoSalvaged,1);});
+
+
+test('finite dungeon manual dual skills, auto toggle and pause survive resume without a second entry charge',()=>{
+ const owner=new SquadBattleModel();owner.heroes.slice(0,3).forEach(h=>h.level=5);
+ assert.equal(owner.startDungeon(0,2,now),null);const trial=SquadBattleModel.restore(owner.dungeon.run.battle);
+ trial.autoSkill=false;assert.ok(trial.requestSkill(0,0));assert.ok(trial.requestSkill(0,1));
+ assert.equal(trial.requestSkill(0,0),false);trial.paused=true;
+ const snap=trial.snapshot();snap.version=9;delete snap.dungeon;owner.dungeon.run.battle=snap;
+ const loaded=SquadBattleModel.restore(owner.snapshot()),fight=SquadBattleModel.restore(loaded.dungeon.run.battle);
+ assert.equal(loaded.dungeon.stamina,100);assert.equal(fight.autoSkill,false);assert.equal(fight.paused,true);
+ assert.ok(fight.party[0].queued);assert.ok(fight.party[0].queued2);
+ assert.deepEqual(fight.step(.1),[]);fight.paused=false;
+ const hits=[];for(let i=0;i<150&&fight.result==='fighting';i++)hits.push(...fight.step(.1));
+ assert.ok(hits.some(h=>h.actor===0&&h.skill&&h.skillSlot===0));
+ assert.ok(hits.some(h=>h.actor===0&&h.skill&&h.skillSlot===2));
+ assert.ok(hits.filter(h=>h.actor===1).every(h=>!h.skill));
+ fight.autoSkill=true;assert.equal(SquadBattleModel.restore(fight.snapshot()).autoSkill,true);
+});

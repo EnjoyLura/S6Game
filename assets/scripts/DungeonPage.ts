@@ -1,14 +1,14 @@
-import {Node,Label,Texture2D,Rect,Sprite,SpriteFrame,UITransform,Graphics,Color,Layers,Mask,ScrollView,Vec2} from 'cc';
-import {SquadBattleModel,DUNGEON_CONFIG,DUNGEONS,DIFFICULTIES,dungeonReward,HERO_CONFIG,MONSTERS,generateGear} from './SquadBattleModel';
+import {Node,Label,Texture2D,Rect,Mask,ScrollView} from 'cc';
+import {SquadBattleModel,DUNGEON_CONFIG,DUNGEONS,DIFFICULTIES,dungeonReward,generateGear} from './SquadBattleModel';
 import {ModalView,modalNode,modalText,modalPanel,modalImage,modalButton,modalSection,modalRow} from './ModalView';
 import {drawNavigation,gearTile} from './GearView';
-import {BattleFeedback} from './BattleFeedback';
+import {BattleView,BattleArt} from './BattleView';
 type Page='hero'|'recruit'|'adventure'|'bag'|'dungeon';
 export class DungeonPage{
  readonly node:Node;private content:Node|null=null;private modal:Node|null=null;private tab=0;private difficulty=0;private selected=0;
  private stamina!:Label;private recovery!:Label;private remaining!:Label;private gold!:Label;private message:Label|null=null;
- private battle:SquadBattleModel|null=null;private fightLayer:Node|null=null;private feedback:BattleFeedback|null=null;private health:Label[]=[];private fighters:Node[]=[];private hpBars:Graphics[]=[];private battleStatus:Label|null=null;private clock=0;private finishing=false;
- constructor(parent:Node,private art:Texture2D,private nav:Texture2D,private bag:Texture2D,private portraits:Texture2D[],private monsters:Texture2D,private yard:Texture2D,private navigate:(page:Page)=>void,private model:()=>SquadBattleModel,private mutate:(fn:(b:SquadBattleModel)=>string|null)=>string|null){this.node=modalNode(parent,'Dungeon page',0,0,887,1774);this.render();this.node.active=false;}
+ private battle:SquadBattleModel|null=null;private fightLayer:Node|null=null;private view:BattleView|null=null;private clock=0;private finishing=false;
+ constructor(parent:Node,private art:Texture2D,private nav:Texture2D,private bag:Texture2D,private portraits:Texture2D[],private monsters:Texture2D,private yard:Texture2D,private navigate:(page:Page)=>void,private model:()=>SquadBattleModel,private mutate:(fn:(b:SquadBattleModel)=>string|null)=>string|null,private battleArt:BattleArt,private save:()=>boolean){this.node=modalNode(parent,'Dungeon page',0,0,887,1774);this.render();this.node.active=false;}
  private image(p:Node,t:Texture2D,r:Rect,x:number,y:number,w:number,h:number){return modalImage(p,t,r,x,y,w,h);}
  private text(p:Node,t:string,x:number,y:number,w:number,h:number,size=28){return modalText(p,t,x,y,w,h,size);}
  private scene(p:Node,id:number,x:number,y:number,w:number,h:number){const index=id<4?id:id===4?3:2;return this.image(p,this.art,new Rect(38,[280,590,898,1190][index],390,260),x,y,w,h);}
@@ -54,26 +54,17 @@ export class DungeonPage{
  }
  private resume(){
  const r=this.model().dungeon.run;if(!r)return;this.close();this.battle=SquadBattleModel.restore(r.battle);if(!this.battle){this.info('挑战异常','无法恢复战斗，请结束本次挑战');return;}
- this.fightLayer?.destroy();const p=this.fightLayer=modalNode(this.node,'Dungeon battle',0,0,887,1774);modalPanel(p,0,0,887,1774,'#FFF0DA',0);this.image(p,this.yard,new Rect(0,0,this.yard.width,this.yard.height),0,50,887,1490);
- modalPanel(p,0,744,840,220,'#FFF0DA',25);this.text(p,DUNGEONS[r.id].name+' · '+DIFFICULTIES[r.difficulty]+(r.id===5?' · 第'+r.floor+'层':''),0,782,810,60,37);
- this.battleStatus=this.text(p,'挑战进行中 · 自动释放技能',0,710,780,48,26);this.fighters=[];this.health=[];this.hpBars=[];
- const positions=[[-195,285],[-265,50],[-125,-185],[240,285],[225,50],[235,-185]];
- for(let i=0;i<6;i++){const hero=i<3?this.battle.formation[i]:undefined;const t=i<3?this.portraits[hero??0]:this.monsters,kind=i>=3?this.battle.enemies[i-3].kind:0;
- const rect=i<3?new Rect(0,0,t.width,t.height):new Rect(kind%2*this.monsters.width/2,Math.floor(kind/2)*this.monsters.height/2,this.monsters.width/2,this.monsters.height/2);const [x,y]=positions[i];const n=this.image(p,t,rect,x,y,235,235);if(i<3&&hero===undefined)n.active=false;this.fighters.push(n);
- const bar=modalNode(p,'Trial health',x,y-86,190,15);this.hpBars.push(bar.addComponent(Graphics));this.health.push(this.text(p,'',x,y-132,245,70,24));
+ this.view?.destroy();this.view=new BattleView(this.node,()=>this.battle!,this.battleArt,{title:DUNGEONS[r.id].name,dungeon:true,subtitle:()=>DIFFICULTIES[r.difficulty]+(r.id===5?' · 第'+r.floor+'层':''),onChange:()=>{this.persistBattle();this.save();},onFormation:()=>{},navigate:i=>{this.leave();this.navigate((['hero','recruit','adventure','bag','dungeon'] as Page[])[i]);},onLeave:()=>this.leave(),onEnd:()=>this.end(this.battle?.result==='victory')});
+ this.fightLayer=this.view.root;this.finishing=false;
  }
- const fx=modalNode(p,'Trial feedback',0,0,887,1774);this.feedback=new BattleFeedback(this.fighters,positions,fx,hit=>{const target=positions[hit.target];const l=this.text(fx,hit.damage?'−'+hit.damage:hit.heal?'+'+hit.heal:'护盾',target[0],target[1]+95,230,44,30);setTimeout(()=>{if(l.node.isValid)l.node.destroy();},700);});this.feedback.reset([...this.battle.party.map(h=>h.hp),...Array(3-this.battle.party.length).fill(0),...this.battle.enemies.map(e=>e.hp)],[...this.battle.party.map(h=>h.shield),...Array(6-this.battle.party.length).fill(0)]);
- modalPanel(p,0,-592,820,220,'#FFF0DA',30);this.text(p,'本次已扣除体力，刷新可继续\n胜利后自动发放奖励，失败不返还体力和次数',0,-588,760,120,27);
- modalButton(p,'离开战斗',-205,-780,350,80,()=>{this.persistBattle();this.fightLayer?.destroy();this.fightLayer=null;this.battle=null;this.render();},'peach');modalButton(p,'结束挑战',205,-780,350,80,()=>this.end(false));this.finishing=false;this.syncBattle();
- }
+ private leave(){this.persistBattle();this.save();this.view?.destroy();this.view=null;this.fightLayer=null;this.battle=null;this.render();}
  private persistBattle(){if(this.battle&&this.model().dungeon.run){const s:any=this.battle.snapshot();s.version=9;delete s.dungeon;this.model().dungeon.run!.battle=s;}}
  private end(win:boolean){
  this.persistBattle();const run=this.model().dungeon.run;if(!run)return;const reward=dungeonReward(run.id,run.difficulty,run.floor);
- const error=this.mutate(b=>win?b.finishDungeon():b.abandonDungeon());if(error){if(this.battleStatus)this.battleStatus.string=error+'，点击结束挑战可重试';this.finishing=false;return;}
- this.battle=null;this.fightLayer?.destroy();this.fightLayer=null;this.render();this.info(win?'挑战胜利':'挑战结束',win?'奖励已发放并保存\n金币 +'+reward.gold+' · 每位英雄经验 +'+reward.experience+'\n强化石 +'+reward.materials+' · 装备 '+reward.gear+' 件':'本次未获得奖励\n体力与每日次数不返还');
+ const error=this.mutate(b=>win?b.finishDungeon():b.abandonDungeon());if(error){this.view?.toast(error+'，点击结束挑战可重试');this.finishing=false;return;}
+ this.battle=null;this.view?.destroy();this.view=null;this.fightLayer=null;this.render();this.info(win?'挑战胜利':'挑战结束',win?'奖励已发放并保存\n金币 +'+reward.gold+' · 每位英雄经验 +'+reward.experience+'\n强化石 +'+reward.materials+' · 装备 '+reward.gear+' 件':'本次未获得奖励\n体力与每日次数不返还');
  }
- private syncBattle(){if(!this.battle)return;const b=this.battle;for(let i=0;i<6;i++){const h=i<3?b.party[i]:b.enemies[i-3];if(!h){this.health[i].string='';this.hpBars[i].clear();continue;}const max=i<3?b.battleStats(i).hp:b.enemies[i-3].maxHp;const g=this.hpBars[i];g.clear();g.fillColor=new Color().fromHEX('#C4AE8A');g.roundRect(-95,-7,190,14,7);g.fill();if(h.hp>0){g.fillColor=new Color().fromHEX(i<3?'#7CC64A':'#E8846C');g.roundRect(-95,-7,Math.max(8,190*h.hp/max),14,7);g.fill();}this.health[i].string=(i<3?HERO_CONFIG[b.formation[i]].name:MONSTERS[b.enemies[i-3].kind].name)+'\n♥ '+h.hp+'/'+max+(i<3&&b.party[i].shield>0?' ◆ '+b.party[i].shield:'');this.fighters[i].active=h.hp>0;} }
  private sync(){const d=this.model().dungeon;this.stamina.string='ϟ '+d.stamina+'/120';this.gold.string='● '+this.model().gold;const seconds=Math.max(0,Math.ceil((d.anchor+DUNGEON_CONFIG.recoverMs-d.clock)/1000));this.recovery.string=d.stamina===120?'体力已满':'下次恢复 '+('0'+Math.floor(seconds/60)).slice(-2)+':'+('0'+(seconds%60)).slice(-2);this.remaining.string=this.tab===2?'今日剩余挑战 '+(2-d.dailyUsed)+'/2 · 本地零点重置':this.tab===1?'已通关 '+(d.floor-1)+' 层 · 每层消耗体力':'体力随时间恢复 · 挑战前选择难度';}
- update(dt:number){this.sync();if(!this.battle||!this.fightLayer||this.finishing)return;const visual=Math.min(.1,dt);this.feedback?.update(visual);for(const hit of this.battle.step(visual))this.feedback?.play(hit);this.syncBattle();this.clock+=dt;if(this.clock>=1){this.clock=0;this.persistBattle();}if(this.battle.result!=='fighting'){this.persistBattle();this.finishing=true;this.end(this.battle.result==='victory');}}
+ update(dt:number){this.sync();if(!this.battle||!this.fightLayer||this.finishing)return;this.view?.update(dt);this.clock+=dt;if(this.clock>=1){this.clock=0;this.persistBattle();}if(this.battle.result!=='fighting'){this.persistBattle();this.finishing=true;this.end(this.battle.result==='victory');}}
  beforeSave(){this.persistBattle();}
 }

@@ -14,16 +14,21 @@ export function fitScreen(canvas:Node,camera:Camera){
  for(const p of containers)for(const n of p.children){
   if(n.getChildByName('Modal card')){fitModal(n,height);continue;}
   const u=n.getComponent(UITransform);if(!u)continue;
+  if(n.name==='Battle actors'){
+    const shrink=Math.min(1,Math.max(.65,1+(height-1774)/1100));
+    n.setScale(shrink,shrink,1);n.setPosition(0,Math.max(0,(1774-height)*.6),0);continue;
+  }
   if(!original.has(n))original.set(n,{x:n.position.x,y:n.position.y,height:u.height,width:u.width,scaleX:n.scale.x,scaleY:n.scale.y});
   const o=original.get(n)!;if(o.applied===height)continue;o.applied=height;
   // Combat feedback owns its moving sprites and must not be repositioned by layout.
-  if(p.name==='Adventure page'&&(n.name==='Combat effects'||n.getComponent(Sprite)&&/^(骑士|法师|牧师|弓箭手|Monster |Empty slot)/.test(n.name)||(n.name==='Health'||/^(heart|shield)$/.test(n.name))&&o.y>-333))continue;
+  if((p.name==='Adventure page'||p.name==='Dungeon battle')&&(n.name==='Combat effects'||n.getComponent(Sprite)&&/^(骑士|法师|牧师|弓箭手|Monster |Empty slot)/.test(n.name)||(n.name==='Health'||/^(heart|shield)$/.test(n.name))&&o.y>-333))continue;
   n.setScale(o.scaleX,o.scaleY,n.scale.z);
   const delta=(height-1774)/2;
   const compact=p.name!=='Adventure page'&&p.name!=='Dungeon content'&&p.name!=='Dungeon battle';
   if(compact&&height<1774&&n.name!=='Navigation'&&o.width<880){const scale=height/1774;n.setPosition(o.x*scale,o.y*scale,n.position.z);n.setScale(o.scaleX*scale,o.scaleY*scale,1);continue;}
-  const bottom=n.name==='Navigation'||p.name==='Adventure page'&&o.y<-333||p.name==='Dungeon content'&&o.y<=-680||p.name==='Dungeon battle'&&o.y<=-680;
-  const top=p.name==='Adventure page'?333:580;
+  const battle=p.name==='Adventure page'||p.name==='Dungeon battle';
+  const bottom=n.name==='Navigation'||battle&&(o.y<-333||['Formation','离开','Battle notice'].indexOf(n.name)>=0)||p.name==='Dungeon content'&&o.y<=-680;
+  const top=(p.name==='Adventure page'||p.name==='Dungeon battle')?300:580;
   const y=o.y>=top?o.y+delta:bottom?o.y-delta:o.y;n.setPosition(o.x,y,n.position.z);
   if(n.name==='Forest'){
     const forestHeight=height/2+333+delta;n.setScale(1,forestHeight/o.height,1);n.setPosition(0,(height/2-333-delta)/2,0);
