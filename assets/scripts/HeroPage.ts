@@ -14,7 +14,7 @@ export class HeroPage {
   private selected=0; private balance!:Label; private experienceLabel!:Label; private experienceFill!:Graphics; private upgradeButton!:Node;
   private content!:Node;
   private dialog:Node|null=null;
-  constructor(parent:Node,private atlas:Texture2D,private forest:Texture2D,private actors:Texture2D,private onAdventure:()=>void,private onBag:(slot?:number,hero?:number)=>void,private heroTextures:Texture2D[],private battleUI:Texture2D,private progress:()=>{gold:number;experience:number[];levels:number[];stats:typeof HERO_CONFIG},private onUpgrade:(i:number)=>string|null,private model:()=>SquadBattleModel,private mutate:(fn:(b:SquadBattleModel)=>string|null)=>string|null,private bagAtlas:Texture2D,private onRecruit:()=>void){
+  constructor(parent:Node,private atlas:Texture2D,private forest:Texture2D,private actors:Texture2D,private onAdventure:()=>void,private onBag:(slot?:number,hero?:number)=>void,private heroTextures:Texture2D[],private battleUI:Texture2D,private progress:()=>{gold:number;experience:number[];levels:number[];stats:typeof HERO_CONFIG},private onUpgrade:(i:number)=>string|null,private model:()=>SquadBattleModel,private mutate:(fn:(b:SquadBattleModel)=>string|null)=>string|null,private bagAtlas:Texture2D,private onRecruit:()=>void,private onDungeon:()=>void){
     this.node=this.nodeAt(parent,'Hero page',0,0,887,1774);this.render();this.node.active=false;
   }
   private nodeAt(parent:Node,name:string,x:number,y:number,w:number,h:number){const n=new Node(name);n.layer=Layers.Enum.UI_2D;n.parent=parent;n.setPosition(x,y);n.addComponent(UITransform).setContentSize(w,h);return n;}
@@ -224,7 +224,7 @@ export class HeroPage {
       const v=this.text(p,owned?values[c][r]:'—',x+130,y,115,36,26);v.horizontalAlign=Label.HorizontalAlign.RIGHT;
       l.node.on(Node.EventType.TOUCH_END,()=>this.info(label,label==='移速'?'移速决定每轮出手顺序。\n不是场景移动速度，也不增加行动次数。':label==='连击率'?'普攻触发连击的概率。\n当前战斗样例尚未启用连击。':label==='破甲率'?'无视目标防御的比例。\n当前没有破甲装备。防御会减少受到的伤害。':label==='闪避率'?'初期仅对普攻生效。\n当前战斗样例尚未启用闪避。':'生命、攻击、防御包含穿戴装备加成。\n防御直接减少每次敌人攻击伤害，最低1点。\n装备技能效果增加主动技能数值，其余百分比属性暂未启用。'));
     }));
-    drawNavigation(p,this.atlas,this.bagAtlas,0,i=>{if(i===1)this.onRecruit();else if(i===2)this.onAdventure();else if(i===3)this.onBag();else if(i!==0)this.info(['英雄','招募','冒险','背包','副本'][i],'此功能尚未开放。');});
+    drawNavigation(p,this.atlas,this.bagAtlas,0,i=>{if(i===1)this.onRecruit();else if(i===2)this.onAdventure();else if(i===3)this.onBag();else if(i===4)this.onDungeon();else if(i!==0)this.info(['英雄','招募','冒险','背包','副本'][i],'此功能尚未开放。');});
     this.refreshIncome();
   }
 }

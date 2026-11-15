@@ -1,3 +1,37 @@
+// Dungeon values are test tuning; all clocks use milliseconds and the local calendar.
+export const DUNGEON_CONFIG={staminaCap:120,recoverMs:6*60*1000,dailyLimit:2,costs:[10,15,20],scales:[1,1.7,2.6]};
+export const DUNGEONS=[
+ {name:'金币宝库',drop:'金币产出',kind:0},
+ {name:'历练营地',drop:'英雄经验',kind:3},
+ {name:'锻造矿洞',drop:'强化材料',kind:2},
+ {name:'遗落秘境',drop:'装备掉落',kind:1},
+ {name:'蘑菇守卫战',drop:'金币 · 经验 · 强化材料',kind:1},
+ {name:'无尽之塔',drop:'逐层挑战 · 首次通层奖励',kind:0},
+];
+export const DIFFICULTIES=['普通','困难','噩梦'];
+export type DungeonRun={id:number;difficulty:number;floor:number;battle:any};
+export type DungeonProgress={stamina:number;anchor:number;clock:number;day:number;dailyUsed:number;floor:number;run:DungeonRun|null};
+export const initialDungeon=():DungeonProgress=>({stamina:120,anchor:0,clock:0,day:0,dailyUsed:0,floor:1,run:null});
+export const localDay=(ms:number)=>{const d=new Date(ms);return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();};
+export function recoverDungeon(p:DungeonProgress,now:number){
+ if(!Number.isSafeInteger(now)||now<=0)return;
+ now=Math.max(now,p.clock);p.clock=now;
+ const day=localDay(now);if(day>p.day){p.day=day;p.dailyUsed=0;}
+ if(!p.anchor){p.anchor=now;return;}
+ if(p.stamina>=DUNGEON_CONFIG.staminaCap){p.anchor=now;return;}
+ const recovered=Math.floor((now-p.anchor)/DUNGEON_CONFIG.recoverMs);
+ if(recovered>0){p.stamina=Math.min(DUNGEON_CONFIG.staminaCap,p.stamina+recovered);p.anchor=p.stamina===DUNGEON_CONFIG.staminaCap?now:p.anchor+recovered*DUNGEON_CONFIG.recoverMs;}
+}
+export function validDungeon(p:DungeonProgress){
+ const int=(v:any,max=1e15)=>Number.isSafeInteger(v)&&v>=0&&v<=max;
+ if(!p||!int(p.stamina,120)||!int(p.anchor)||!int(p.clock)||p.anchor>p.clock||!int(p.day,99991231)||!int(p.dailyUsed,2)||!int(p.floor,10000)||p.floor<1)return false;
+ const r=p.run;return r===null||!!r&&int(r.id,5)&&int(r.difficulty,2)&&int(r.floor,10000)&&r.floor>=1&&(r.id!==5||r.floor===p.floor)&&!!r.battle&&r.battle.version===9&&r.battle.continuous===false&&r.battle.count===3;
+}
+export function dungeonReward(id:number,difficulty:number,floor=1){
+ const scale=difficulty+1,layer=id===5?floor:1;
+ return {gold:([3000,0,0,0,1500,500][id]||0)*scale*layer,experience:([0,1200,0,0,600,100][id]||0)*scale*layer,materials:([0,0,30,0,15,5][id]||0)*scale,gear:id===3?scale:0,level:Math.min(100,12+difficulty*6)};
+}
+
 export const RECRUIT_CONFIG={initialTickets:60,epicPity:10,legendPity:30,legendRate:.05,epicRate:.2,upMageRate:.5};
 export const RECRUIT_HEROES=['骑士','法师','牧师','弓箭手'];
 export type RecruitResult={id:number;pool:number;hero:number;rarity:number;fresh:boolean};
@@ -84,6 +118,29 @@ export const FIRE_TARGET:EnemyTargetRule='random';
 export type SquadHit = {actor:number;hero?:number;target:number;damage:number;blocked:number;heal:number;skill:boolean;skillSlot?:number;killed?:boolean;hpAfter:number;shieldAfter:number};
 // Combat indices 0..2 are formation slots, not roster IDs; 3..5 are enemies.
 export class SquadBattleModel {
+  dungeon:DungeonProgress=initialDungeon();
+  refreshDungeon(now:number){recoverDungeon(this.dungeon,now);}
+  startDungeon(id:number,difficulty:number,now:number){
+    if(!Number.isInteger(id)||id<0||id>=DUNGEONS.length||!Number.isInteger(difficulty)||difficulty<0||difficulty>2)return '无效的副本或难度';
+    this.refreshDungeon(now);const p=this.dungeon;if(p.run)return '已有进行中的挑战，请先继续或结束';
+    if(!p.clock)return '时间异常，请重试';if(id===5&&p.floor>=10000)return '已达到测试层数上限';
+    if(id===4&&p.dailyUsed>=DUNGEON_CONFIG.dailyLimit)return '今日挑战次数已用完，明日再来';
+    const cost=DUNGEON_CONFIG.costs[difficulty];if(p.stamina<cost)return '体力不足，需要'+cost+'点';
+    const battle=new SquadBattleModel(DUNGEONS[id].kind,Math.random,3,false);battle.inheritIncome(this);battle.dungeon=initialDungeon();battle.offline=null;battle.paused=false;
+    const scale=DUNGEON_CONFIG.scales[difficulty]*(id===5?1+(p.floor-1)*.15:1);
+    battle.enemies.forEach(e=>{e.hp=e.maxHp=Math.min(1000000,Math.round(e.maxHp*scale));e.attack=Math.min(100000,Math.round(e.attack*scale));});
+    const snapshot:any=battle.snapshot();snapshot.version=9;delete snapshot.dungeon;
+    p.stamina-=cost;if(id===4)p.dailyUsed++;p.run={id,difficulty,floor:p.floor,battle:snapshot};return null;
+  }
+  finishDungeon(){
+    const p=this.dungeon,r=p.run;if(!r)return '没有进行中的挑战';
+    const battle=SquadBattleModel.restore(r.battle);if(!battle||battle.result!=='victory')return '挑战尚未胜利';
+    const reward=dungeonReward(r.id,r.difficulty,r.floor);this.gold+=reward.gold;this.materials+=reward.materials;
+    this.heroes.forEach((h,i)=>{if(this.owns(i))h.experience+=reward.experience;});
+    for(let i=0;i<reward.gear;i++){const g=generateGear(this.nextGearId++,reward.level);this.inventory.push(g);if(this.rules.enabled&&!this.retained(g)){this.salvage([g.id]);this.autoSalvaged++;}}
+    if(r.id===5)p.floor++;p.run=null;return null;
+  }
+  abandonDungeon(){if(!this.dungeon.run)return '没有进行中的挑战';this.dungeon.run=null;return null;}
   lastSeen=0;offline:OfflineReward|null=null;
   markSeen(now:number){if(Number.isFinite(now)&&now>0)this.lastSeen=Math.max(this.lastSeen,Math.floor(now));}
   prepareOffline(now:number){
@@ -201,20 +258,20 @@ export class SquadBattleModel {
   private patient(){return this.party.map((_,i)=>i).filter(i=>this.party[i].hp>0&&this.party[i].hp<this.battleStats(i).hp).sort((a,b)=>this.party[a].hp/this.battleStats(a).hp-this.party[b].hp/this.battleStats(b).hp)[0];}
   private target(){const alive=this.party.map((_,i)=>i).filter(i=>this.party[i].hp>0);const total=alive.reduce((s,i)=>s+(i===0?6:2),0);let roll=this.random()*total;for(const i of alive){roll-=i===0?6:2;if(roll<0)return i;}return alive[alive.length-1];}
   inheritIncome(previous:SquadBattleModel){
-    this.lastSeen=previous.lastSeen;this.offline=previous.offline?JSON.parse(JSON.stringify(previous.offline)):null;this.formation=previous.formation.slice();this.buildOrder();this.materials=previous.materials;this.autoSalvaged=previous.autoSalvaged;this.rules={...previous.rules,attributes:previous.rules.attributes.slice()};
+    this.dungeon=JSON.parse(JSON.stringify(previous.dungeon));this.lastSeen=previous.lastSeen;this.offline=previous.offline?JSON.parse(JSON.stringify(previous.offline)):null;this.formation=previous.formation.slice();this.buildOrder();this.materials=previous.materials;this.autoSalvaged=previous.autoSalvaged;this.rules={...previous.rules,attributes:previous.rules.attributes.slice()};
     this.recruitment=JSON.parse(JSON.stringify(previous.recruitment));
     this.inventory=previous.inventory.map(g=>({...g}));this.loadouts=previous.loadouts.map(s=>s.slice());this.nextGearId=previous.nextGearId;this.dropRemainder=previous.dropRemainder;this.highestWave=previous.highestWave;
     this.gold=previous.gold;this.kills=previous.kills;this.idleElapsed=previous.idleElapsed;this.incomeRemainder=previous.incomeRemainder;
     this.heroes.forEach((h,i)=>{h.experience=previous.heroes[i].experience;h.level=previous.heroes[i].level;h.stars=previous.heroes[i].stars;h.talents=previous.heroes[i].talents.slice();h.hp=this.stats(i).hp;});
   }
-  snapshot(){return {version:9,lastSeen:this.lastSeen,offline:this.offline?JSON.parse(JSON.stringify(this.offline)) as OfflineReward:null,formation:this.formation.slice(),recruitment:JSON.parse(JSON.stringify(this.recruitment)) as typeof this.recruitment,materials:this.materials,autoSalvaged:this.autoSalvaged,rules:{...this.rules,attributes:this.rules.attributes.slice()},inventory:this.inventory.map(g=>({...g,enhancement:g.enhancement||0})),loadouts:this.loadouts.map(s=>s.slice()),nextGearId:this.nextGearId,dropRemainder:this.dropRemainder,highestWave:this.highestWave,heroes:this.heroes.map(h=>({...h,talents:h.talents.slice()})),enemies:this.enemies.map(e=>({...e})),gold:this.gold,kills:this.kills,wave:this.wave,clearedWaves:this.clearedWaves,idleElapsed:this.idleElapsed,incomeRemainder:this.incomeRemainder,elapsed:this.elapsed,actions:this.actions,damage:this.damage,received:this.received,autoSkill:this.autoSkill,paused:this.paused,waveDelay:this.waveDelay,regrouping:this.regrouping,result:this.result,cursor:this.cursor,timer:this.timer,monsterIndex:this.monsterIndex,count:this.count,continuous:this.continuous};}
+  snapshot(){return {version:10,dungeon:JSON.parse(JSON.stringify(this.dungeon)) as DungeonProgress,lastSeen:this.lastSeen,offline:this.offline?JSON.parse(JSON.stringify(this.offline)) as OfflineReward:null,formation:this.formation.slice(),recruitment:JSON.parse(JSON.stringify(this.recruitment)) as typeof this.recruitment,materials:this.materials,autoSalvaged:this.autoSalvaged,rules:{...this.rules,attributes:this.rules.attributes.slice()},inventory:this.inventory.map(g=>({...g,enhancement:g.enhancement||0})),loadouts:this.loadouts.map(s=>s.slice()),nextGearId:this.nextGearId,dropRemainder:this.dropRemainder,highestWave:this.highestWave,heroes:this.heroes.map(h=>({...h,talents:h.talents.slice()})),enemies:this.enemies.map(e=>({...e})),gold:this.gold,kills:this.kills,wave:this.wave,clearedWaves:this.clearedWaves,idleElapsed:this.idleElapsed,incomeRemainder:this.incomeRemainder,elapsed:this.elapsed,actions:this.actions,damage:this.damage,received:this.received,autoSkill:this.autoSkill,paused:this.paused,waveDelay:this.waveDelay,regrouping:this.regrouping,result:this.result,cursor:this.cursor,timer:this.timer,monsterIndex:this.monsterIndex,count:this.count,continuous:this.continuous};}
   static restore(value:unknown):SquadBattleModel|null{
     // Reject malformed or future saves as a whole; never partially apply balances.
     try{
       const d=value as ReturnType<SquadBattleModel['snapshot']>;
       const num=(v:unknown,max=1e12)=>typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=max;
       const integer=(v:unknown,max=1e12)=>num(v,max)&&Number.isInteger(v);
-      if(!d||(d.version!==1&&d.version!==2&&d.version!==3&&d.version!==4&&d.version!==5&&d.version!==6&&d.version!==7&&d.version!==8&&d.version!==9)||!integer(d.monsterIndex,3)||!integer(d.count,3)||d.count<1||typeof d.continuous!=='boolean')return null;
+      if(!d||(d.version!==1&&d.version!==2&&d.version!==3&&d.version!==4&&d.version!==5&&d.version!==6&&d.version!==7&&d.version!==8&&d.version!==9&&d.version!==10)||!integer(d.monsterIndex,3)||!integer(d.count,3)||d.count<1||typeof d.continuous!=='boolean')return null;
       if(!Array.isArray(d.heroes)||d.heroes.length!==(d.version>=5?4:3)||!Array.isArray(d.enemies)||d.enemies.length!==d.count)return null;
       if(!['gold','kills','wave','clearedWaves','actions','damage','received'].every(k=>integer(d[k as keyof typeof d]))||d.wave<1)return null;
       if(!['idleElapsed','elapsed'].every(k=>num(d[k as keyof typeof d]))||!num(d.incomeRemainder,5)||d.incomeRemainder>=5||!num(d.timer,1)||d.timer>=1||!num(d.waveDelay,2))return null;
@@ -251,6 +308,10 @@ export class SquadBattleModel {
       if(d.result==='fighting'&&d.waveDelay===0&&(b.party.every(h=>h.hp===0)||d.enemies.every(e=>e.hp===0)))return null;
       b.enemies=d.enemies.map(e=>({...e}));
       for(const key of ['gold','kills','wave','clearedWaves','idleElapsed','incomeRemainder','elapsed','actions','damage','received','autoSkill','paused','waveDelay','regrouping','result','cursor','timer'] as const)(b as any)[key]=d[key];
+      if(d.version>=10){if(!validDungeon(d.dungeon))return null;
+        if(d.dungeon.run&&!SquadBattleModel.restore(d.dungeon.run.battle))return null;
+        b.dungeon=JSON.parse(JSON.stringify(d.dungeon));
+      }
       return b;
     }catch{return null;}
   }

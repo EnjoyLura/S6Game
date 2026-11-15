@@ -14,7 +14,7 @@ export class BagPage {
   private savedOffsets=[0,0,0];private targetHero=0;private batch=false;private selected=new Set<number>();private batchIds:number[]=[];
   refresh(){this.save();this.render();if(this.modal)this.modal.setSiblingIndex(this.node.children.length-1);}
   showSlot(slot:number,hero:number){this.batch=false;this.selected.clear();this.lockedOnly=false;this.targetHero=hero;this.category=0;this.part=slot+1;this.savedOffsets[0]=0;this.render();}
-  constructor(parent:Node,private atlas:Texture2D,private yard:Texture2D,private navigate:(page:'hero'|'adventure'|'recruit')=>void,private model:()=>SquadBattleModel,private mutate:(fn:(b:SquadBattleModel)=>string|null)=>string|null,private navAtlas:Texture2D){this.node=this.base(parent,'Bag page',0,0,887,1774);this.render();this.node.active=false;}
+  constructor(parent:Node,private atlas:Texture2D,private yard:Texture2D,private navigate:(page:'hero'|'adventure'|'recruit'|'dungeon')=>void,private model:()=>SquadBattleModel,private mutate:(fn:(b:SquadBattleModel)=>string|null)=>string|null,private navAtlas:Texture2D){this.node=this.base(parent,'Bag page',0,0,887,1774);this.render();this.node.active=false;}
   private base(parent:Node,name:string,x:number,y:number,w:number,h:number){const n=new Node(name);n.parent=parent;n.layer=Layers.Enum.UI_2D;n.setPosition(x,y);n.addComponent(UITransform).setContentSize(w,h);return n;}
   private panel(parent:Node,x:number,y:number,w:number,h:number,color=CREAM,r=24){const n=this.base(parent,'Panel',x,y,w,h),g=n.addComponent(Graphics);g.fillColor=new Color().fromHEX(color);g.roundRect(-w/2,-h/2,w,h,r);g.fill();return n;}
   private text(parent:Node,t:string,x:number,y:number,w:number,h:number,size=28,color=INK){const l=this.base(parent,t,x,y,w,h).addComponent(Label);l.string=t;l.fontFamily='Microsoft YaHei';l.isBold=true;l.fontSize=size;l.lineHeight=size*1.4;l.color=new Color().fromHEX(color);l.horizontalAlign=Label.HorizontalAlign.CENTER;l.verticalAlign=Label.VerticalAlign.CENTER;l.overflow=Label.Overflow.SHRINK;return l;}
@@ -122,6 +122,6 @@ export class BagPage {
     this.text(p,this.batch?'预计 '+model.salvagePreview(Array.from(this.selected)).materials+' 强化石':this.category===0?'自动分解：'+(model.rules.enabled?'开启':'关闭'):this.category===1?'分解获得 · 强化消耗':'暂无物品',-303,-663,230,35,22,'#AA8060');
     this.button(p,this.batch?'按规则选':'保留规则',-10,-628,240,70,()=>{if(this.batch){this.selected=new Set(this.filteredItems().filter(g=>!model.retained(g)).map(g=>g.id));this.refresh();}else this.rulesDetail();});
     this.button(p,this.batch?'分解 '+this.selected.size+' 件':'批量分解',280,-628,285,70,()=>{if(this.batch){this.confirmSalvage();return;}this.category=0;this.batchIds=model.inventory.map(g=>g.id);this.batch=true;this.selected.clear();this.savedOffsets[0]=0;this.render();},true);
-    drawNavigation(p,this.navAtlas,this.atlas,3,i=>{this.save();if(i===0)this.navigate('hero');else if(i===1)this.navigate('recruit');else if(i===2)this.navigate('adventure');else if(i!==3)this.detail(i===1?'招募':'副本','此功能尚未开放。');});
+    drawNavigation(p,this.navAtlas,this.atlas,3,i=>{this.save();if(i===0)this.navigate('hero');else if(i===1)this.navigate('recruit');else if(i===2)this.navigate('adventure');else if(i===4)this.navigate('dungeon');else if(i!==3)this.detail(i===1?'招募':'副本','此功能尚未开放。');});
   }
 }

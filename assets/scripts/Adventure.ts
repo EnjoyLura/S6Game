@@ -1,3 +1,5 @@
+import {fitScreen} from './ScreenLayout';
+import {DungeonPage} from './DungeonPage';
 import {ModalView,setModalSkin,modalButton,modalRow,modalSection,modalText} from './ModalView';
 import {SKILL_NAMES,SECOND_COOLDOWN} from './SquadBattleModel';
 import {RecruitPage} from './RecruitPage';
@@ -12,7 +14,7 @@ const { ccclass } = _decorator;
 const C = { ink: '#704124', cream: '#FFF6E4', gold: '#FFCD54', muted: '#AE8966', green: '#78C847', red: '#EB8068' };
 @ccclass('Adventure')
 export class Adventure extends Component {
-  private root!: Node; private model = new SquadBattleModel(0,Math.random,3,true); private speed = 1; private ready = false;
+  private screenCamera!:Camera; private root!: Node; private model = new SquadBattleModel(0,Math.random,3,true); private speed = 1; private ready = false;
   private battleArt!:Texture2D[]; private shownFormation='';
   private units:Node[]=[]; private hpLabels:Label[]=[]; private bars:Graphics[]=[];
   private partyHP:Label[]=[]; private partyBars:Graphics[]=[]; private skillLabels:Label[]=[]; private skillShades:Graphics[]=[];
@@ -21,18 +23,18 @@ export class Adventure extends Component {
   private heartIcons:Node[]=[]; private shields:Label[]=[];private shieldIcons:Node[]=[];private partyShields:Label[]=[];private partyShieldIcons:Node[]=[];private feedback!:BattleFeedback; private autoDot!:Graphics; private menu!:Node; private statsVisible=false; private foregroundPaused=false;
   private ui!:Texture2D; private heroTextures:Texture2D[]=[]; private monsters!:Texture2D; private enemyPortraits:Node[]=[]; private shownWave=0; private shownRegroup=false;
   private floating:{target:number;text:string;color:string}[]=[]; private floatTimer=0; private floatSerial=0; private effects=new Set<Node>();
-  private recruitPage!:RecruitPage; private heroPage!:HeroPage; private bagPage!:BagPage; private currentPage:'adventure'|'hero'|'bag'|'recruit'='adventure'; private canvasRoot!:Node;
+  private dungeonPage!:DungeonPage; private recruitPage!:RecruitPage; private heroPage!:HeroPage; private bagPage!:BagPage; private currentPage:'adventure'|'hero'|'bag'|'recruit'|'dungeon'='adventure'; private canvasRoot!:Node;
   private saves!:LocalSave<SquadBattleModel>; private saveClock=0; private background=false;
-  private saveProgress=()=>{if(!this.saves)return false;if(!this.background)this.model.markSeen(Date.now());const snapshot=this.model.snapshot();if(this.background)snapshot.paused=this.foregroundPaused;const ok=this.saves.save(snapshot);if(!ok&&this.notice)this.notice.string=this.saves.error;return ok;};
+  private saveProgress=()=>{if(!this.saves)return false;this.dungeonPage?.beforeSave();this.model.refreshDungeon(Date.now());if(!this.background)this.model.markSeen(Date.now());const snapshot=this.model.snapshot();if(this.background)snapshot.paused=this.foregroundPaused;const ok=this.saves.save(snapshot);if(!ok&&this.notice)this.notice.string=this.saves.error;return ok;};
   private upgradeHero=(i:number)=>{const before=this.model.snapshot();const error=this.model.upgrade(i);if(error)return error;if(!this.saveProgress()){this.model=SquadBattleModel.restore(before)!;return this.saves.error+'，本次升级未扣经验';}return null;};
   private mutateEquipment=(fn:(b:SquadBattleModel)=>string|null)=>{const before=this.model.snapshot();const error=fn(this.model);if(error)return error;if(!this.saveProgress()){this.model=SquadBattleModel.restore(before)!;return this.saves.error+'，本次操作已撤销';}this.resetFeedback();return null;};
   onLoad() {
     this.saves=new LocalSave(sys.localStorage,SquadBattleModel.restore);this.model=this.saves.load()||this.model;this.model.prepareOffline(Date.now());this.saveProgress();
     if(typeof window!=='undefined')window.addEventListener('beforeunload',this.saveProgress);
     profiler.hideStats();
-    view.setDesignResolutionSize(887,1774,ResolutionPolicy.SHOW_ALL);
+    view.setDesignResolutionSize(887,1774,ResolutionPolicy.FIXED_WIDTH);
     const cameraNode = new Node('UI Camera'); cameraNode.parent = this.node;
-    cameraNode.setPosition(443.5,887,1000); const camera=cameraNode.addComponent(Camera);
+    cameraNode.setPosition(443.5,887,1000); const camera=cameraNode.addComponent(Camera);this.screenCamera=camera;
     camera.projection=Camera.ProjectionType.ORTHO; camera.orthoHeight=887;
     camera.clearColor=new Color(31,46,37,255); camera.visibility=Layers.Enum.UI_2D;
     this.root=new Node('Adventure Canvas');this.root.layer=Layers.Enum.UI_2D;this.root.parent=this.node;
@@ -42,13 +44,13 @@ export class Adventure extends Component {
     this.root=this.base('Adventure page',0,0,887,1774,this.canvasRoot);
     this.panel('Page',0,0,887,1774,C.cream,0);
     game.on(Game.EVENT_HIDE,this.hide,this);game.on(Game.EVENT_SHOW,this.show,this);
-    Promise.all(['forest','hero-knight','hero-mage','hero-priest','hero-archer','monsters-4','adventure-ui-v5','hero-ui-v6','training-yard','bag-ui-v4','recruit-ui-v1','modal-skin-v1','modal-controls-9'].map(n=>this.texture('art/'+n))).then(([forest,knight,mage,priest,archer,monsters,ui,heroUI,yard,bagUI,recruitUI,modalSkin,modalControls])=>{
+    Promise.all(['forest','hero-knight','hero-mage','hero-priest','hero-archer','monsters-4','adventure-ui-v5','hero-ui-v6','training-yard','bag-ui-v4','recruit-ui-v1','modal-skin-v1','modal-controls-9','dungeon-ui-v2'].map(n=>this.texture('art/'+n))).then(([forest,knight,mage,priest,archer,monsters,ui,heroUI,yard,bagUI,recruitUI,modalSkin,modalControls,dungeonUI])=>{
       setModalSkin(modalSkin,modalControls);
       this.ui=ui;this.heroTextures=[knight,mage,priest,archer];this.monsters=monsters;
       this.battleArt=[forest,heroUI,bagUI];this.rebuildBattle();
-      this.heroPage=new HeroPage(this.canvasRoot,heroUI,yard,knight,()=>this.openPage('adventure'),(slot,hero)=>{this.openPage('bag');if(slot!==undefined)this.bagPage.showSlot(slot,hero!);},this.heroTextures,ui,()=>({gold:this.model.gold,experience:this.model.heroes.map(h=>h.experience),levels:this.model.heroes.map(h=>h.level),stats:this.model.heroes.map((_,i)=>this.model.stats(i))}),this.upgradeHero,()=>this.model,this.mutateEquipment,bagUI,()=>this.openPage('recruit'));
+      this.heroPage=new HeroPage(this.canvasRoot,heroUI,yard,knight,()=>this.openPage('adventure'),(slot,hero)=>{this.openPage('bag');if(slot!==undefined)this.bagPage.showSlot(slot,hero!);},this.heroTextures,ui,()=>({gold:this.model.gold,experience:this.model.heroes.map(h=>h.experience),levels:this.model.heroes.map(h=>h.level),stats:this.model.heroes.map((_,i)=>this.model.stats(i))}),this.upgradeHero,()=>this.model,this.mutateEquipment,bagUI,()=>this.openPage('recruit'),()=>this.openPage('dungeon'));
       this.bagPage=new BagPage(this.canvasRoot,bagUI,yard,(page)=>this.openPage(page),()=>this.model,this.mutateEquipment,heroUI);
-      this.recruitPage=new RecruitPage(this.canvasRoot,recruitUI,heroUI,bagUI,page=>this.openPage(page),()=>this.model,this.mutateEquipment,this.heroTextures);this.showOffline();
+      this.recruitPage=new RecruitPage(this.canvasRoot,recruitUI,heroUI,bagUI,page=>this.openPage(page),()=>this.model,this.mutateEquipment,this.heroTextures);this.dungeonPage=new DungeonPage(this.canvasRoot,dungeonUI,heroUI,bagUI,this.heroTextures,this.monsters,yard,page=>this.openPage(page),()=>this.model,this.mutateEquipment);if(this.model.dungeon.run)this.openPage('dungeon');this.showOffline();
     }).catch(e=>{console.error(e);this.label('素材加载失败，请刷新重试',0,0,700,70,34);});
   }
   private rebuildBattle(){
@@ -56,7 +58,7 @@ export class Adventure extends Component {
     this.root.destroyAllChildren();this.units=[];this.turns=[];this.enemyPortraits=[];this.partyHP=[];this.partyBars=[];this.skillLabels=[];this.skillShades=[];this.partyShields=[];this.partyShieldIcons=[];
     this.panel('Page',0,0,887,1774,C.cream,0);
     const [forest,heroUI,bagUI]=this.battleArt;this.shownFormation=this.model.formation.join();this.shownWave=0;
-      const bg=this.picture(forest,new Rect(0,0,forest.width,forest.height),0,277,887,1220,'Forest');bg.setSiblingIndex(1);
+      this.picture(forest,new Rect(0,0,forest.width,forest.height),0,277,887,1220,'Forest');
       this.model.formation.forEach((id,i)=>{const t=this.heroTextures[id];const [x,y]=this.positions[i];this.units.push(this.picture(t,new Rect(0,0,t.width,t.height),x,y,i===0?280:260,i===0?280:260,HERO_CONFIG[this.model.formation[i]].name));});
       if(this.units[1])this.units[1].setSiblingIndex(this.units[0].getSiblingIndex());
       for(let i=this.units.length;i<3;i++){this.units[i]=this.picture(this.heroTextures[0],new Rect(0,0,this.heroTextures[0].width,this.heroTextures[0].height),this.positions[i][0],this.positions[i][1],260,260,'Empty slot');}
@@ -130,7 +132,7 @@ export class Adventure extends Component {
         this.skillShades[i*2+j]=this.base('Cooldown '+i+' '+j,x,-585,120,120).addComponent(Graphics);this.skillLabels[i*2+j]=this.label('',x,-585,110,70,30,'#FFFFFF');
       }
     }
-    drawNavigation(this.root,navAtlas,bagAtlas,2,i=>{if(i===0)this.openPage('hero');else if(i===1)this.openPage('recruit');else if(i===3)this.openPage('bag');else if(i!==2)this.toast(['英雄','招募','冒险','背包','副本'][i]+'暂未开放');});
+    drawNavigation(this.root,navAtlas,bagAtlas,2,i=>{if(i===0)this.openPage('hero');else if(i===1)this.openPage('recruit');else if(i===3)this.openPage('bag');else if(i===4)this.openPage('dungeon');else if(i!==2)this.toast(['英雄','招募','冒险','背包','副本'][i]+'暂未开放');});
     this.stats=this.label('',-25,425,600,155,25);this.stats.node.active=false;
     const menuView=new ModalView(this.root,'战斗设置',870,()=>{this.menu.active=false;});this.menu=menuView.layer;const card=menuView.card;
     const pause=modalButton(card,'暂停战斗',0,145,520,78,()=>{if(this.model.result!=='fighting')return;this.model.paused=!this.model.paused;this.pauseLabel.string=this.model.paused?'继续战斗':'暂停战斗';this.saveProgress();});
@@ -196,10 +198,10 @@ export class Adventure extends Component {
     tween(l.node).to(.10,{scale:new Vec3(1.08,1.08,1)}).to(.1,{scale:Vec3.ONE}).by(.65,{position:new Vec3(0,54,0)}).call(()=>{this.effects.delete(l.node);l.node.destroy();}).start();
     tween(o).delay(.48).to(.37,{opacity:0}).start();
   }
-  private openPage(page:'adventure'|'hero'|'bag'|'recruit'){if(!this.heroPage||!this.bagPage||!this.recruitPage)return;this.currentPage=page;if(page==='adventure'&&this.shownFormation!==this.model.formation.join())this.rebuildBattle();this.resetFeedback();this.floating=[];if(page==='hero')this.heroPage.refresh();if(page==='bag'){this.bagPage.setGold(this.model.gold);this.bagPage.refresh();}this.root.active=page==='adventure';this.heroPage.node.active=page==='hero';this.bagPage.node.active=page==='bag';this.recruitPage.node.active=page==='recruit';}
+  private openPage(page:'adventure'|'hero'|'bag'|'recruit'|'dungeon'){if(!this.heroPage||!this.bagPage||!this.recruitPage)return;if(this.currentPage==='dungeon')this.dungeonPage.beforeSave();this.currentPage=page;if(page==='dungeon')this.dungeonPage.refresh();if(page==='adventure'&&this.shownFormation!==this.model.formation.join())this.rebuildBattle();this.resetFeedback();this.floating=[];if(page==='hero')this.heroPage.refresh();if(page==='bag'){this.bagPage.setGold(this.model.gold);this.bagPage.refresh();}this.root.active=page==='adventure';this.heroPage.node.active=page==='hero';this.bagPage.node.active=page==='bag';this.recruitPage.node.active=page==='recruit';this.dungeonPage.node.active=page==='dungeon';}
   update(dt:number){
-    if(!this.ready||this.background)return;const nextId=this.model.nextGearId,oldCount=this.model.inventory.length,oldMaterials=this.model.materials;this.model.settleIdle(foregroundRewardDelta(dt));if(this.model.nextGearId>nextId){const saved=this.saveProgress(),kept=this.model.inventory.length-oldCount,recycled=this.model.nextGearId-nextId-kept;if(this.currentPage==='bag')this.bagPage.refresh();if(this.currentPage==='adventure')this.toast(!saved?this.saves.error:recycled?'自动分解 '+recycled+' 件 · 强化石 +'+(this.model.materials-oldMaterials)+(kept?' · 保留 '+kept+' 件':''):'获得 '+gearName(this.model.inventory[this.model.inventory.length-1])+' · 已进入背包');}this.saveClock+=dt;if(this.saveClock>=1){this.saveClock=0;this.saveProgress();}
-    if(this.currentPage==='recruit')return;if(this.currentPage==='hero'){this.heroPage.refreshIncome();return;}if(this.currentPage==='bag'){this.bagPage.setGold(this.model.gold);return;}
+    if(!this.ready||this.background)return;fitScreen(this.canvasRoot,this.screenCamera);this.model.refreshDungeon(Date.now());const nextId=this.model.nextGearId,oldCount=this.model.inventory.length,oldMaterials=this.model.materials;this.model.settleIdle(foregroundRewardDelta(dt));if(this.model.nextGearId>nextId){const saved=this.saveProgress(),kept=this.model.inventory.length-oldCount,recycled=this.model.nextGearId-nextId-kept;if(this.currentPage==='bag')this.bagPage.refresh();if(this.currentPage==='adventure')this.toast(!saved?this.saves.error:recycled?'自动分解 '+recycled+' 件 · 强化石 +'+(this.model.materials-oldMaterials)+(kept?' · 保留 '+kept+' 件':''):'获得 '+gearName(this.model.inventory[this.model.inventory.length-1])+' · 已进入背包');}this.saveClock+=dt;if(this.saveClock>=1){this.saveClock=0;this.saveProgress();}
+    if(this.currentPage==='dungeon'){this.dungeonPage.update(dt);return;}if(this.currentPage==='recruit')return;if(this.currentPage==='hero'){this.heroPage.refreshIncome();return;}if(this.currentPage==='bag'){this.bagPage.setGold(this.model.gold);return;}
     const visualDt=this.model.paused?0:Math.min(dt,.1)*this.speed;
     this.feedback.update(visualDt);for(const h of this.model.step(visualDt))this.feedback.play(h);this.updateFloats(this.model.paused?0:dt);this.sync();
   }

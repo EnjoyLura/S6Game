@@ -5,7 +5,7 @@ import {Node,UITransform,Layers,Graphics,Color,Label,Sprite,SpriteFrame,Texture2
 import {drawNavigation} from './GearView';
 export class RecruitPage {
  readonly node:Node; private content!:Node; private modal:Node|null=null; private pool=0;
- constructor(parent:Node,private art:Texture2D,private heroAtlas:Texture2D,private bagAtlas:Texture2D,private navigate:(page:'hero'|'adventure'|'bag')=>void,private model:()=>SquadBattleModel,private mutate:(fn:(b:SquadBattleModel)=>string|null)=>string|null,private heroTextures:Texture2D[]){this.node=this.base(parent,'Recruit page',0,0,887,1774);this.render();this.node.active=false;}
+ constructor(parent:Node,private art:Texture2D,private heroAtlas:Texture2D,private bagAtlas:Texture2D,private navigate:(page:'hero'|'adventure'|'bag'|'dungeon')=>void,private model:()=>SquadBattleModel,private mutate:(fn:(b:SquadBattleModel)=>string|null)=>string|null,private heroTextures:Texture2D[]){this.node=this.base(parent,'Recruit page',0,0,887,1774);this.render();this.node.active=false;}
  private base(p:Node,name:string,x:number,y:number,w:number,h:number){const n=new Node(name);n.parent=p;n.layer=Layers.Enum.UI_2D;n.setPosition(x,y);n.addComponent(UITransform).setContentSize(w,h);return n;}
  private panel(p:Node,x:number,y:number,w:number,h:number,color='#FFF4E3',r=28){const n=this.base(p,'Panel',x,y,w,h),g=n.addComponent(Graphics);g.fillColor=new Color().fromHEX(color);g.roundRect(-w/2,-h/2,w,h,r);g.fill();return n;}
  private text(p:Node,t:string,x:number,y:number,w:number,h:number,size=30,color='#704124'){const l=this.base(p,t,x,y,w,h).addComponent(Label);l.string=t;l.fontFamily='Microsoft YaHei';l.fontSize=size;l.lineHeight=size*1.4;l.isBold=true;l.color=new Color().fromHEX(color);l.horizontalAlign=Label.HorizontalAlign.CENTER;l.verticalAlign=Label.VerticalAlign.CENTER;l.overflow=Label.Overflow.SHRINK;return l;}
@@ -52,6 +52,6 @@ export class RecruitPage {
  [1,10].forEach((n,i)=>this.hit(p,'招募'+n+'次',-210+i*420,-620,395,130,()=>this.draw(n)));
  this.text(p,'测试配置 · 10抽至少史诗 / 30抽传说',0,-705,810,36,22);
  this.panel(p,0,-800,887,174,'#F8E6CF',0);
- drawNavigation(p,this.heroAtlas,this.bagAtlas,1,i=>{if(i===0)this.navigate('hero');else if(i===2)this.navigate('adventure');else if(i===3)this.navigate('bag');else if(i===4)this.info('副本','此功能尚未开放。');});
+ drawNavigation(p,this.heroAtlas,this.bagAtlas,1,i=>{if(i===0)this.navigate('hero');else if(i===2)this.navigate('adventure');else if(i===3)this.navigate('bag');else if(i===4)this.navigate('dungeon');});
  }
 }
