@@ -27,7 +27,7 @@ export function fitScreen(canvas:Node,camera:Camera){
   const compact=p.name!=='Adventure page'&&p.name!=='Dungeon content'&&p.name!=='Dungeon battle';
   if(compact&&height<1774&&n.name!=='Navigation'&&o.width<880){const scale=height/1774;n.setPosition(o.x*scale,o.y*scale,n.position.z);n.setScale(o.scaleX*scale,o.scaleY*scale,1);continue;}
   const battle=p.name==='Adventure page'||p.name==='Dungeon battle';
-  const bottom=n.name==='Navigation'||battle&&(o.y<-333||['Formation','离开','Battle notice'].indexOf(n.name)>=0)||p.name==='Dungeon content'&&o.y<=-680;
+  const bottom=n.name==='Navigation'||battle&&(o.y<-333||['Formation','离开','Battle notice','查看结算'].indexOf(n.name)>=0)||p.name==='Dungeon content'&&o.y<=-680;
   const top=(p.name==='Adventure page'||p.name==='Dungeon battle')?300:580;
   const y=o.y>=top?o.y+delta:bottom?o.y-delta:o.y;n.setPosition(o.x,y,n.position.z);
   if(n.name==='Forest'){

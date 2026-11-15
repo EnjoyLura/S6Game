@@ -1,3 +1,4 @@
+import {formationModal} from './FormationModal';
 import {equipmentHeader,equipmentStats} from './EquipmentModal';
 import {ModalView,modalIcon,inModal,modalButton,modalRow,modalSection,modalPanel,modalImage} from './ModalView';
 import { Node, UITransform, Graphics, Label, Color, Texture2D, SpriteFrame, Sprite, Rect, Layers, BlockInputEvents, Mask, ScrollView } from 'cc';
@@ -121,22 +122,7 @@ export class HeroPage {
     if(!max)this.button(card,p.available>=p.cost?'升星 · 消耗'+p.cost+'份':'份数不足',0,-425,390,80,()=>{const error=this.mutate(b=>b.starUp(id));if(error){this.info('英雄升星',error);return;}this.render();this.starDialog();},p.available>=p.cost?'#FFCE52':'#E2D2B9');
   }
   private formationPicker(){
-    this.closeEquipment();const {layer,card}=this.equipmentLayer('队伍编队',1180);this.dialog=layer;
-    let draft=this.model().formation.slice();const rows=this.nodeAt(card,'Formation draft',0,0,760,900);
-    const face=(parent:Node,id:number,x:number,y:number,size:number)=>{const t=this.heroTextures[id];modalImage(parent,t,new Rect(0,0,t.width,t.height),x,y,size,size);};
-    const draw=()=>{rows.destroyAllChildren();modalSection(rows,'当前上阵',365);
-      for(let slot=0;slot<3;slot++){const id=draft[slot],x=-225+slot*225,n=modalPanel(rows,x,240,200,180,'#FBE1C2',24);
-        if(id!==undefined){face(n,id,0,10,145);this.text(n,HEROES[id],0,-62,180,42,25);n.on(Node.EventType.TOUCH_END,()=>{draft.splice(slot,1);draw();});}
-        else this.text(n,'＋',0,0,160,100,60,'#B49770');this.text(rows,slot===0?'前排':'后排',x,128,190,42,25);
-      }
-      modalSection(rows,'可选英雄',45);
-      HEROES.forEach((name,id)=>{const owned=this.model().owns(id),slot=draft.indexOf(id),x=-265+id*176,n=modalPanel(rows,x,-75,160,145,slot>=0?'#FFDA76':'#FBE1C2',20);
-        if(owned)face(n,id,0,10,110);this.text(n,owned?name:'未招募',0,-50,150,38,23);if(slot>=0)this.text(n,'✓',55,48,42,36,27);
-        n.on(Node.EventType.TOUCH_END,()=>{if(!owned)return;if(slot>=0)draft.splice(slot,1);else if(draft.length<3)draft.push(id);draw();});
-      });
-      this.text(rows,'最多上阵3位，同一英雄不能重复。\n满员请先移除一位；第一位为前排。\n保存变更后重新挑战当前波。',0,-260,680,145,26);
-      this.button(rows,'保存阵容',0,-460,390,80,()=>{const error=this.mutate(b=>b.setFormation(draft));if(error){this.info('编队',error);return;}this.closeEquipment();this.render();});
-    };draw();
+    this.closeEquipment();this.dialog=formationModal(this.node,this.model(),this.heroTextures,ids=>this.mutate(b=>b.setFormation(ids)),()=>{this.closeEquipment();this.render();});
   }
   private skillDialog(index:number){
     const id=this.selected,b=this.model(),config=b.stats(id),open=b.unlocked(id,index),passive=index%2===1;

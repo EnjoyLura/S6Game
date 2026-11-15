@@ -1,15 +1,17 @@
 // Dungeon values are test tuning; all clocks use milliseconds and the local calendar.
-export const DUNGEON_CONFIG={staminaCap:120,recoverMs:6*60*1000,dailyLimit:2,costs:[10,15,20],scales:[1,1.7,2.6]};
+export const DUNGEON_CONFIG={staminaCap:120,recoverMs:6*60*1000,dailyLimit:2,costs:[10,15,20],scales:[1,1.7,2.6],mobWaves:10};
 export const DUNGEONS=[
  {name:'金币宝库',drop:'金币产出',kind:0},
  {name:'历练营地',drop:'英雄经验',kind:3},
  {name:'锻造矿洞',drop:'强化材料',kind:2},
  {name:'遗落秘境',drop:'装备掉落',kind:1},
  {name:'蘑菇守卫战',drop:'金币 · 经验 · 强化材料',kind:1},
- {name:'无尽之塔',drop:'逐层挑战 · 首次通层奖励',kind:0},
+ {name:'无尽之塔',drop:'无限关卡 · 阵亡后结算',kind:0},
 ];
 export const DIFFICULTIES=['普通','困难','噩梦'];
-export type DungeonRun={id:number;difficulty:number;floor:number;battle:any};
+export type DungeonReceipt={gold:number;experience:number;materials:number;gear:number;salvaged:number;cleared:number};
+export type DungeonEncounter={id:number;difficulty:number;startFloor:number};
+export type DungeonRun={id:number;difficulty:number;floor:number;battle:any;receipt?:DungeonReceipt};
 export type DungeonProgress={stamina:number;anchor:number;clock:number;day:number;dailyUsed:number;floor:number;run:DungeonRun|null};
 export const initialDungeon=():DungeonProgress=>({stamina:120,anchor:0,clock:0,day:0,dailyUsed:0,floor:1,run:null});
 export const localDay=(ms:number)=>{const d=new Date(ms);return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();};
@@ -24,8 +26,8 @@ export function recoverDungeon(p:DungeonProgress,now:number){
 }
 export function validDungeon(p:DungeonProgress){
  const int=(v:any,max=1e15)=>Number.isSafeInteger(v)&&v>=0&&v<=max;
- if(!p||!int(p.stamina,120)||!int(p.anchor)||!int(p.clock)||p.anchor>p.clock||!int(p.day,99991231)||!int(p.dailyUsed,2)||!int(p.floor,10000)||p.floor<1)return false;
- const r=p.run;return r===null||!!r&&int(r.id,5)&&int(r.difficulty,2)&&int(r.floor,10000)&&r.floor>=1&&(r.id!==5||r.floor===p.floor)&&!!r.battle&&r.battle.version===9&&r.battle.continuous===false&&r.battle.count===3;
+ if(!p||!int(p.stamina,120)||!int(p.anchor)||!int(p.clock)||p.anchor>p.clock||!int(p.day,99991231)||!int(p.dailyUsed,2)||!int(p.floor,1e12)||p.floor<1)return false;
+ const r=p.run;return r===null||!!r&&int(r.id,5)&&int(r.difficulty,2)&&int(r.floor,1e12)&&r.floor>=1&&!!r.battle&&r.battle.version===9&&r.battle.continuous===false&&r.battle.count===3&&(!r.receipt||['gold','experience','materials','gear','salvaged','cleared'].every(k=>int((r.receipt as any)[k]))&&r.battle.result!=='fighting'&&r.receipt.cleared===r.battle.clearedWaves);
 }
 export function dungeonReward(id:number,difficulty:number,floor=1){
  const scale=difficulty+1,layer=id===5?floor:1;
@@ -118,27 +120,37 @@ export const FIRE_TARGET:EnemyTargetRule='random';
 export type SquadHit = {actor:number;hero?:number;target:number;damage:number;blocked:number;heal:number;skill:boolean;skillSlot?:number;killed?:boolean;hpAfter:number;shieldAfter:number};
 // Combat indices 0..2 are formation slots, not roster IDs; 3..5 are enemies.
 export class SquadBattleModel {
+  encounter:DungeonEncounter|null=null;
   dungeon:DungeonProgress=initialDungeon();
   refreshDungeon(now:number){recoverDungeon(this.dungeon,now);}
   startDungeon(id:number,difficulty:number,now:number){
     if(!Number.isInteger(id)||id<0||id>=DUNGEONS.length||!Number.isInteger(difficulty)||difficulty<0||difficulty>2)return '无效的副本或难度';
     this.refreshDungeon(now);const p=this.dungeon;if(p.run)return '已有进行中的挑战，请先继续或结束';
-    if(!p.clock)return '时间异常，请重试';if(id===5&&p.floor>=10000)return '已达到测试层数上限';
+    if(!p.clock)return '时间异常，请重试';
     if(id===4&&p.dailyUsed>=DUNGEON_CONFIG.dailyLimit)return '今日挑战次数已用完，明日再来';
     const cost=DUNGEON_CONFIG.costs[difficulty];if(p.stamina<cost)return '体力不足，需要'+cost+'点';
     const battle=new SquadBattleModel(DUNGEONS[id].kind,Math.random,3,false);battle.inheritIncome(this);battle.dungeon=initialDungeon();battle.offline=null;battle.paused=false;
-    const scale=DUNGEON_CONFIG.scales[difficulty]*(id===5?1+(p.floor-1)*.15:1);
-    battle.enemies.forEach(e=>{e.hp=e.maxHp=Math.min(1000000,Math.round(e.maxHp*scale));e.attack=Math.min(100000,Math.round(e.attack*scale));});
+    battle.encounter={id,difficulty,startFloor:1};battle.wave=1;battle.kills=0;battle.clearedWaves=0;battle.spawn();
     const snapshot:any=battle.snapshot();snapshot.version=9;delete snapshot.dungeon;
     p.stamina-=cost;if(id===4)p.dailyUsed++;p.run={id,difficulty,floor:p.floor,battle:snapshot};return null;
   }
-  finishDungeon(){
-    const p=this.dungeon,r=p.run;if(!r)return '没有进行中的挑战';
-    const battle=SquadBattleModel.restore(r.battle);if(!battle||battle.result!=='victory')return '挑战尚未胜利';
-    const reward=dungeonReward(r.id,r.difficulty,r.floor);this.gold+=reward.gold;this.materials+=reward.materials;
-    this.heroes.forEach((h,i)=>{if(this.owns(i))h.experience+=reward.experience;});
-    for(let i=0;i<reward.gear;i++){const g=generateGear(this.nextGearId++,reward.level);this.inventory.push(g);if(this.rules.enabled&&!this.retained(g)){this.salvage([g.id]);this.autoSalvaged++;}}
-    if(r.id===5)p.floor++;p.run=null;return null;
+  /** Receipt and balances are saved atomically; retaining the run keeps the result screen resumable. */
+  settleDungeon(){
+    const p=this.dungeon,r=p.run;if(!r)return '没有进行中的挑战';if(r.receipt)return null;
+    const battle=SquadBattleModel.restore(r.battle);if(!battle||battle.result==='fighting')return '挑战尚未结束';
+    const cleared=battle.clearedWaves;
+    const reward=r.id===5?{gold:500*(r.difficulty+1)*cleared,experience:100*(r.difficulty+1)*cleared,materials:5*(r.difficulty+1)*cleared,gear:0,level:1}:battle.result==='victory'?dungeonReward(r.id,r.difficulty):{gold:0,experience:0,materials:0,gear:0,level:1};
+    this.gold+=reward.gold;this.heroes.forEach((h,i)=>{if(this.owns(i))h.experience+=reward.experience;});
+    const materials=this.materials;this.materials+=reward.materials;let kept=0,salvaged=0;
+    for(let i=0;i<reward.gear;i++){const g=generateGear(this.nextGearId++,reward.level);this.inventory.push(g);if(this.rules.enabled&&!this.retained(g)){this.salvage([g.id]);this.autoSalvaged++;salvaged++;}else kept++;}
+    if(r.id===5)p.floor=Math.max(p.floor,cleared+1);
+    r.receipt={gold:reward.gold,experience:reward.experience,materials:this.materials-materials,gear:kept,salvaged,cleared};return null;
+  }
+  finishDungeon(){const r=this.dungeon.run;if(!r)return '没有进行中的挑战';if(r.battle.result!=='victory')return '挑战尚未胜利';const error=this.settleDungeon();if(!error)this.dungeon.run=null;return error;}
+  exitDungeon(){if(!this.dungeon.run?.receipt)return '请先完成结算';this.dungeon.run=null;return null;}
+  retryDungeon(now:number){
+    const r=this.dungeon.run;if(!r?.receipt)return '请先完成结算';this.dungeon.run=null;
+    const error=this.startDungeon(r.id,r.difficulty,now);if(error)this.dungeon.run=r;return error;
   }
   abandonDungeon(){if(!this.dungeon.run)return '没有进行中的挑战';this.dungeon.run=null;return null;}
   lastSeen=0;offline:OfflineReward|null=null;
@@ -172,6 +184,14 @@ export class SquadBattleModel {
     if(ids.join()===this.formation.join())return null;
     this.formation=ids.slice();this.party.forEach((h,i)=>{h.hp=this.battleStats(i).hp;h.shield=0;h.cooldown=0;h.queued=false;h.cooldown2=0;h.queued2=false;});
     this.result="fighting";this.waveDelay=0;this.regrouping=false;this.spawn();return null;
+  }
+  setBattleFormation(ids:number[]){
+    if(this.result!=='fighting')return '战斗已结束';
+    if(!Array.isArray(ids)||ids.length<1||ids.length>3||new Set(ids).size!==ids.length||!ids.every(i=>this.owns(i)))return '请选择1至3位已招募且不重复的英雄';
+    if(ids.every(i=>this.heroes[i].hp<=0))return '至少需要一位存活英雄';
+    const next=this.order[this.cursor],hero=next<3?this.formation[next]:-1;
+    this.formation=ids.slice();this.buildOrder();const actor=next>=3?next:this.formation.indexOf(hero);
+    this.cursor=Math.max(0,this.order.indexOf(actor));return null;
   }
   private buildOrder(){this.order=[...this.formation.map((_,i)=>i).sort((a,b)=>this.battleStats(b).speed-this.battleStats(a).speed),...this.enemies.map((_,i)=>i+3)];}
   inventory:Gear[]=[];loadouts:(number|null)[][]=Array.from({length:4},()=>Array(6).fill(null));nextGearId=1;dropRemainder=0;highestWave=1;
@@ -242,6 +262,8 @@ export class SquadBattleModel {
     this.enemies=Array.from({length:this.count},(_,i)=>{const kind=(this.monsterIndex+this.wave-1+i)%4,c=MONSTERS[kind];
       // Group trial uses lighter regular monsters; stable difficulty for the idle loop.
       return {kind,hp:this.count>1?Math.round(c.hp*.45):c.hp,maxHp:this.count>1?Math.round(c.hp*.45):c.hp,attack:this.count>1?Math.round(c.attack*.30):c.attack};});
+    if(this.encounter){const c=this.encounter,scale=DUNGEON_CONFIG.scales[c.difficulty]*(c.id===5?1+(this.wave-1)*.15:1),boss=c.id!==5&&this.wave===DUNGEON_CONFIG.mobWaves+1;
+      this.enemies.forEach((e,i)=>{const boost=boss&&i===0?3:1;e.hp=e.maxHp=Math.min(1000000,Math.round(e.maxHp*scale*boost));e.attack=Math.min(100000,Math.round(e.attack*scale*(boss&&i===0?1.6:1)));});}
     this.highestWave=Math.max(this.highestWave,this.wave);this.buildOrder();this.cursor=0;this.timer=0;
   }
   private alive(id:number){return id<3?!!this.party[id]&&this.party[id].hp>0:this.enemies[id-3].hp>0;}
@@ -264,14 +286,14 @@ export class SquadBattleModel {
     this.gold=previous.gold;this.kills=previous.kills;this.idleElapsed=previous.idleElapsed;this.incomeRemainder=previous.incomeRemainder;
     this.heroes.forEach((h,i)=>{h.experience=previous.heroes[i].experience;h.level=previous.heroes[i].level;h.stars=previous.heroes[i].stars;h.talents=previous.heroes[i].talents.slice();h.hp=this.stats(i).hp;});
   }
-  snapshot(){return {version:10,dungeon:JSON.parse(JSON.stringify(this.dungeon)) as DungeonProgress,lastSeen:this.lastSeen,offline:this.offline?JSON.parse(JSON.stringify(this.offline)) as OfflineReward:null,formation:this.formation.slice(),recruitment:JSON.parse(JSON.stringify(this.recruitment)) as typeof this.recruitment,materials:this.materials,autoSalvaged:this.autoSalvaged,rules:{...this.rules,attributes:this.rules.attributes.slice()},inventory:this.inventory.map(g=>({...g,enhancement:g.enhancement||0})),loadouts:this.loadouts.map(s=>s.slice()),nextGearId:this.nextGearId,dropRemainder:this.dropRemainder,highestWave:this.highestWave,heroes:this.heroes.map(h=>({...h,talents:h.talents.slice()})),enemies:this.enemies.map(e=>({...e})),gold:this.gold,kills:this.kills,wave:this.wave,clearedWaves:this.clearedWaves,idleElapsed:this.idleElapsed,incomeRemainder:this.incomeRemainder,elapsed:this.elapsed,actions:this.actions,damage:this.damage,received:this.received,autoSkill:this.autoSkill,paused:this.paused,waveDelay:this.waveDelay,regrouping:this.regrouping,result:this.result,cursor:this.cursor,timer:this.timer,monsterIndex:this.monsterIndex,count:this.count,continuous:this.continuous};}
+  snapshot(){return {version:11,encounter:this.encounter?{...this.encounter}:null,dungeon:JSON.parse(JSON.stringify(this.dungeon)) as DungeonProgress,lastSeen:this.lastSeen,offline:this.offline?JSON.parse(JSON.stringify(this.offline)) as OfflineReward:null,formation:this.formation.slice(),recruitment:JSON.parse(JSON.stringify(this.recruitment)) as typeof this.recruitment,materials:this.materials,autoSalvaged:this.autoSalvaged,rules:{...this.rules,attributes:this.rules.attributes.slice()},inventory:this.inventory.map(g=>({...g,enhancement:g.enhancement||0})),loadouts:this.loadouts.map(s=>s.slice()),nextGearId:this.nextGearId,dropRemainder:this.dropRemainder,highestWave:this.highestWave,heroes:this.heroes.map(h=>({...h,talents:h.talents.slice()})),enemies:this.enemies.map(e=>({...e})),gold:this.gold,kills:this.kills,wave:this.wave,clearedWaves:this.clearedWaves,idleElapsed:this.idleElapsed,incomeRemainder:this.incomeRemainder,elapsed:this.elapsed,actions:this.actions,damage:this.damage,received:this.received,autoSkill:this.autoSkill,paused:this.paused,waveDelay:this.waveDelay,regrouping:this.regrouping,result:this.result,cursor:this.cursor,timer:this.timer,monsterIndex:this.monsterIndex,count:this.count,continuous:this.continuous};}
   static restore(value:unknown):SquadBattleModel|null{
     // Reject malformed or future saves as a whole; never partially apply balances.
     try{
       const d=value as ReturnType<SquadBattleModel['snapshot']>;
       const num=(v:unknown,max=1e12)=>typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=max;
       const integer=(v:unknown,max=1e12)=>num(v,max)&&Number.isInteger(v);
-      if(!d||(d.version!==1&&d.version!==2&&d.version!==3&&d.version!==4&&d.version!==5&&d.version!==6&&d.version!==7&&d.version!==8&&d.version!==9&&d.version!==10)||!integer(d.monsterIndex,3)||!integer(d.count,3)||d.count<1||typeof d.continuous!=='boolean')return null;
+      if(!d||(d.version!==1&&d.version!==2&&d.version!==3&&d.version!==4&&d.version!==5&&d.version!==6&&d.version!==7&&d.version!==8&&d.version!==9&&d.version!==10&&d.version!==11)||!integer(d.monsterIndex,3)||!integer(d.count,3)||d.count<1||typeof d.continuous!=='boolean')return null;
       if(!Array.isArray(d.heroes)||d.heroes.length!==(d.version>=5?4:3)||!Array.isArray(d.enemies)||d.enemies.length!==d.count)return null;
       if(!['gold','kills','wave','clearedWaves','actions','damage','received'].every(k=>integer(d[k as keyof typeof d]))||d.wave<1)return null;
       if(!['idleElapsed','elapsed'].every(k=>num(d[k as keyof typeof d]))||!num(d.incomeRemainder,5)||d.incomeRemainder>=5||!num(d.timer,1)||d.timer>=1||!num(d.waveDelay,2))return null;
@@ -306,10 +328,11 @@ export class SquadBattleModel {
       }
       for(const e of d.enemies)if(!e||!integer(e.kind,3)||!integer(e.maxHp,1000000)||e.maxHp<1||!integer(e.hp,e.maxHp)||!integer(e.attack,100000))return null;
       if(d.result==='fighting'&&d.waveDelay===0&&(b.party.every(h=>h.hp===0)||d.enemies.every(e=>e.hp===0)))return null;
+      if(d.encounter!=null){const c=d.encounter;if(!integer(c.id,5)||!integer(c.difficulty,2)||c.startFloor!==1||d.continuous||d.count!==3||d.regrouping||c.id!==5&&d.wave>DUNGEON_CONFIG.mobWaves+1||d.clearedWaves>d.wave||d.result==='victory'&&(c.id===5||d.clearedWaves!==DUNGEON_CONFIG.mobWaves+1))return null;b.encounter={...c};}
       b.enemies=d.enemies.map(e=>({...e}));
       for(const key of ['gold','kills','wave','clearedWaves','idleElapsed','incomeRemainder','elapsed','actions','damage','received','autoSkill','paused','waveDelay','regrouping','result','cursor','timer'] as const)(b as any)[key]=d[key];
       if(d.version>=10){if(!validDungeon(d.dungeon))return null;
-        if(d.dungeon.run&&!SquadBattleModel.restore(d.dungeon.run.battle))return null;
+        if(d.dungeon.run){const r=d.dungeon.run,fight=SquadBattleModel.restore(r.battle);if(!fight||fight.encounter&&(fight.encounter.id!==r.id||fight.encounter.difficulty!==r.difficulty))return null;}
         b.dungeon=JSON.parse(JSON.stringify(d.dungeon));
       }
       return b;
@@ -352,7 +375,7 @@ export class SquadBattleModel {
       hits.push({actor,hero:actor<3?this.formation[actor]:undefined,target,damage,blocked,heal,skill,skillSlot,killed,hpAfter:target<3?this.party[target].hp:this.enemies[target-3].hp,shieldAfter:target<3?this.party[target].shield:0});
       if(this.enemies.every(e=>e.hp<=0)){
         this.clearedWaves++;
-        if(this.continuous){this.waveDelay=1.2;this.party.forEach((h,i)=>{if(h.hp>0)h.hp=Math.min(this.battleStats(i).hp,h.hp+Math.ceil(this.battleStats(i).hp*.08));});}
+        if(this.continuous||this.encounter&&(this.encounter.id===5||this.wave<=DUNGEON_CONFIG.mobWaves)){this.waveDelay=1.2;this.party.forEach((h,i)=>{if(h.hp>0)h.hp=Math.min(this.battleStats(i).hp,h.hp+Math.ceil(this.battleStats(i).hp*.08));});}
         else this.result='victory';
       }else if(this.party.every(h=>h.hp<=0)){
         if(this.continuous){this.waveDelay=2;this.regrouping=true;}

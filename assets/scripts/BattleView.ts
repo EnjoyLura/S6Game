@@ -1,6 +1,6 @@
 import {battleDelta} from './BattleTiming';
 import {Node,UITransform,Layers,Color,Graphics,Label,Sprite,SpriteFrame,Texture2D,Rect,tween,Vec3,UIOpacity,Tween,Mask} from 'cc';
-import {SquadBattleModel,HERO_CONFIG,SquadHit,SKILL_NAMES,DROP_SECONDS} from './SquadBattleModel';
+import {SquadBattleModel,HERO_CONFIG,SquadHit,SKILL_NAMES,DROP_SECONDS,DUNGEON_CONFIG} from './SquadBattleModel';
 import {BattleFeedback} from './BattleFeedback';
 import {drawNavigation} from './GearView';
 import {ModalView,modalButton,modalText,modalSection} from './ModalView';
@@ -10,7 +10,7 @@ export type BattleOptions={title:string;dungeon?:boolean;subtitle?:()=>string;on
 /** Shared adventure/dungeon presentation. Resource settlement stays with the owning page. */
 export class BattleView{
  readonly root:Node;private speed=1;private battleArt:Texture2D[];
- private actors!:Node;
+ private actors!:Node;private resultButton:Node|null=null;
  private get model(){return this.getModel();}
   private units:Node[]=[]; private hpLabels:Label[]=[]; private bars:Graphics[]=[];
   private partyHP:Label[]=[]; private partyBars:Graphics[]=[]; private skillLabels:Label[]=[]; private skillShades:Graphics[]=[];
@@ -50,6 +50,7 @@ export class BattleView{
   private valueLabel(text:string,x:number,y:number,w:number,size:number){const l=this.label(text,x,y,w,36,size,'#FFFFFF');l.enableOutline=true;l.outlineWidth=2;l.outlineColor=new Color(28,47,45,255);l.horizontalAlign=0;return l;}
   private statusIcon(kind:'heart'|'shield',x:number,y:number,color:string){const n=this.base(kind,x,y,24,24),g=n.addComponent(Graphics);g.fillColor=new Color().fromHEX(color);g.strokeColor=new Color(38,86,75,255);g.lineWidth=1.5;
     if(kind==='heart'){g.moveTo(0,-10);g.bezierCurveTo(-23,3,-8,21,0,8);g.bezierCurveTo(8,21,23,3,0,-10);}else{g.moveTo(-10,8);g.lineTo(0,12);g.lineTo(10,8);g.lineTo(8,-4);g.lineTo(0,-12);g.lineTo(-8,-4);}g.close();g.fill();g.stroke();return n;}
+  refreshFormation(){this.rebuildBattle();}
   resetFeedback(){this.feedback.reset([...[0,1,2].map(i=>this.model.party[i]?.hp||0),...this.model.enemies.map(e=>e.hp)],[...[0,1,2].map(i=>this.model.party[i]?.shield||0),0,0,0]);}
   // Native Cocos SpriteFrame regions reference the untouched concept texture.
   // Only reusable UI pieces are sampled; combat and live values are real nodes.
@@ -89,7 +90,7 @@ export class BattleView{
       [this.bars[i].node,this.heartIcons[i],this.hpLabels[i].node,this.shields[i].node,this.shieldIcons[i]].forEach(n=>n.parent=this.actors);
     });
     this.model.enemies.forEach((e,j)=>{const [x,y]=this.positions[j+3];this.enemyNames[j]=this.label('',x,y+105,220,32,23);this.enemyNames[j].node.parent=this.actors;});
-    if(this.options.dungeon)this.button('离开',-346,-260,152,59,()=>this.options.onLeave!());else this.cut('Formation',22,1141,152,59,-346,-260).on(Node.EventType.TOUCH_END,()=>this.options.onFormation());
+    this.cut('Formation',22,1141,152,59,-346,-260).on(Node.EventType.TOUCH_END,()=>this.options.onFormation());
     this.notice=this.label(this.options.dungeon?'点击技能手动释放 · 可切换自动技能':'持续挂机 · 收益按实际时间结算',55,-270,570,42,23);
     this.notice.node.name='Battle notice';
     this.cut('Party background',580,1230,8,370,0,-528,887,390);
@@ -122,6 +123,7 @@ export class BattleView{
       modalButton(card,'切换怪物并重试',0,-300,520,78,()=>this.options.onRestart!((this.model.monsterIndex+1)%4),'peach');
     }
     this.menu.active=false;
+    if(this.options.dungeon){this.resultButton=this.button('查看结算',55,-270,570,59,()=>this.options.onEnd!()).node.parent!;this.resultButton.active=false;}
   }
   private statisticsModal:Node|null=null;
   private showStatistics(){
@@ -135,13 +137,13 @@ export class BattleView{
   private monsterRect(slot=0){const i=this.model.enemies[slot].kind;return new Rect((i%2)*this.monsters.width/2,Math.floor(i/2)*this.monsters.height/2,this.monsters.width/2,this.monsters.height/2);}
   private setMonsterFrame(n:Node,slot:number){const f=new SpriteFrame();f.texture=this.monsters;f.rect=this.monsterRect(slot);n.getComponent(Sprite)!.spriteFrame=f;}
   private sync(){
-    const b=this.model;
+    const b=this.model;if(this.resultButton){this.resultButton.active=b.result!=='fighting';this.notice.node.active=b.result==='fighting';}
     this.status.string=this.options.dungeon?this.options.subtitle!():b.regrouping?'整备后重试':b.waveDelay>0?'下一波即将入场':'第 '+b.wave+' 波';
-    this.goldLabel.string=String(b.gold);this.incomeLabel.string=this.options.dungeon?'已击败 '+b.enemies.filter(e=>e.hp<=0).length+'/'+b.enemies.length+' · 刷新可续战':'击杀 '+b.kills+' · 装备 '+b.inventory.length+' · 下件 '+Math.ceil(DROP_SECONDS-b.dropRemainder)+'秒';
+    this.goldLabel.string=String(b.gold);this.incomeLabel.string=this.options.dungeon?(b.encounter?.id===5?'第 '+b.wave+' 关 · 已通关 '+b.clearedWaves:b.wave>DUNGEON_CONFIG.mobWaves?'Boss 波 · 击败首领及护卫':('第 '+b.wave+'/'+(DUNGEON_CONFIG.mobWaves+1)+' 波 · 击败 '+b.enemies.filter(e=>e.hp<=0).length+'/3')):'击杀 '+b.kills+' · 装备 '+b.inventory.length+' · 下件 '+Math.ceil(DROP_SECONDS-b.dropRemainder)+'秒';
     if(this.shownWave!==b.wave||(this.shownRegroup&&!b.regrouping)){
-      this.shownWave=b.wave;this.model.enemies.forEach((e,j)=>{const n=this.units[j+3];this.setMonsterFrame(n,j);this.setMonsterFrame(this.enemyPortraits[j],j);});this.resetFeedback();this.feedback.enter();
+      this.shownWave=b.wave;this.model.enemies.forEach((e,j)=>{const n=this.units[j+3];const size=b.encounter&&b.encounter.id!==5&&b.wave>DUNGEON_CONFIG.mobWaves&&j===0?330:260;n.getComponent(UITransform)!.setContentSize(size,size);this.setMonsterFrame(n,j);this.setMonsterFrame(this.enemyPortraits[j],j);});this.resetFeedback();this.feedback.enter();
     }this.shownRegroup=b.regrouping;
-    b.enemies.forEach((e,j)=>{const i=j+3,hp=this.feedback.hp[i];this.hpLabels[i].string=hp+'/'+e.maxHp;this.paintBar(this.bars[i],hp,e.maxHp,'#F38B71');this.enemyNames[j].string='';this.heartIcons[i].active=hp>0;this.hpLabels[i].node.active=hp>0;this.bars[i].node.active=hp>0;this.shields[i].node.active=false;this.shieldIcons[i].active=false;});
+    b.enemies.forEach((e,j)=>{const i=j+3,hp=this.feedback.hp[i];this.hpLabels[i].string=hp+'/'+e.maxHp;this.paintBar(this.bars[i],hp,e.maxHp,'#F38B71');this.enemyNames[j].string=b.encounter&&b.encounter.id!==5&&b.wave>DUNGEON_CONFIG.mobWaves&&j===0&&hp>0?'BOSS':'';this.heartIcons[i].active=hp>0;this.hpLabels[i].node.active=hp>0;this.bars[i].node.active=hp>0;this.shields[i].node.active=false;this.shieldIcons[i].active=false;});
     for(let i=0;i<3;i++){const active=i<b.formation.length;this.bars[i].node.active=active;this.hpLabels[i].node.active=active;this.heartIcons[i].active=active;if(!active){this.shields[i].node.active=false;this.shieldIcons[i].active=false;}}
     b.party.forEach((h,i)=>{
       const hp=this.feedback.hp[i],shield=this.feedback.shields[i];this.hpLabels[i].string=hp+'/'+b.battleStats(i).hp;this.partyHP[i].string=this.hpLabels[i].string;
