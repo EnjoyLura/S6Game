@@ -6,6 +6,16 @@ import {drawNavigation,gearTile} from './GearView';
 import {BattleView,BattleArt} from './BattleView';
 type Page='hero'|'recruit'|'adventure'|'bag'|'dungeon';
 export class DungeonPage{
+ externalUI=false;externalForest:Texture2D|null=null;
+ get activeBattle(){return this.battle;}
+ get activeView(){return this.view;}
+ startExternal(id:number,difficulty:number){const error=this.transact(b=>b.startDungeon(id,difficulty,Date.now()));if(error)return error;this.resume();return null;}
+ resumeExternal(){this.resume();}
+ leaveExternal(){this.leave();}
+ endExternal(){this.end(true);}
+ retryExternal(){const error=this.transact(b=>b.retryDungeon(Date.now()));if(!error)this.resume();return error;}
+ exitExternal(){const error=this.transact(b=>b.exitDungeon());if(error)return error;this.close();this.view?.destroy();this.view=null;this.fightLayer=null;this.battle=null;this.finishing=false;this.render();return null;}
+ formationExternal(ids:number[]){if(!this.battle)return '没有进行中的战斗';const draft=SquadBattleModel.restore(this.battle.snapshot())!,error=draft.setBattleFormation(ids);if(error)return error;const snapshot:any=draft.snapshot();snapshot.version=9;delete snapshot.dungeon;const failure=this.transact(b=>{if(!b.dungeon.run||b.dungeon.run.receipt)return '挑战已结束';b.dungeon.run.battle=snapshot;return null;});if(failure)return failure;this.battle=draft;this.view!.refreshFormation();this.view!.useExternalPresentation();return null;}
  readonly node:Node;private content:Node|null=null;private modal:Node|null=null;private tab=0;private difficulty=0;private selected=0;
  private stamina!:Label;private recovery!:Label;private remaining!:Label;private gold!:Label;private message:Label|null=null;
  private battle:SquadBattleModel|null=null;private fightLayer:Node|null=null;private view:BattleView|null=null;private clock=0;private finishing=false;private finishDelay=0;private mutating=false;private choosingFormation=false;
@@ -33,7 +43,7 @@ export class DungeonPage{
  this.rewardIcons(card,id,0,135,-15,72);
  this.text(card,'ϟ 消耗体力',66,-108,210,45,25);modalButton(card,'查看',286,-96,180,58,()=>this.challenge(id));
  });
- this.text(p,'点击副本选择难度',0,-709,800,40,26);drawNavigation(p,this.nav,this.bag,4,i=>this.navigate((['hero','recruit','adventure','bag','dungeon'] as Page[])[i]));this.sync();
+ this.text(p,'点击副本选择难度',0,-709,800,40,26);drawNavigation(p,this.nav,this.bag,4,i=>this.navigate((['hero','recruit','adventure','bag','dungeon'] as Page[])[i]));this.sync();if(this.externalUI)p.active=false;
  if(this.model().dungeon.run){modalButton(p,this.model().dungeon.run!.receipt?'查看战斗结算':'继续进行中的挑战',0,-709,500,56,()=>this.resume());}
  }
  private rewardIcons(p:Node,id:number,difficulty:number,x:number,y:number,size=100){
@@ -60,7 +70,7 @@ export class DungeonPage{
  if(r.receipt)this.resultDialog();else if(this.battle.result!=='fighting')this.end(false);
  }
  private buildFight(){
- const r=this.model().dungeon.run!;this.view?.destroy();this.view=new BattleView(this.node,()=>this.battle!,this.battleArt,{title:DUNGEONS[r.id].name,dungeon:true,subtitle:()=>DIFFICULTIES[r.difficulty]+(r.id===5?' · 无尽挑战':''),onChange:()=>{this.persistBattle();this.save();},onFormation:()=>this.formation(),navigate:i=>{if(this.battle?.result!=='fighting'){this.resultDialog();return;}this.leave();this.navigate((['hero','recruit','adventure','bag','dungeon'] as Page[])[i]);},onLeave:()=>this.leave(),onEnd:()=>this.end(true)});this.fightLayer=this.view.root;
+ const r=this.model().dungeon.run!;this.view?.destroy();this.view=new BattleView(this.node,()=>this.battle!,this.battleArt,{title:DUNGEONS[r.id].name,dungeon:true,subtitle:()=>DIFFICULTIES[r.difficulty]+(r.id===5?' · 无尽挑战':''),onChange:()=>{this.persistBattle();this.save();},onFormation:()=>this.formation(),navigate:i=>{if(this.battle?.result!=='fighting'){this.resultDialog();return;}this.leave();this.navigate((['hero','recruit','adventure','bag','dungeon'] as Page[])[i]);},onLeave:()=>this.leave(),onEnd:()=>this.end(true)});this.fightLayer=this.view.root;if(this.externalUI)this.view.useExternalPresentation(this.externalForest||undefined);
  }
  private formation(){
  if(!this.battle)return;if(this.battle.result!=='fighting'){this.resultDialog();return;}this.close();
@@ -82,6 +92,7 @@ export class DungeonPage{
  this.finishing=true;this.resultDialog();
  }
  private resultDialog(){
+ if(this.externalUI)return;
  const r=this.model().dungeon.run,b=this.battle;if(!r||!b)return;
  if(!r.receipt){if(b.result!=='fighting')this.end(false);return;}
  this.close();const win=b.result==='victory',reward=r.receipt,reason=b.party.every(h=>h.hp<=0)?'全队阵亡':'主动结束';

@@ -1,0 +1,130 @@
+{
+  "description": "第二版运行时资源。原始生成图保存在 assets/resources/art；运行时按下列区域切片，文字独立渲染。",
+  "resources": [
+    {
+      "file": "assets/resources/art/v2-backgrounds.png",
+      "grid": "2×3",
+      "cells": [
+        "森林战场",
+        "训练庭院",
+        "常驻召唤",
+        "UP召唤",
+        "铁匠铺",
+        "城镇资源栏"
+      ],
+      "prompt": "Use case: ui-mockup. Production game background atlas, 2 columns x 3 rows EXACT equal rectangular cells, no gutters, total portrait 2:3 canvas, each cell landscape square-ish. Match reference cute fantasy mobile game clean dark brown outlines, bright simple cel shading crisp NOT painterly. NO TEXT NO UI NO CHARACTERS NO BUTTONS. Top left lush forest clearing with stone arch in distance and large open grassy foreground; top right sunny stone training courtyard with wooden training dummy and archery target, trees distant mountains, no houses in trees. Middle left magical royal summoning hall with blue portal golden stone and banners, middle right purple cosmic summoning hall with luminous purple portal and crystalline pillars. Bottom left forge workshop furnace anvil on foreground center, friendly chibi dwarf blacksmith at right with empty center anvil (no sword on anvil); bottom right sunny forest castle courtyard vista only sky trees and distant castle as header background. Full bleed detailed clean outlines and flat game colors, no dirt or blur. Separate scenes never bleed across cell boundary. Precisely 6 cells."
+    },
+    {
+      "file": "assets/resources/art/v2-controls.png",
+      "regions": [
+        [
+          28,
+          90,
+          579,
+          203
+        ],
+        [
+          646,
+          90,
+          590,
+          203
+        ],
+        [
+          50,
+          365,
+          535,
+          455
+        ],
+        [
+          637,
+          510,
+          605,
+          180
+        ],
+        [
+          162,
+          889,
+          285,
+          290
+        ],
+        [
+          572,
+          948,
+          674,
+          180
+        ]
+      ],
+      "cells": [
+        "金黄按钮",
+        "奶油按钮",
+        "叶角通用底板",
+        "标题牌",
+        "关闭按钮",
+        "浅色词条"
+      ],
+      "slicing": "按钮65/150九切片，底板75九切片；关闭与标题整片",
+      "prompt": "Use case: ui-mockup. Original production reusable UI sprite sheet matching attached cute chibi fantasy mobile game warm cream honey gold brown outlined style. Exactly 2 columns x 3 rows regular grid six equally sized cells with ample transparent margin, transparent background. NO TEXT NO letters NO numbers NO icons. Top left a gold rounded capsule game button wide 3:1 aspect glossy subtle beveled edge golden shadow. Top right a pale cream rounded capsule game button same 3:1 aspect warm white inner edge warm beige shadow. Middle left a reusable blank cream large dialog panel nearly square with restrained golden outer edge and tiny leaf decorations on its corners, blank center and plain straight middle edges so nine-slicing works. Middle right a matching small orange gold blank title plaque wide 3:1 aspect, tiny symmetric gold flourishes on tips. Bottom left a rounded orange gold close button with bold white X, square shape, slight bevel. Bottom right a light apricot rounded rectangular attribute strip 5:1 aspect with subtle warm gradient, blank. Clean vector-like raster high resolution, crisp brown contours, no complex painted ornament, no text embedded. Exactly six isolated assets."
+    },
+    {
+      "file": "assets/resources/art/v2-icons.png",
+      "grid": "3×3",
+      "cells": [
+        "武器",
+        "戒指",
+        "项链",
+        "头盔",
+        "衣服",
+        "鞋子",
+        "金币",
+        "经验",
+        "体力"
+      ],
+      "prompt": "Use case: ui-mockup. Production game icon atlas, exactly 3 columns x 3 rows equal square cells, transparent background, isolated cute fantasy mobile game crisp brown outlined icons with gold and cream highlights. No text, no numbers, no UI tiles behind icons, large margins within each cell to crop safely. Row1: silver straight knight sword golden hilt; gold ring red ruby; brown cord necklace green gem. Row2: silver knight helmet golden plume; white gold knight breastplate; brown leather boots golden stars. Row3: golden coin crown emblem; blue experience book gold corners; bright golden lightning bolt stamina. Nine objects in exact order. Match references clean chibi outline style. Vector-like crisp edges NO grain NO blur NO photorealistic metal."
+    },
+    {
+      "file": "assets/resources/art/v2-skills.png",
+      "grid": "3×3",
+      "cells": [
+        "护盾",
+        "被动",
+        "剑击",
+        "锁定",
+        "火焰",
+        "治疗",
+        "天赋树",
+        "强化石",
+        "招募券"
+      ],
+      "prompt": "Use case: ui-mockup. Production mobile fantasy game skill icon sprite atlas exactly 3x3 equal square cells transparent gaps and background. No text no numbers. Crisp cute brown outlined flat cel shaded bright colors, original game art matching references. Each cell a rounded square skill tile; row1 glowing gold shield on blue burst, gold heart shield on amber burst, crossed silver swords on orange burst; row2 ivory padlock on beige square, bright orange fireball on red-orange burst, white healing plus on vivid lime green burst; row3 luminous golden green talent tree on golden round medal, blue crystal enhancement material on blue square, curled parchment recruitment ticket golden border and purple star with no text. Perfect square tiles with inner icon large, balanced safe margins. Nine isolated tiles, NO words or labels."
+    },
+    {
+      "file": "assets/resources/art/v2-navigation.png",
+      "grid": "3×3",
+      "cells": [
+        "英雄",
+        "招募",
+        "冒险",
+        "背包",
+        "副本",
+        "阵型",
+        "挂机奖励",
+        "战斗统计",
+        "自动技能"
+      ],
+      "promptFile": "docs/第二版导航图标提示词.txt"
+    }
+  ],
+  "reused": [
+    "hero-knight",
+    "hero-mage",
+    "hero-priest",
+    "hero-archer",
+    "monsters-4",
+    "dungeon-ui-v2"
+  ],
+  "notes": [
+    "保留四英雄验证范围；效果图中的额外英雄和属性不作为新增玩法配置。",
+    "常驻和UP票券共用轮廓，UP使用紫色变体。",
+    "图集原始生成结果的单元边缘并非完全规则，按钮使用显式矩形，图标使用等分网格。"
+  ]
+}

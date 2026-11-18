@@ -1,0 +1,132 @@
+{
+  "viewport": "390×844 @2x",
+  "screens": [
+    {
+      "id": "01-adventure",
+      "title": "冒险页"
+    },
+    {
+      "id": "02-hero",
+      "title": "英雄页"
+    },
+    {
+      "id": "14-skill",
+      "title": "技能详情"
+    },
+    {
+      "id": "13-star",
+      "title": "英雄升星"
+    },
+    {
+      "id": "15-talents",
+      "title": "天赋树"
+    },
+    {
+      "id": "10-equipment",
+      "title": "装备详情"
+    },
+    {
+      "id": "12-equipment-picker",
+      "title": "装备穿戴"
+    },
+    {
+      "id": "05-bag",
+      "title": "背包页"
+    },
+    {
+      "id": "11-confirm",
+      "title": "小提示弹窗"
+    },
+    {
+      "id": "24-salvage",
+      "title": "装备分解"
+    },
+    {
+      "id": "03-recruit-normal",
+      "title": "常驻招募"
+    },
+    {
+      "id": "16-pool-normal",
+      "title": "常驻卡池详情"
+    },
+    {
+      "id": "20-single",
+      "title": "单抽结果"
+    },
+    {
+      "id": "19-ten",
+      "title": "十连结果"
+    },
+    {
+      "id": "04-recruit-up",
+      "title": "UP招募"
+    },
+    {
+      "id": "17-pool-up",
+      "title": "UP卡池详情"
+    },
+    {
+      "id": "06-dungeons",
+      "title": "资源副本"
+    },
+    {
+      "id": "07-endless",
+      "title": "无尽挑战"
+    },
+    {
+      "id": "08-daily",
+      "title": "每日副本"
+    },
+    {
+      "id": "23-challenge",
+      "title": "挑战确认"
+    },
+    {
+      "id": "28-dungeon-defeat",
+      "title": "副本失败结算"
+    },
+    {
+      "id": "18-formation",
+      "title": "编队二级页"
+    },
+    {
+      "id": "21-formations",
+      "title": "阵型选择"
+    },
+    {
+      "id": "09-offline",
+      "title": "挂机奖励"
+    },
+    {
+      "id": "22-rewards",
+      "title": "获取奖励"
+    },
+    {
+      "id": "25-upgrade",
+      "title": "装备普通升级"
+    },
+    {
+      "id": "26-breakthrough",
+      "title": "装备突破升级"
+    },
+    {
+      "id": "27-dungeon-victory",
+      "title": "副本胜利结算"
+    },
+    {
+      "id": "29-endless-result",
+      "title": "无尽挑战结算"
+    }
+  ],
+  "checks": [
+    "26 screens",
+    "manual controls",
+    "single/ten draw",
+    "tree purchase",
+    "capacity expansion",
+    "dungeon entry/result/exit",
+    "save reload",
+    "four responsive viewports"
+  ],
+  "errors": []
+}

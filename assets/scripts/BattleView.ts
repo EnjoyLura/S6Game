@@ -23,6 +23,10 @@ export class BattleView{
     this.root=new Node(options.dungeon?'Dungeon battle':'Adventure page');this.root.layer=Layers.Enum.UI_2D;this.root.parent=parent;this.root.addComponent(UITransform).setContentSize(887,1774);
     this.ui=art.ui;this.heroTextures=art.heroes;this.monsters=art.monsters;this.battleArt=[art.forest,art.nav,art.bag];this.rebuildBattle();
   }
+  externalPresentation=false;private externalForest:Texture2D|null=null;
+  useExternalPresentation(texture?:Texture2D){this.externalPresentation=true;if(texture)this.externalForest=texture;for(const n of this.root.children)n.active=n===this.actors||n.name==='Forest';const forest=this.root.getChildByName('Forest');if(forest&&this.externalForest){const f=new SpriteFrame();f.texture=this.externalForest;f.rect=new Rect(0,0,this.externalForest.width/2,this.externalForest.height/3);forest.getComponent(Sprite)!.spriteFrame=f;}}
+  getSpeed(){return this.speed;}
+  cycleSpeed(){this.speed=this.speed===1?2:1;}
   update(dt:number){const visual=battleDelta(dt,this.model.paused,this.speed);this.feedback.update(visual);for(const hit of this.model.step(visual))this.feedback.play(hit);this.updateFloats(this.model.paused?0:dt);this.sync();}
   destroy(){this.effects.forEach(n=>{Tween.stopAllByTarget(n);n.destroy();});this.effects.clear();this.root.active=false;this.root.destroy();}
   private rebuildBattle(){
@@ -38,7 +42,7 @@ export class BattleView{
       this.units.forEach(n=>n.parent=this.actors);
       if(this.model.formation.length>1)this.units[1].setSiblingIndex(0);
       const fxLayer=this.base('Combat effects',0,0,887,1774,this.actors);this.feedback=new BattleFeedback(this.units,this.positions,fxLayer,h=>this.impactText(h));this.resetFeedback();
-      this.drawPage(heroUI,bagUI);this.sync();this.pauseLabel.string=this.model.paused?'继续战斗':'暂停战斗';
+      this.drawPage(heroUI,bagUI);this.sync();if(this.externalPresentation)this.useExternalPresentation();this.pauseLabel.string=this.model.paused?'继续战斗':'暂停战斗';
   }
   private base(name:string,x:number,y:number,w:number,h:number,parent=this.root){const n=new Node(name);n.layer=Layers.Enum.UI_2D;n.parent=parent;n.setPosition(x,y);n.addComponent(UITransform).setContentSize(w,h);return n;}
   private panel(name:string,x:number,y:number,w:number,h:number,color:string,r=24,parent=this.root){const n=this.base(name,x,y,w,h,parent);const g=n.addComponent(Graphics);g.fillColor=new Color().fromHEX(color);g.roundRect(-w/2,-h/2,w,h,r);g.fill();return n;}
@@ -155,7 +159,7 @@ export class BattleView{
 
     });
     this.autoDot.clear();this.autoDot.fillColor=new Color().fromHEX('#FFFFFF');this.autoDot.circle(0,0,13);this.autoDot.fill();this.autoDot.fillColor=new Color().fromHEX(b.autoSkill?'#71C730':'#B8A789');this.autoDot.circle(0,0,10);this.autoDot.fill();
-    this.turns.forEach((n,i)=>n.active=b.result==='fighting'&&b.waveDelay===0&&i===b.nextActor);
+    this.turns.forEach((n,i)=>n.active=!this.externalPresentation&&b.result==='fighting'&&b.waveDelay===0&&i===b.nextActor);
     if(this.stats&&this.stats.isValid)this.stats.string=b.party.map((h,i)=>b.battleStats(i).name+' '+h.damage+(b.formation[i]===2?' / 治疗 '+h.healing:'')).join('\n')+'\n承伤 '+b.received+' · '+b.elapsed.toFixed(1)+'秒';
   }
   private impactText(hit:SquadHit){

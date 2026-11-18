@@ -11,7 +11,7 @@ test('drops settle once per foreground interval and are independent of combat RN
  b.step(10);assert.equal(b.inventory.length,9);assert.equal(DROP_SECONDS,30);
 });
 test('all six slots drop with persistent unique IDs, rolled attributes and progress-based levels',()=>{
- const b=new SquadBattleModel();b.highestWave=10;b.settleIdle(30*200);assert.equal(new Set(b.inventory.map(g=>g.slot)).size,6);assert.equal(new Set(b.inventory.map(g=>g.id)).size,200);
+ const b=new SquadBattleModel();b.interfaceProgress.capacity=1000;b.highestWave=10;b.settleIdle(30*200);assert.equal(new Set(b.inventory.map(g=>g.slot)).size,6);assert.equal(new Set(b.inventory.map(g=>g.id)).size,200);
  assert.ok(b.inventory.every(g=>g.level===4&&gearScore(g)>0));const copy=new SquadBattleModel();copy.inheritIncome(b);copy.settleIdle(30);assert.equal(copy.inventory.at(-1).id,201);assert.equal(copy.inventory.at(-1).level,4);assert.equal(b.inventory.length,200);
 });
 test('equip, replace and unequip preserve HP ratio and cannot duplicate or steal equipment',()=>{

@@ -31,7 +31,7 @@ export function fitScreen(canvas:Node,camera:Camera){
   const top=(p.name==='Adventure page'||p.name==='Dungeon battle')?300:580;
   const y=o.y>=top?o.y+delta:bottom?o.y-delta:o.y;n.setPosition(o.x,y,n.position.z);
   if(n.name==='Forest'){
-    const forestHeight=height/2+333+delta;n.setScale(1,forestHeight/o.height,1);n.setPosition(0,(height/2-333-delta)/2,0);
+    const extension=typeof document!=='undefined'&&document.getElementById('s6-v2')?100:0;const forestHeight=height/2+333+delta+extension;n.setScale(1,forestHeight/o.height,1);n.setPosition(0,(height/2-333-delta-extension)/2,0);
   }else if(o.width>=880&&o.height>=1770){
     n.setScale(n.scale.x,o.scaleY*height/1774,n.scale.z);
   }else if(n.getComponent(Sprite)&&o.width>=880){n.setScale(n.scale.x,o.scaleY*height/1774,n.scale.z);}

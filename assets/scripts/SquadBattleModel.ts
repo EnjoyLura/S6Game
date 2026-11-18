@@ -1,3 +1,4 @@
+import {initialV2,validV2,FORMATIONS,V2_CONFIG,TREE_NODES,treeBonuses} from './V2Progress.ts';
 // Dungeon values are test tuning; all clocks use milliseconds and the local calendar.
 export const DUNGEON_CONFIG={staminaCap:120,recoverMs:6*60*1000,dailyLimit:2,costs:[10,15,20],scales:[1,1.7,2.6],mobWaves:10};
 export const DUNGEONS=[
@@ -83,8 +84,17 @@ export const DROP_SECONDS=30;
 // Runtime resume/stall gaps are not offline reward time. Model tests may still settle explicit durations.
 export const foregroundRewardDelta=(seconds:number)=>Number.isFinite(seconds)&&seconds>0&&seconds<=60?seconds:0;
 export const GEAR_ART=[[0,3],[1,2],[2,1],[3,2],[4,3],[5,1],[0,4],[0,1],[2,2],[0,1],[3,0],[4,2],[0,3],[1,2],[2,1],[3,3],[4,2],[5,1]];
-export type Gear={id:number;slot:number;quality:number;level:number;hp:number;attack:number;defense:number;power:number;locked:boolean;enhancement?:number};
+export type Gear={id:number;slot:number;quality:number;level:number;hp:number;attack:number;defense:number;power:number;locked:boolean;enhancement?:number;effects?:('attack'|'hp')[]};
 export type GearAttribute='hp'|'attack'|'defense'|'power';
+export const validGearEffects=(g:Gear)=>g.effects===undefined||Array.isArray(g.effects)&&g.effects.length<=(g.quality===4?2:g.quality===3?1:0)&&new Set(g.effects).size===g.effects.length&&g.effects.every(e=>e==='attack'||e==='hp');
+export const GEAR_ATTRIBUTE_NAMES={hp:'生命',attack:'攻击',defense:'防御',power:'技能效果'};
+export const gearPrimary=(g:Gear):GearAttribute=>(['attack','attack','power','defense','hp','hp'] as GearAttribute[])[g.slot];
+export function gearUpgradePreview(g:Gear){
+ const next={...g,level:Math.min(100,g.level+1)},primary=gearPrimary(g),breakthrough=g.level%10===9;
+ if(g.level>=100)return next;
+ for(const key of ['hp','attack','defense','power'] as const)if(g[key]&&(key===primary||breakthrough))next[key]=Math.min(1e6,Math.ceil(g[key]*(key===primary?1.1:1.15)));
+ return next;
+}
 export type RetentionRules={enabled:boolean;minQuality:number;minLevel:number;attributes:GearAttribute[]};
 export const ENHANCE_CAP=10;
 export const gearStats=(g:Gear)=>{const scale=10+(g.enhancement||0);return {hp:Math.ceil(g.hp*scale/10),attack:Math.ceil(g.attack*scale/10),defense:Math.ceil(g.defense*scale/10),power:Math.ceil(g.power*scale/10)};};
@@ -104,7 +114,8 @@ export function generateGear(id:number,level:number):Gear{
  const main=['attack','attack','power','defense','hp','hp'][slot] as 'hp'|'attack'|'defense'|'power';
  g[main]=Math.round(({hp:100,attack:16,defense:7,power:22})[main]*scale);
  const secondary=(['hp','attack','defense','power'] as const).filter(k=>k!==main),key=secondary[Math.floor(random()*secondary.length)];
- g[key]=Math.round(({hp:40,attack:6,defense:3,power:9})[key]*scale*(.8+random()*.4));return g;
+ g[key]=Math.round(({hp:40,attack:6,defense:3,power:9})[key]*scale*(.8+random()*.4));
+ if(quality>=3){const count=Math.floor(random()*(quality===4?3:2));g.effects=count===2?['attack','hp']:count===1?[random()<.5?'attack':'hp']:[];}return g;
 }
 export const STAR_CONFIG={cap:5,costs:[1,2,3,4],attributePerStar:.15,skillPerStar:.25};
 export const starSpent=(stars:number)=>STAR_CONFIG.costs.slice(0,stars-1).reduce((a,b)=>a+b,0);
@@ -121,6 +132,7 @@ export type SquadHit = {actor:number;hero?:number;target:number;damage:number;bl
 // Combat indices 0..2 are formation slots, not roster IDs; 3..5 are enemies.
 export class SquadBattleModel {
   encounter:DungeonEncounter|null=null;
+  interfaceProgress=initialV2();
   dungeon:DungeonProgress=initialDungeon();
   refreshDungeon(now:number){recoverDungeon(this.dungeon,now);}
   startDungeon(id:number,difficulty:number,now:number){
@@ -142,7 +154,7 @@ export class SquadBattleModel {
     const reward=r.id===5?{gold:500*(r.difficulty+1)*cleared,experience:100*(r.difficulty+1)*cleared,materials:5*(r.difficulty+1)*cleared,gear:0,level:1}:battle.result==='victory'?dungeonReward(r.id,r.difficulty):{gold:0,experience:0,materials:0,gear:0,level:1};
     this.gold+=reward.gold;this.heroes.forEach((h,i)=>{if(this.owns(i))h.experience+=reward.experience;});
     const materials=this.materials;this.materials+=reward.materials;let kept=0,salvaged=0;
-    for(let i=0;i<reward.gear;i++){const g=generateGear(this.nextGearId++,reward.level);this.inventory.push(g);if(this.rules.enabled&&!this.retained(g)){this.salvage([g.id]);this.autoSalvaged++;salvaged++;}else kept++;}
+    for(let i=0;i<reward.gear;i++){const g=generateGear(this.nextGearId++,reward.level);this.inventory.push(g);if(this.inventory.length>this.interfaceProgress.capacity||this.rules.enabled&&!this.retained(g)){this.salvage([g.id]);this.autoSalvaged++;salvaged++;}else kept++;}
     if(r.id===5)p.floor=Math.max(p.floor,cleared+1);
     r.receipt={gold:reward.gold,experience:reward.experience,materials:this.materials-materials,gear:kept,salvaged,cleared};return null;
   }
@@ -170,8 +182,15 @@ export class SquadBattleModel {
   }
   claimOffline(){
     const r=this.offline;if(!r)return '没有待领取收益';this.gold+=r.gold;r.experience.forEach((v,i)=>this.heroes[i].experience+=v);
-    for(const gear of r.equipment){this.inventory.push({...gear});if(this.rules.enabled&&!this.retained(gear)){this.salvage([gear.id]);this.autoSalvaged++;}}
+    for(const gear of r.equipment){this.inventory.push({...gear});if(this.inventory.length>this.interfaceProgress.capacity||this.rules.enabled&&!this.retained(gear)){this.salvage([gear.id]);this.autoSalvaged++;}}
     this.offline=null;return null;
+  }
+  quickSweep(){
+    if(this.dungeon.stamina<V2_CONFIG.quickCost)return {error:'体力不足',reward:null as OfflineReward|null};
+    const pending=this.offline,seen=this.lastSeen,now=Math.max(Date.now(),seen);
+    this.offline=null;this.lastSeen=now-V2_CONFIG.quickSeconds*1000;this.prepareOffline(now);
+    const reward=this.offline as OfflineReward|null;this.claimOffline();this.offline=pending;this.lastSeen=seen;this.dungeon.stamina-=V2_CONFIG.quickCost;
+    return {error:null,reward};
   }
   materials=0;autoSalvaged=0;rules:RetentionRules={enabled:false,minQuality:2,minLevel:0,attributes:[]};
   recruitment=initialRecruit();
@@ -208,9 +227,11 @@ export class SquadBattleModel {
   }
   equipment(i:number){return this.loadouts[i].map(id=>this.inventory.find(g=>g.id===id)||null);}
   owner(id:number){return this.loadouts.findIndex(slots=>slots.indexOf(id)>=0);}
-  stats(i:number,stars=this.heroes[i].stars){const base=HERO_CONFIG[i],scale=1+(this.heroes[i].level-1)*.1,attr=1+(stars-1)*STAR_CONFIG.attributePerStar,skill=1+(stars-1)*STAR_CONFIG.skillPerStar,gear=this.equipment(i);const sum=(key:'hp'|'attack'|'defense'|'power')=>gear.reduce((n,g)=>n+(g?gearStats(g)[key]:0),0);return {...base,hp:Math.round((base.hp*scale*attr+sum('hp'))*(1+this.heroes[i].talents[0]*.1)),attack:Math.round((base.attack*scale*attr+sum('attack'))*(this.unlocked(i,1)&&i===3?1.15:1)*(1+this.heroes[i].talents[1]*.1)),defense:sum('defense')+(this.unlocked(i,1)&&i===0?25:0),power:Math.round((base.power*scale*skill+sum('power'))*(this.unlocked(i,1)&&(i===1||i===2)?1.15:1)*(this.unlocked(i,3)?1.2:1)*(1+this.heroes[i].talents[2]*.1))};}
-  talentPoints(i:number){return this.owns(i)?this.heroes[i].level-1-this.heroes[i].talents.reduce((n,r,j)=>n+r*TALENTS[j].cost,0):0;}
-  secondCooldown(i:number){return this.heroes[i].talents[3]?8:SECOND_COOLDOWN;}
+  stats(i:number,stars=this.heroes[i].stars){const tree=treeBonuses(this.interfaceProgress,i),base=HERO_CONFIG[i],scale=1+(this.heroes[i].level-1)*.1,attr=1+(stars-1)*STAR_CONFIG.attributePerStar,skill=1+(stars-1)*STAR_CONFIG.skillPerStar,gear=this.equipment(i);const effect=(key:'hp'|'attack')=>1+gear.reduce((n,g)=>n+(g?.effects&&g.effects.indexOf(key)>=0?1:0),0)*.05;const sum=(key:'hp'|'attack'|'defense'|'power')=>gear.reduce((n,g)=>n+(g?gearStats(g)[key]:0),0);return {...base,hp:Math.round((base.hp*scale*attr+sum('hp'))*(1+this.heroes[i].talents[0]*.1+tree.hp)*effect('hp')),attack:Math.round((base.attack*scale*attr+sum('attack'))*(this.unlocked(i,1)&&i===3?1.15:1)*(1+this.heroes[i].talents[1]*.1+tree.attack)*effect('attack')),defense:tree.defense+sum('defense')+(this.unlocked(i,1)&&i===0?25:0),power:Math.round((base.power*scale*skill+sum('power'))*(this.unlocked(i,1)&&(i===1||i===2)?1.15:1)*(this.unlocked(i,3)?1.2:1)*(1+this.heroes[i].talents[2]*.1+tree.power))};}
+  talentPoints(i:number){return this.owns(i)?this.heroes[i].level-1-this.interfaceProgress.tree[i].reduce((n,r)=>n+r,0)-this.heroes[i].talents.reduce((n,r,j)=>n+r*TALENTS[j].cost,0):0;}
+  secondCooldown(i:number){return (this.heroes[i].talents[3]?8:SECOND_COOLDOWN)-treeBonuses(this.interfaceProgress,i).cooldown;}
+  trainTreeTalent(i:number,node:number){if(!this.owns(i)||!Number.isInteger(node)||node<0||node>=15)return '无效的天赋节点';const t=this.interfaceProgress.tree[i],c=TREE_NODES[node];if(t[node])return '节点已学习';if(c.parent>=0&&!t[c.parent])return '请先学习前置节点';if(this.talentPoints(i)<c.cost)return '天赋点不足';const h=this.heroes[i],ratio=h.hp/this.stats(i).hp;t[node]=1;h.hp=h.hp>0?Math.max(1,Math.round(this.stats(i).hp*ratio)):0;return null;}
+  resetTreeTalents(i:number){if(!this.owns(i))return '请先招募该英雄';const h=this.heroes[i],ratio=h.hp/this.stats(i).hp;this.interfaceProgress.tree[i]=Array(15).fill(0);h.talents=[0,0,0,0];h.hp=h.hp>0?Math.max(1,Math.round(this.stats(i).hp*ratio)):0;h.shield=Math.min(h.shield,this.stats(i).power);return null;}
   trainTalent(i:number,node:number){
     if(!this.owns(i))return '请先招募该英雄';if(!Number.isInteger(node)||node<0||node>=TALENTS.length)return '无效天赋';
     const h=this.heroes[i],c=TALENTS[node];if(h.talents[node]>=c.max)return '天赋已满级';if(node===3&&!h.talents[2])return '需要技能强化1级';if(this.talentPoints(i)<c.cost)return '天赋点不足';
@@ -253,6 +274,20 @@ export class SquadBattleModel {
     this.materials-=cost;g.enhancement=(g.enhancement||0)+1;
     if(h)h.hp=h.hp>0?Math.max(1,Math.floor(this.stats(owner).hp*ratio)):0;return null;
   }
+  recruitPool(pool:number,n:number){
+    if(pool===0)return recruit(this.recruitment,pool,n);
+    const old=this.recruitment.tickets;this.recruitment.tickets=this.interfaceProgress.upTickets;
+    const error=recruit(this.recruitment,pool,n);this.interfaceProgress.upTickets=this.recruitment.tickets;this.recruitment.tickets=old;return error;
+  }
+  expandBag(){const p=this.interfaceProgress,cost=V2_CONFIG.capacityCost*Math.max(1,1+Math.floor((p.capacity-200)/50));if(p.capacity>=1e6)return '容量已达上限';if(this.gold<cost)return '金币不足';this.gold-=cost;p.capacity=Math.min(1e6,p.capacity+50);return null;}
+  upgradeGear(id:number){
+    const g=this.inventory.find(g=>g.id===id);if(!g)return '装备不存在';if(g.level>=100)return '已达等级上限';
+    const breakthrough=g.level%10===9,material=(g.quality+1)*(breakthrough?15:4),gold=g.level*(breakthrough?100:30);
+    if(this.materials<material||this.gold<gold)return '材料或金币不足';
+    const owner=this.owner(id),h=owner>=0?this.heroes[owner]:null,ratio=h?h.hp/this.stats(owner).hp:0;
+    this.materials-=material;this.gold-=gold;Object.assign(g,gearUpgradePreview(g));
+    if(h)h.hp=h.hp>0?Math.max(1,Math.floor(this.stats(owner).hp*ratio)):0;return null;
+  }
   upgrade(i:number){const h=this.heroes[i];if(!this.owns(i))return '该英雄尚未招募';if(h.level>=LEVEL_CAP)return '已达到当前等级上限';const cost=upgradeCost(h.level);if(h.experience<cost)return '经验不足，需要'+cost+'经验，当前'+h.experience;
     const ratio=h.hp/this.stats(i).hp;h.experience-=cost;h.level++;h.hp=h.hp>0?Math.ceil(this.stats(i).hp*ratio):0;return null;
   }
@@ -278,15 +313,16 @@ export class SquadBattleModel {
     return 3+alive[Math.min(alive.length-1,Math.floor(this.random()*alive.length))];
   }
   private patient(){return this.party.map((_,i)=>i).filter(i=>this.party[i].hp>0&&this.party[i].hp<this.battleStats(i).hp).sort((a,b)=>this.party[a].hp/this.battleStats(a).hp-this.party[b].hp/this.battleStats(b).hp)[0];}
-  private target(){const alive=this.party.map((_,i)=>i).filter(i=>this.party[i].hp>0);const total=alive.reduce((s,i)=>s+(i===0?6:2),0);let roll=this.random()*total;for(const i of alive){roll-=i===0?6:2;if(roll<0)return i;}return alive[alive.length-1];}
+  private target(){const alive=this.party.map((_,i)=>i).filter(i=>this.party[i].hp>0);const total=alive.reduce((s,i)=>s+(FORMATIONS[this.interfaceProgress.formation].rates[i]||1),0);let roll=this.random()*total;for(const i of alive){roll-=FORMATIONS[this.interfaceProgress.formation].rates[i]||1;if(roll<0)return i;}return alive[alive.length-1];}
   inheritIncome(previous:SquadBattleModel){
+    this.interfaceProgress=JSON.parse(JSON.stringify(previous.interfaceProgress));
     this.dungeon=JSON.parse(JSON.stringify(previous.dungeon));this.lastSeen=previous.lastSeen;this.offline=previous.offline?JSON.parse(JSON.stringify(previous.offline)):null;this.formation=previous.formation.slice();this.buildOrder();this.materials=previous.materials;this.autoSalvaged=previous.autoSalvaged;this.rules={...previous.rules,attributes:previous.rules.attributes.slice()};
     this.recruitment=JSON.parse(JSON.stringify(previous.recruitment));
     this.inventory=previous.inventory.map(g=>({...g}));this.loadouts=previous.loadouts.map(s=>s.slice());this.nextGearId=previous.nextGearId;this.dropRemainder=previous.dropRemainder;this.highestWave=previous.highestWave;
     this.gold=previous.gold;this.kills=previous.kills;this.idleElapsed=previous.idleElapsed;this.incomeRemainder=previous.incomeRemainder;
     this.heroes.forEach((h,i)=>{h.experience=previous.heroes[i].experience;h.level=previous.heroes[i].level;h.stars=previous.heroes[i].stars;h.talents=previous.heroes[i].talents.slice();h.hp=this.stats(i).hp;});
   }
-  snapshot(){return {version:11,encounter:this.encounter?{...this.encounter}:null,dungeon:JSON.parse(JSON.stringify(this.dungeon)) as DungeonProgress,lastSeen:this.lastSeen,offline:this.offline?JSON.parse(JSON.stringify(this.offline)) as OfflineReward:null,formation:this.formation.slice(),recruitment:JSON.parse(JSON.stringify(this.recruitment)) as typeof this.recruitment,materials:this.materials,autoSalvaged:this.autoSalvaged,rules:{...this.rules,attributes:this.rules.attributes.slice()},inventory:this.inventory.map(g=>({...g,enhancement:g.enhancement||0})),loadouts:this.loadouts.map(s=>s.slice()),nextGearId:this.nextGearId,dropRemainder:this.dropRemainder,highestWave:this.highestWave,heroes:this.heroes.map(h=>({...h,talents:h.talents.slice()})),enemies:this.enemies.map(e=>({...e})),gold:this.gold,kills:this.kills,wave:this.wave,clearedWaves:this.clearedWaves,idleElapsed:this.idleElapsed,incomeRemainder:this.incomeRemainder,elapsed:this.elapsed,actions:this.actions,damage:this.damage,received:this.received,autoSkill:this.autoSkill,paused:this.paused,waveDelay:this.waveDelay,regrouping:this.regrouping,result:this.result,cursor:this.cursor,timer:this.timer,monsterIndex:this.monsterIndex,count:this.count,continuous:this.continuous};}
+  snapshot(){return {version:11,interfaceProgress:JSON.parse(JSON.stringify(this.interfaceProgress)),encounter:this.encounter?{...this.encounter}:null,dungeon:JSON.parse(JSON.stringify(this.dungeon)) as DungeonProgress,lastSeen:this.lastSeen,offline:this.offline?JSON.parse(JSON.stringify(this.offline)) as OfflineReward:null,formation:this.formation.slice(),recruitment:JSON.parse(JSON.stringify(this.recruitment)) as typeof this.recruitment,materials:this.materials,autoSalvaged:this.autoSalvaged,rules:{...this.rules,attributes:this.rules.attributes.slice()},inventory:this.inventory.map(g=>({...g,...(g.effects?{effects:g.effects.slice()}:{}),enhancement:g.enhancement||0})),loadouts:this.loadouts.map(s=>s.slice()),nextGearId:this.nextGearId,dropRemainder:this.dropRemainder,highestWave:this.highestWave,heroes:this.heroes.map(h=>({...h,talents:h.talents.slice()})),enemies:this.enemies.map(e=>({...e})),gold:this.gold,kills:this.kills,wave:this.wave,clearedWaves:this.clearedWaves,idleElapsed:this.idleElapsed,incomeRemainder:this.incomeRemainder,elapsed:this.elapsed,actions:this.actions,damage:this.damage,received:this.received,autoSkill:this.autoSkill,paused:this.paused,waveDelay:this.waveDelay,regrouping:this.regrouping,result:this.result,cursor:this.cursor,timer:this.timer,monsterIndex:this.monsterIndex,count:this.count,continuous:this.continuous};}
   static restore(value:unknown):SquadBattleModel|null{
     // Reject malformed or future saves as a whole; never partially apply balances.
     try{
@@ -302,27 +338,29 @@ export class SquadBattleModel {
       if(d.version>=2){
         if(!Array.isArray(d.inventory)||!Array.isArray(d.loadouts)||d.loadouts.length!==(d.version>=5?4:3)||!integer(d.nextGearId)||d.nextGearId<1||!num(d.dropRemainder,DROP_SECONDS)||d.dropRemainder>=DROP_SECONDS||!integer(d.highestWave)||d.highestWave<d.wave)return null;
         const ids=new Set<number>();
-        for(const g of d.inventory){if(!g||!integer(g.id)||g.id<1||g.id>=d.nextGearId||ids.has(g.id)||!integer(g.slot,5)||!integer(g.quality,4)||!integer(g.level,100)||g.level<1||typeof g.locked!=='boolean'||!['hp','attack','defense','power'].every(k=>integer(g[k],1000000)))return null;if(d.version>=3&&!integer(g.enhancement,ENHANCE_CAP))return null;ids.add(g.id);}
+        for(const g of d.inventory){if(!g||!validGearEffects(g)||!integer(g.id)||g.id<1||g.id>=d.nextGearId||ids.has(g.id)||!integer(g.slot,5)||!integer(g.quality,4)||!integer(g.level,100)||g.level<1||typeof g.locked!=='boolean'||!['hp','attack','defense','power'].every(k=>integer(g[k],1000000)))return null;if(d.version>=3&&!integer(g.enhancement,ENHANCE_CAP))return null;ids.add(g.id);}
         const used=new Set<number>();for(const slots of d.loadouts){if(!Array.isArray(slots)||slots.length!==6)return null;for(let slot=0;slot<6;slot++){const id=slots[slot];if(id===null)continue;const g=d.inventory.find(g=>g.id===id);if(!g||g.slot!==slot||used.has(id))return null;used.add(id);}}
-        b.inventory=d.inventory.map(g=>({...g,enhancement:d.version>=3?g.enhancement:0}));b.loadouts=d.loadouts.map(s=>s.slice());b.nextGearId=d.nextGearId;b.dropRemainder=d.dropRemainder;b.highestWave=d.highestWave;
+        if(d.interfaceProgress===undefined)b.interfaceProgress.capacity=Math.max(200,Math.ceil(d.inventory.length/50)*50);
+        b.inventory=d.inventory.map(g=>({...g,...(g.effects?{effects:g.effects.slice()}:{}),enhancement:d.version>=3?g.enhancement:0}));b.loadouts=d.loadouts.map(s=>s.slice());b.nextGearId=d.nextGearId;b.dropRemainder=d.dropRemainder;b.highestWave=d.highestWave;
       }else b.highestWave=d.wave;
       if(d.version>=3){if(!integer(d.materials)||!integer(d.autoSalvaged)||!validRules(d.rules))return null;b.materials=d.materials;b.autoSalvaged=d.autoSalvaged;b.rules={...d.rules,attributes:d.rules.attributes.slice()};}
       if(d.version>=4){if(!validRecruit(d.recruitment))return null;b.recruitment=JSON.parse(JSON.stringify(d.recruitment));}
       if(d.version<5)b.loadouts[3]=Array(6).fill(null);
       if(d.version>=5){if(!Array.isArray(d.formation)||d.formation.length<1||d.formation.length>3||new Set(d.formation).size!==d.formation.length||!d.formation.every(i=>b.owns(i))||d.cursor>=d.formation.length+d.count)return null;b.formation=d.formation.slice();b.buildOrder();}
+      if(d.interfaceProgress!==undefined){if(!validV2(d.interfaceProgress))return null;b.interfaceProgress=JSON.parse(JSON.stringify(d.interfaceProgress));}
       for(let i=0;i<d.heroes.length;i++){const h=d.heroes[i];if(!h||!integer(h.level,LEVEL_CAP)||h.level<1||!integer(h.experience)||!integer(h.hp)||!integer(h.shield)||!num(h.cooldown,HERO_CONFIG[i].cooldown)||typeof h.queued!=='boolean'||!integer(h.damage)||!integer(h.healing))return null;
         if(d.version>=5&&!b.owns(i)&&(h.level!==1||h.experience!==0||b.loadouts[i].some(id=>id!==null)))return null;
         const stars=d.version>=6?h.stars:1;if(!integer(stars,STAR_CONFIG.cap)||stars<1||starSpent(stars)>Math.max(0,b.recruitment.counts[i]-1))return null;
         if(d.version>=7&&(!num(h.cooldown2,SECOND_COOLDOWN)||typeof h.queued2!=='boolean'||(h.level<5&&(h.cooldown2>0||h.queued2))))return null;
         const talents=d.version>=8?h.talents:[0,0,0,0];
-        if(!Array.isArray(talents)||talents.length!==4||!talents.every((r,j)=>integer(r,TALENTS[j].max))||(talents[3]>0&&talents[2]===0)||talents.reduce((n,r,j)=>n+r*TALENTS[j].cost,0)>h.level-1)return null;
+        if(!Array.isArray(talents)||talents.length!==4||!talents.every((r,j)=>integer(r,TALENTS[j].max))||(talents[3]>0&&talents[2]===0)||talents.reduce((n,r,j)=>n+r*TALENTS[j].cost,0)+b.interfaceProgress.tree[i].reduce((n,r)=>n+r,0)>h.level-1)return null;
         b.heroes[i]={...h,stars,talents:talents.slice(),cooldown2:d.version>=7?h.cooldown2:0,queued2:d.version>=7?h.queued2:false};if(h.hp>b.stats(i).hp||h.shield>b.stats(i).power)return null;
       }
       if(d.version>=9){
         if(!integer(d.lastSeen,1e15))return null;b.lastSeen=d.lastSeen;
         if(d.offline!==null){const r=d.offline;
           if(!r||!integer(r.seconds,OFFLINE_CONFIG.capSeconds)||r.seconds<5||r.seconds%5||!integer(r.gold)||!integer(r.checkpoint)||r.checkpoint<1||r.checkpoint>b.highestWave||!Array.isArray(r.experience)||r.experience.length!==4||!r.experience.every((v,i)=>integer(v)&&(b.owns(i)||v===0))||!Array.isArray(r.equipment)||r.equipment.length!==Math.floor(r.seconds/30))return null;
-          const ids=new Set(b.inventory.map(g=>g.id));for(const g of r.equipment){if(!g||!integer(g.id)||g.id<1||g.id>=b.nextGearId||ids.has(g.id)||!integer(g.slot,5)||!integer(g.quality,4)||!integer(g.level,100)||g.level<1||g.locked!==false||(g.enhancement||0)!==0||!['hp','attack','defense','power'].every(k=>integer(g[k],1000000)))return null;ids.add(g.id);}
+          const ids=new Set(b.inventory.map(g=>g.id));for(const g of r.equipment){if(!g||!validGearEffects(g)||!integer(g.id)||g.id<1||g.id>=b.nextGearId||ids.has(g.id)||!integer(g.slot,5)||!integer(g.quality,4)||!integer(g.level,100)||g.level<1||g.locked!==false||(g.enhancement||0)!==0||!['hp','attack','defense','power'].every(k=>integer(g[k],1000000)))return null;ids.add(g.id);}
           b.offline=JSON.parse(JSON.stringify(r));
         }
       }
@@ -335,13 +373,14 @@ export class SquadBattleModel {
         if(d.dungeon.run){const r=d.dungeon.run,fight=SquadBattleModel.restore(r.battle);if(!fight||fight.encounter&&(fight.encounter.id!==r.id||fight.encounter.difficulty!==r.difficulty))return null;}
         b.dungeon=JSON.parse(JSON.stringify(d.dungeon));
       }
+
       return b;
     }catch{return null;}
   }
   // Real foreground time, intentionally separate from battle speed and kill count.
   settleIdle(seconds:number){
     if(this.paused||!Number.isFinite(seconds)||seconds<=0)return 0;
-    this.dropRemainder+=seconds;const drops=Math.floor((this.dropRemainder+1e-8)/DROP_SECONDS);if(drops){this.dropRemainder=Math.max(0,this.dropRemainder-drops*DROP_SECONDS);for(let n=0;n<drops;n++){const g=generateGear(this.nextGearId++,Math.min(100,1+Math.floor((this.highestWave-1)/3)));this.inventory.push(g);if(this.rules.enabled&&!this.retained(g)){this.salvage([g.id]);this.autoSalvaged++;}}}
+    this.dropRemainder+=seconds;const drops=Math.floor((this.dropRemainder+1e-8)/DROP_SECONDS);if(drops){this.dropRemainder=Math.max(0,this.dropRemainder-drops*DROP_SECONDS);for(let n=0;n<drops;n++){const g=generateGear(this.nextGearId++,Math.min(100,1+Math.floor((this.highestWave-1)/3)));this.inventory.push(g);if(this.inventory.length>this.interfaceProgress.capacity||this.rules.enabled&&!this.retained(g)){this.salvage([g.id]);this.autoSalvaged++;}}}
     this.idleElapsed+=seconds;this.incomeRemainder+=seconds;
     const ticks=Math.floor((this.incomeRemainder+1e-8)/5);
     if(ticks){this.incomeRemainder=Math.max(0,this.incomeRemainder-ticks*5);this.gold+=ticks*10;this.heroes.forEach((h,i)=>{if(this.owns(i))h.experience+=ticks*8;});}
