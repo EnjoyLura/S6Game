@@ -38,12 +38,12 @@ try{
  // Unequip a slot and open the shared selection grid.
  await page.locator('.equipment-slot').first().click();await click('卸下',dialog());await page.locator('.equipment-slot').first().click();await shot('12-equipment-picker','装备穿戴');await close();
  await nav('背包');await shot('05-bag','背包页');
- await click('⊕ 🪙 扩容');await shot('11-confirm','小提示弹窗');await click('确定',dialog());
+ await page.locator('.expand-button').click();await shot('11-confirm','小提示弹窗');await click('确定',dialog());
  await click('批量分解');await shot('24-salvage','装备分解');await close();
  await nav('招募');await shot('03-recruit-normal','常驻招募');await click('卡池详情');await shot('16-pool-normal','常驻卡池详情');await close();
  await page.locator('.recruit-bottom .page-actions button').first().click();await shot('20-single','单抽结果');assert.equal(await dialog().locator('.hero-card').count(),1);assert.equal(await dialog().locator('.dialog-actions button').count(),2);await close();
  await page.locator('.recruit-bottom .page-actions button').last().click();await shot('19-ten','十连结果');assert.equal(await dialog().locator('.hero-card').count(),10);await close();
- await click('限时UP');await shot('04-recruit-up','UP招募');await click('卡池详情');await shot('17-pool-up','UP卡池详情');await close();
+ await click('UP招募');await shot('04-recruit-up','UP招募');await click('卡池详情');await shot('17-pool-up','UP卡池详情');await close();
  await nav('副本');await shot('06-dungeons','资源副本');await click('无尽挑战');await shot('07-endless','无尽挑战');await click('每日副本');await shot('08-daily','每日副本');
  await click('资源副本');await page.locator('.dungeon-card button').first().click();await shot('23-challenge','挑战确认');assert.equal(await dialog().locator('.main-tabs button').count(),3);await click('困难',dialog());await click('普通',dialog());
  await click('开始挑战',dialog());await page.locator('.battle-hud').waitFor();assert.ok((await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).dungeon.run,SAVE_KEY)));
