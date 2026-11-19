@@ -1,3 +1,5 @@
+import type {CombatAffixes} from './CombatAttributes.ts';
+import {combatTotals,validCombatAffixes,COMBAT_KEYS,COMBAT_CONFIG,attackDamage} from './CombatAttributes.ts';
 import {initialV2,validV2,FORMATIONS,V2_CONFIG,TREE_NODES,treeBonuses} from './V2Progress.ts';
 // Dungeon values are test tuning; all clocks use milliseconds and the local calendar.
 export const DUNGEON_CONFIG={staminaCap:120,recoverMs:6*60*1000,dailyLimit:2,costs:[10,15,20],scales:[1,1.7,2.6],mobWaves:10};
@@ -84,15 +86,16 @@ export const DROP_SECONDS=30;
 // Runtime resume/stall gaps are not offline reward time. Model tests may still settle explicit durations.
 export const foregroundRewardDelta=(seconds:number)=>Number.isFinite(seconds)&&seconds>0&&seconds<=60?seconds:0;
 export const GEAR_ART=[[0,3],[1,2],[2,1],[3,2],[4,3],[5,1],[0,4],[0,1],[2,2],[0,1],[3,0],[4,2],[0,3],[1,2],[2,1],[3,3],[4,2],[5,1]];
-export type Gear={id:number;slot:number;quality:number;level:number;hp:number;attack:number;defense:number;power:number;locked:boolean;enhancement?:number;effects?:('attack'|'hp')[]};
+export type Gear={id:number;slot:number;quality:number;level:number;hp:number;attack:number;defense:number;power:number;locked:boolean;enhancement?:number;effects?:('attack'|'hp')[];combat?:CombatAffixes};
 export type GearAttribute='hp'|'attack'|'defense'|'power';
-export const validGearEffects=(g:Gear)=>g.effects===undefined||Array.isArray(g.effects)&&g.effects.length<=(g.quality===4?2:g.quality===3?1:0)&&new Set(g.effects).size===g.effects.length&&g.effects.every(e=>e==='attack'||e==='hp');
+export const validGearEffects=(g:Gear)=>validCombatAffixes(g.combat)&&(g.effects===undefined||Array.isArray(g.effects)&&g.effects.length<=(g.quality===4?2:g.quality===3?1:0)&&new Set(g.effects).size===g.effects.length&&g.effects.every(e=>e==='attack'||e==='hp'));
 export const GEAR_ATTRIBUTE_NAMES={hp:'生命',attack:'攻击',defense:'防御',power:'技能效果'};
 export const gearPrimary=(g:Gear):GearAttribute=>(['attack','attack','power','defense','hp','hp'] as GearAttribute[])[g.slot];
 export function gearUpgradePreview(g:Gear){
- const next={...g,level:Math.min(100,g.level+1)},primary=gearPrimary(g),breakthrough=g.level%10===9;
+ const next={...g,...(g.combat?{combat:{...g.combat}}:{}),level:Math.min(100,g.level+1)},primary=gearPrimary(g),breakthrough=g.level%10===9;
  if(g.level>=100)return next;
  for(const key of ['hp','attack','defense','power'] as const)if(g[key]&&(key===primary||breakthrough))next[key]=Math.min(1e6,Math.ceil(g[key]*(key===primary?1.1:1.15)));
+ if(breakthrough&&next.combat)for(const key of COMBAT_KEYS)if(next.combat[key])next.combat[key]=Math.min(1,Math.round(next.combat[key]!*1.15*10000)/10000);
  return next;
 }
 export type RetentionRules={enabled:boolean;minQuality:number;minLevel:number;attributes:GearAttribute[]};
@@ -115,7 +118,7 @@ export function generateGear(id:number,level:number):Gear{
  g[main]=Math.round(({hp:100,attack:16,defense:7,power:22})[main]*scale);
  const secondary=(['hp','attack','defense','power'] as const).filter(k=>k!==main),key=secondary[Math.floor(random()*secondary.length)];
  g[key]=Math.round(({hp:40,attack:6,defense:3,power:9})[key]*scale*(.8+random()*.4));
- if(quality>=3){const count=Math.floor(random()*(quality===4?3:2));g.effects=count===2?['attack','hp']:count===1?[random()<.5?'attack':'hp']:[];}return g;
+ if(quality>=3){const count=Math.floor(random()*(quality===4?3:2));g.effects=count===2?['attack','hp']:count===1?[random()<.5?'attack':'hp']:[];}if(quality>=1){const key=COMBAT_KEYS[Math.floor(random()*COMBAT_KEYS.length)];g.combat={[key]:quality*COMBAT_CONFIG.affixPerQuality};}return g;
 }
 export const STAR_CONFIG={cap:5,costs:[1,2,3,4],attributePerStar:.15,skillPerStar:.25};
 export const starSpent=(stars:number)=>STAR_CONFIG.costs.slice(0,stars-1).reduce((a,b)=>a+b,0);
@@ -128,7 +131,7 @@ export const MONSTERS = [
 export type EnemyTargetRule='random'|'lowest-hp-ratio'|'highest-attack'|{preferred:number};
 // Skills may override this independently of basic attacks. Current fire stays random.
 export const FIRE_TARGET:EnemyTargetRule='random';
-export type SquadHit = {actor:number;hero?:number;target:number;damage:number;blocked:number;heal:number;skill:boolean;skillSlot?:number;killed?:boolean;hpAfter:number;shieldAfter:number};
+export type SquadHit = {critical?:boolean;combo?:boolean;dodged?:boolean;actor:number;hero?:number;target:number;damage:number;blocked:number;heal:number;skill:boolean;skillSlot?:number;killed?:boolean;hpAfter:number;shieldAfter:number};
 // Combat indices 0..2 are formation slots, not roster IDs; 3..5 are enemies.
 export class SquadBattleModel {
   encounter:DungeonEncounter|null=null;
@@ -227,24 +230,26 @@ export class SquadBattleModel {
   }
   equipment(i:number){return this.loadouts[i].map(id=>this.inventory.find(g=>g.id===id)||null);}
   owner(id:number){return this.loadouts.findIndex(slots=>slots.indexOf(id)>=0);}
-  stats(i:number,stars=this.heroes[i].stars){const tree=treeBonuses(this.interfaceProgress,i),base=HERO_CONFIG[i],scale=1+(this.heroes[i].level-1)*.1,attr=1+(stars-1)*STAR_CONFIG.attributePerStar,skill=1+(stars-1)*STAR_CONFIG.skillPerStar,gear=this.equipment(i);const effect=(key:'hp'|'attack')=>1+gear.reduce((n,g)=>n+(g?.effects&&g.effects.indexOf(key)>=0?1:0),0)*.05;const sum=(key:'hp'|'attack'|'defense'|'power')=>gear.reduce((n,g)=>n+(g?gearStats(g)[key]:0),0);return {...base,hp:Math.round((base.hp*scale*attr+sum('hp'))*(1+this.heroes[i].talents[0]*.1+tree.hp)*effect('hp')),attack:Math.round((base.attack*scale*attr+sum('attack'))*(this.unlocked(i,1)&&i===3?1.15:1)*(1+this.heroes[i].talents[1]*.1+tree.attack)*effect('attack')),defense:tree.defense+sum('defense')+(this.unlocked(i,1)&&i===0?25:0),power:Math.round((base.power*scale*skill+sum('power'))*(this.unlocked(i,1)&&(i===1||i===2)?1.15:1)*(this.unlocked(i,3)?1.2:1)*(1+this.heroes[i].talents[2]*.1+tree.power))};}
+  combatStats(i:number){return combatTotals(this.equipment(i));}
+  shieldCapacity(i:number){return Math.round(this.stats(i).power*(1+this.combatStats(i).shieldBonus));}
+  stats(i:number,stars=this.heroes[i].stars){const tree=treeBonuses(this.interfaceProgress,i),base=HERO_CONFIG[i],scale=1+(this.heroes[i].level-1)*.1,attr=1+(stars-1)*STAR_CONFIG.attributePerStar,skill=1+(stars-1)*STAR_CONFIG.skillPerStar,gear=this.equipment(i);const effect=(key:'hp'|'attack')=>1+gear.reduce((n,g)=>n+(g?.effects&&g.effects.indexOf(key)>=0?1:0),0)*.05;const sum=(key:'hp'|'attack'|'defense'|'power')=>gear.reduce((n,g)=>n+(g?gearStats(g)[key]:0),0);return {...base,cooldown:base.cooldown*(1-this.combatStats(i).cooldownReduction),hp:Math.round((base.hp*scale*attr+sum('hp'))*(1+this.heroes[i].talents[0]*.1+tree.hp)*effect('hp')),attack:Math.round((base.attack*scale*attr+sum('attack'))*(this.unlocked(i,1)&&i===3?1.15:1)*(1+this.heroes[i].talents[1]*.1+tree.attack)*effect('attack')),defense:tree.defense+sum('defense')+(this.unlocked(i,1)&&i===0?25:0),power:Math.round((base.power*scale*skill+sum('power'))*(this.unlocked(i,1)&&(i===1||i===2)?1.15:1)*(this.unlocked(i,3)?1.2:1)*(1+this.heroes[i].talents[2]*.1+tree.power))};}
   talentPoints(i:number){return this.owns(i)?this.heroes[i].level-1-this.interfaceProgress.tree[i].reduce((n,r)=>n+r,0)-this.heroes[i].talents.reduce((n,r,j)=>n+r*TALENTS[j].cost,0):0;}
-  secondCooldown(i:number){return (this.heroes[i].talents[3]?8:SECOND_COOLDOWN)-treeBonuses(this.interfaceProgress,i).cooldown;}
+  secondCooldown(i:number){return ((this.heroes[i].talents[3]?8:SECOND_COOLDOWN)-treeBonuses(this.interfaceProgress,i).cooldown)*(1-this.combatStats(i).cooldownReduction);}
   trainTreeTalent(i:number,node:number){if(!this.owns(i)||!Number.isInteger(node)||node<0||node>=15)return '无效的天赋节点';const t=this.interfaceProgress.tree[i],c=TREE_NODES[node];if(t[node])return '节点已学习';if(c.parent>=0&&!t[c.parent])return '请先学习前置节点';if(this.talentPoints(i)<c.cost)return '天赋点不足';const h=this.heroes[i],ratio=h.hp/this.stats(i).hp;t[node]=1;h.hp=h.hp>0?Math.max(1,Math.round(this.stats(i).hp*ratio)):0;return null;}
-  resetTreeTalents(i:number){if(!this.owns(i))return '请先招募该英雄';const h=this.heroes[i],ratio=h.hp/this.stats(i).hp;this.interfaceProgress.tree[i]=Array(15).fill(0);h.talents=[0,0,0,0];h.hp=h.hp>0?Math.max(1,Math.round(this.stats(i).hp*ratio)):0;h.shield=Math.min(h.shield,this.stats(i).power);return null;}
+  resetTreeTalents(i:number){if(!this.owns(i))return '请先招募该英雄';const h=this.heroes[i],ratio=h.hp/this.stats(i).hp;this.interfaceProgress.tree[i]=Array(15).fill(0);h.talents=[0,0,0,0];h.hp=h.hp>0?Math.max(1,Math.round(this.stats(i).hp*ratio)):0;h.shield=Math.min(h.shield,this.shieldCapacity(i));return null;}
   trainTalent(i:number,node:number){
     if(!this.owns(i))return '请先招募该英雄';if(!Number.isInteger(node)||node<0||node>=TALENTS.length)return '无效天赋';
     const h=this.heroes[i],c=TALENTS[node];if(h.talents[node]>=c.max)return '天赋已满级';if(node===3&&!h.talents[2])return '需要技能强化1级';if(this.talentPoints(i)<c.cost)return '天赋点不足';
     const ratio=h.hp/this.stats(i).hp;h.talents[node]++;h.hp=h.hp>0?Math.max(1,Math.floor(this.stats(i).hp*ratio)):0;return null;
   }
-  resetTalents(i:number){if(!this.owns(i))return '请先招募该英雄';const h=this.heroes[i],ratio=h.hp/this.stats(i).hp;h.talents=[0,0,0,0];h.hp=h.hp>0?Math.max(1,Math.floor(this.stats(i).hp*ratio)):0;h.shield=Math.min(h.shield,this.stats(i).power);return null;}
+  resetTalents(i:number){if(!this.owns(i))return '请先招募该英雄';const h=this.heroes[i],ratio=h.hp/this.stats(i).hp;h.talents=[0,0,0,0];h.hp=h.hp>0?Math.max(1,Math.floor(this.stats(i).hp*ratio)):0;h.shield=Math.min(h.shield,this.shieldCapacity(i));return null;}
   spareCopies(i:number){return this.owns(i)?Math.max(0,this.recruitment.counts[i]-1-starSpent(this.heroes[i].stars)):0;}
   starPreview(i:number){if(!this.owns(i))return null;const stars=this.heroes[i].stars;return {stars,cost:stars<STAR_CONFIG.cap?STAR_CONFIG.costs[stars-1]:0,available:this.spareCopies(i),before:this.stats(i),after:this.stats(i,Math.min(STAR_CONFIG.cap,stars+1))};}
   starUp(i:number){
     const p=this.starPreview(i);if(!p)return '请先招募该英雄';if(p.stars>=STAR_CONFIG.cap)return '已达到5星上限';if(p.available<p.cost)return '重复份数不足：需要'+p.cost+'份，当前'+p.available+'份';
     const h=this.heroes[i],ratio=h.hp/p.before.hp;h.stars++;h.hp=h.hp>0?Math.max(1,Math.floor(this.stats(i).hp*ratio)):0;return null;
   }
-  private changeEquipment(i:number,slots:(number|null)[]){if(slots.every((id,j)=>id===this.loadouts[i][j]))return;const h=this.heroes[i],ratio=h.hp/this.stats(i).hp;this.loadouts[i]=slots;h.hp=h.hp>0?Math.max(1,Math.floor(this.stats(i).hp*ratio)):0;h.shield=Math.min(h.shield,this.stats(i).power);}
+  private changeEquipment(i:number,slots:(number|null)[]){if(slots.every((id,j)=>id===this.loadouts[i][j]))return;const h=this.heroes[i],ratio=h.hp/this.stats(i).hp;this.loadouts[i]=slots;h.hp=h.hp>0?Math.max(1,Math.floor(this.stats(i).hp*ratio)):0;h.shield=Math.min(h.shield,this.shieldCapacity(i));}
   equip(i:number,id:number|null,slot:number){
     if(!this.owns(i))return '该英雄尚未招募';
     if(!Number.isInteger(slot)||slot<0||slot>=6)return '无效装备部位';
@@ -288,7 +293,7 @@ export class SquadBattleModel {
     this.materials-=material;this.gold-=gold;Object.assign(g,gearUpgradePreview(g));
     if(h)h.hp=h.hp>0?Math.max(1,Math.floor(this.stats(owner).hp*ratio)):0;return null;
   }
-  resetHeroExperience(i:number){if(!this.owns(i))return '请先招募该英雄';const h=this.heroes[i];if(h.level<=1)return '英雄已为1级';const refund=Array.from({length:h.level-1},(_,level)=>upgradeCost(level+1)).reduce((a,v)=>a+v,0);if(h.experience+refund>1e9)return '经验已达存储上限';const ratio=h.hp/this.stats(i).hp;h.level=1;h.experience+=refund;h.talents=[0,0,0,0];this.interfaceProgress.tree[i]=Array(15).fill(0);h.hp=h.hp>0?Math.max(1,Math.floor(this.stats(i).hp*ratio)):0;h.shield=Math.min(h.shield,this.stats(i).power);h.cooldown2=0;h.queued2=false;this.buildOrder();return null;}
+  resetHeroExperience(i:number){if(!this.owns(i))return '请先招募该英雄';const h=this.heroes[i];if(h.level<=1)return '英雄已为1级';const refund=Array.from({length:h.level-1},(_,level)=>upgradeCost(level+1)).reduce((a,v)=>a+v,0);if(h.experience+refund>1e9)return '经验已达存储上限';const ratio=h.hp/this.stats(i).hp;h.level=1;h.experience+=refund;h.talents=[0,0,0,0];this.interfaceProgress.tree[i]=Array(15).fill(0);h.hp=h.hp>0?Math.max(1,Math.floor(this.stats(i).hp*ratio)):0;h.shield=Math.min(h.shield,this.shieldCapacity(i));h.cooldown2=0;h.queued2=false;this.buildOrder();return null;}
   upgrade(i:number){const h=this.heroes[i];if(!this.owns(i))return '该英雄尚未招募';if(h.level>=LEVEL_CAP)return '已达到当前等级上限';const cost=upgradeCost(h.level);if(h.experience<cost)return '经验不足，需要'+cost+'经验，当前'+h.experience;
     const ratio=h.hp/this.stats(i).hp;h.experience-=cost;h.level++;h.hp=h.hp>0?Math.ceil(this.stats(i).hp*ratio):0;return null;
   }
@@ -319,11 +324,11 @@ export class SquadBattleModel {
     this.interfaceProgress=JSON.parse(JSON.stringify(previous.interfaceProgress));
     this.dungeon=JSON.parse(JSON.stringify(previous.dungeon));this.lastSeen=previous.lastSeen;this.offline=previous.offline?JSON.parse(JSON.stringify(previous.offline)):null;this.formation=previous.formation.slice();this.buildOrder();this.materials=previous.materials;this.autoSalvaged=previous.autoSalvaged;this.rules={...previous.rules,attributes:previous.rules.attributes.slice()};
     this.recruitment=JSON.parse(JSON.stringify(previous.recruitment));
-    this.inventory=previous.inventory.map(g=>({...g}));this.loadouts=previous.loadouts.map(s=>s.slice());this.nextGearId=previous.nextGearId;this.dropRemainder=previous.dropRemainder;this.highestWave=previous.highestWave;
+    this.inventory=previous.inventory.map(g=>({...g,...(g.combat?{combat:{...g.combat}}:{}),...(g.effects?{effects:g.effects.slice()}:{})}));this.loadouts=previous.loadouts.map(s=>s.slice());this.nextGearId=previous.nextGearId;this.dropRemainder=previous.dropRemainder;this.highestWave=previous.highestWave;
     this.gold=previous.gold;this.kills=previous.kills;this.idleElapsed=previous.idleElapsed;this.incomeRemainder=previous.incomeRemainder;
     this.heroes.forEach((h,i)=>{h.experience=previous.heroes[i].experience;h.level=previous.heroes[i].level;h.stars=previous.heroes[i].stars;h.talents=previous.heroes[i].talents.slice();h.hp=this.stats(i).hp;});
   }
-  snapshot(){return {version:11,interfaceProgress:JSON.parse(JSON.stringify(this.interfaceProgress)),encounter:this.encounter?{...this.encounter}:null,dungeon:JSON.parse(JSON.stringify(this.dungeon)) as DungeonProgress,lastSeen:this.lastSeen,offline:this.offline?JSON.parse(JSON.stringify(this.offline)) as OfflineReward:null,formation:this.formation.slice(),recruitment:JSON.parse(JSON.stringify(this.recruitment)) as typeof this.recruitment,materials:this.materials,autoSalvaged:this.autoSalvaged,rules:{...this.rules,attributes:this.rules.attributes.slice()},inventory:this.inventory.map(g=>({...g,...(g.effects?{effects:g.effects.slice()}:{}),enhancement:g.enhancement||0})),loadouts:this.loadouts.map(s=>s.slice()),nextGearId:this.nextGearId,dropRemainder:this.dropRemainder,highestWave:this.highestWave,heroes:this.heroes.map(h=>({...h,talents:h.talents.slice()})),enemies:this.enemies.map(e=>({...e})),gold:this.gold,kills:this.kills,wave:this.wave,clearedWaves:this.clearedWaves,idleElapsed:this.idleElapsed,incomeRemainder:this.incomeRemainder,elapsed:this.elapsed,actions:this.actions,damage:this.damage,received:this.received,autoSkill:this.autoSkill,paused:this.paused,waveDelay:this.waveDelay,regrouping:this.regrouping,result:this.result,cursor:this.cursor,timer:this.timer,monsterIndex:this.monsterIndex,count:this.count,continuous:this.continuous};}
+  snapshot(){return {version:11,interfaceProgress:JSON.parse(JSON.stringify(this.interfaceProgress)),encounter:this.encounter?{...this.encounter}:null,dungeon:JSON.parse(JSON.stringify(this.dungeon)) as DungeonProgress,lastSeen:this.lastSeen,offline:this.offline?JSON.parse(JSON.stringify(this.offline)) as OfflineReward:null,formation:this.formation.slice(),recruitment:JSON.parse(JSON.stringify(this.recruitment)) as typeof this.recruitment,materials:this.materials,autoSalvaged:this.autoSalvaged,rules:{...this.rules,attributes:this.rules.attributes.slice()},inventory:this.inventory.map(g=>({...g,...(g.combat?{combat:{...g.combat}}:{}),...(g.effects?{effects:g.effects.slice()}:{}),enhancement:g.enhancement||0})),loadouts:this.loadouts.map(s=>s.slice()),nextGearId:this.nextGearId,dropRemainder:this.dropRemainder,highestWave:this.highestWave,heroes:this.heroes.map(h=>({...h,talents:h.talents.slice()})),enemies:this.enemies.map(e=>({...e})),gold:this.gold,kills:this.kills,wave:this.wave,clearedWaves:this.clearedWaves,idleElapsed:this.idleElapsed,incomeRemainder:this.incomeRemainder,elapsed:this.elapsed,actions:this.actions,damage:this.damage,received:this.received,autoSkill:this.autoSkill,paused:this.paused,waveDelay:this.waveDelay,regrouping:this.regrouping,result:this.result,cursor:this.cursor,timer:this.timer,monsterIndex:this.monsterIndex,count:this.count,continuous:this.continuous};}
   static restore(value:unknown):SquadBattleModel|null{
     // Reject malformed or future saves as a whole; never partially apply balances.
     try{
@@ -342,7 +347,7 @@ export class SquadBattleModel {
         for(const g of d.inventory){if(!g||!validGearEffects(g)||!integer(g.id)||g.id<1||g.id>=d.nextGearId||ids.has(g.id)||!integer(g.slot,5)||!integer(g.quality,4)||!integer(g.level,100)||g.level<1||typeof g.locked!=='boolean'||!['hp','attack','defense','power'].every(k=>integer(g[k],1000000)))return null;if(d.version>=3&&!integer(g.enhancement,ENHANCE_CAP))return null;ids.add(g.id);}
         const used=new Set<number>();for(const slots of d.loadouts){if(!Array.isArray(slots)||slots.length!==6)return null;for(let slot=0;slot<6;slot++){const id=slots[slot];if(id===null)continue;const g=d.inventory.find(g=>g.id===id);if(!g||g.slot!==slot||used.has(id))return null;used.add(id);}}
         if(d.interfaceProgress===undefined)b.interfaceProgress.capacity=Math.max(200,Math.ceil(d.inventory.length/50)*50);
-        b.inventory=d.inventory.map(g=>({...g,...(g.effects?{effects:g.effects.slice()}:{}),enhancement:d.version>=3?g.enhancement:0}));b.loadouts=d.loadouts.map(s=>s.slice());b.nextGearId=d.nextGearId;b.dropRemainder=d.dropRemainder;b.highestWave=d.highestWave;
+        b.inventory=d.inventory.map(g=>({...g,...(g.combat?{combat:{...g.combat}}:{}),...(g.effects?{effects:g.effects.slice()}:{}),enhancement:d.version>=3?g.enhancement:0}));b.loadouts=d.loadouts.map(s=>s.slice());b.nextGearId=d.nextGearId;b.dropRemainder=d.dropRemainder;b.highestWave=d.highestWave;
       }else b.highestWave=d.wave;
       if(d.version>=3){if(!integer(d.materials)||!integer(d.autoSalvaged)||!validRules(d.rules))return null;b.materials=d.materials;b.autoSalvaged=d.autoSalvaged;b.rules={...d.rules,attributes:d.rules.attributes.slice()};}
       if(d.version>=4){if(!validRecruit(d.recruitment))return null;b.recruitment=JSON.parse(JSON.stringify(d.recruitment));}
@@ -355,7 +360,7 @@ export class SquadBattleModel {
         if(d.version>=7&&(!num(h.cooldown2,SECOND_COOLDOWN)||typeof h.queued2!=='boolean'||(h.level<5&&(h.cooldown2>0||h.queued2))))return null;
         const talents=d.version>=8?h.talents:[0,0,0,0];
         if(!Array.isArray(talents)||talents.length!==4||!talents.every((r,j)=>integer(r,TALENTS[j].max))||(talents[3]>0&&talents[2]===0)||talents.reduce((n,r,j)=>n+r*TALENTS[j].cost,0)+b.interfaceProgress.tree[i].reduce((n,r)=>n+r,0)>h.level-1)return null;
-        b.heroes[i]={...h,stars,talents:talents.slice(),cooldown2:d.version>=7?h.cooldown2:0,queued2:d.version>=7?h.queued2:false};if(h.hp>b.stats(i).hp||h.shield>b.stats(i).power)return null;
+        b.heroes[i]={...h,stars,talents:talents.slice(),cooldown2:d.version>=7?h.cooldown2:0,queued2:d.version>=7?h.queued2:false};if(h.hp>b.stats(i).hp||h.shield>b.shieldCapacity(i))return null;
       }
       if(d.version>=9){
         if(!integer(d.lastSeen,1e15))return null;b.lastSeen=d.lastSeen;
@@ -397,22 +402,22 @@ export class SquadBattleModel {
       if(this.timer+1e-8<1)break;this.timer=0;
       let actor=this.order[this.cursor];this.cursor=(this.cursor+1)%this.order.length;
       while(!this.alive(actor)){actor=this.order[this.cursor];this.cursor=(this.cursor+1)%this.order.length;}
-      this.actions++;let target=actor,damage=0,blocked=0,heal=0,skill=false,killed=false,skillSlot=0;
-      if(actor>=3){target=this.target();const h=this.party[target],attack=Math.max(1,this.enemies[actor-3].attack-this.battleStats(target).defense);blocked=Math.min(h.shield,attack);h.shield-=blocked;damage=Math.min(h.hp,attack-blocked);h.hp-=damage;this.received+=damage;}
+      this.actions++;let target=actor,damage=0,blocked=0,heal=0,skill=false,killed=false,skillSlot=0,critical=false,combo=false,dodged=false;
+      if(actor>=3){target=this.target();const h=this.party[target],dodge=this.combatStats(this.formation[target]).dodgeChance;dodged=dodge>0&&this.random()<dodge;const attack=dodged?0:Math.max(1,this.enemies[actor-3].attack-this.battleStats(target).defense);blocked=Math.min(h.shield,attack);h.shield-=blocked;damage=Math.min(h.hp,attack-blocked);h.hp-=damage;this.received+=damage;}
       else{
         const h=this.party[actor],c=this.battleStats(actor),patient=this.patient(),hero=this.formation[actor];
         const second=this.unlocked(hero,2)&&h.cooldown2<=0&&(h.queued2||(!h.queued&&this.autoSkill&&h.cooldown>0))&&(hero!==2||patient!==undefined);
-        if(second){skill=true;skillSlot=2;h.queued2=false;h.cooldown2=this.secondCooldown(hero);const power=Math.round(c.power*1.4);if(hero===2){target=patient!;heal=Math.min(power,this.battleStats(target).hp-this.party[target].hp);this.party[target].hp+=heal;h.healing+=heal;}else{target=this.selectEnemy(hero===0?'highest-attack':'lowest-hp-ratio');damage=Math.min(this.enemies[target-3].hp,power);}}else if(h.cooldown<=0&&(this.autoSkill||h.queued)&&(hero!==2||patient!==undefined)){
+        if(second){skill=true;skillSlot=2;h.queued2=false;h.cooldown2=this.secondCooldown(hero);const power=Math.round(c.power*1.4*(hero===2?1+this.combatStats(hero).healingBonus:1));if(hero===2){target=patient!;heal=Math.min(power,this.battleStats(target).hp-this.party[target].hp);this.party[target].hp+=heal;h.healing+=heal;}else{target=this.selectEnemy(hero===0?'highest-attack':'lowest-hp-ratio');damage=power;}}else if(h.cooldown<=0&&(this.autoSkill||h.queued)&&(hero!==2||patient!==undefined)){
           skill=true;h.queued=false;h.cooldown=c.cooldown;
-          if(hero===0){target=actor;h.shield=c.power;}
-          else if(hero===2){target=patient!;heal=Math.min(c.power,this.battleStats(target).hp-this.party[target].hp);this.party[target].hp+=heal;h.healing+=heal;}
-          else{target=this.selectEnemy(hero===3?'lowest-hp-ratio':FIRE_TARGET);damage=Math.min(this.enemies[target-3].hp,c.power);}
-        }else{target=this.selectEnemy('random');damage=Math.min(this.enemies[target-3].hp,c.attack);}
-        if(damage){const e=this.enemies[target-3];e.hp-=damage;h.damage+=damage;this.damage+=damage;
+          if(hero===0){target=actor;h.shield=this.shieldCapacity(hero);}
+          else if(hero===2){target=patient!;heal=Math.min(Math.round(c.power*(1+this.combatStats(hero).healingBonus)),this.battleStats(target).hp-this.party[target].hp);this.party[target].hp+=heal;h.healing+=heal;}
+          else{target=this.selectEnemy(hero===3?'lowest-hp-ratio':FIRE_TARGET);damage=c.power;}
+        }else{target=this.selectEnemy('random');damage=c.attack;}
+        if(damage){const e=this.enemies[target-3],resolved=attackDamage(damage,Math.min(10000,Math.max(0,this.wave-1)*COMBAT_CONFIG.armorPerWave),this.combatStats(hero),skill,this.random);critical=resolved.critical;combo=resolved.combo;damage=Math.min(e.hp,resolved.damage);e.hp-=damage;h.damage+=damage;this.damage+=damage;
           if(e.hp===0){killed=true;this.kills++;}
         }
       }
-      hits.push({actor,hero:actor<3?this.formation[actor]:undefined,target,damage,blocked,heal,skill,skillSlot,killed,hpAfter:target<3?this.party[target].hp:this.enemies[target-3].hp,shieldAfter:target<3?this.party[target].shield:0});
+      hits.push({...(critical?{critical:true}:{}),...(combo?{combo:true}:{}),...(dodged?{dodged:true}:{}),actor,hero:actor<3?this.formation[actor]:undefined,target,damage,blocked,heal,skill,skillSlot,killed,hpAfter:target<3?this.party[target].hp:this.enemies[target-3].hp,shieldAfter:target<3?this.party[target].shield:0});
       if(this.enemies.every(e=>e.hp<=0)){
         this.clearedWaves++;
         if(this.continuous||this.encounter&&(this.encounter.id===5||this.wave<=DUNGEON_CONFIG.mobWaves)){this.waveDelay=1.2;this.party.forEach((h,i)=>{if(h.hp>0)h.hp=Math.min(this.battleStats(i).hp,h.hp+Math.ceil(this.battleStats(i).hp*.08));});}

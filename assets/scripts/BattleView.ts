@@ -163,10 +163,12 @@ export class BattleView{
     if(this.stats&&this.stats.isValid)this.stats.string=b.party.map((h,i)=>b.battleStats(i).name+' '+h.damage+(b.formation[i]===2?' / 治疗 '+h.healing:'')).join('\n')+'\n承伤 '+b.received+' · '+b.elapsed.toFixed(1)+'秒';
   }
   private impactText(hit:SquadHit){
+    if(hit.dodged)this.floating.push({target:hit.target,text:'闪避',color:'#AEEBFF'});
+    if(hit.critical||hit.combo)this.floating.push({target:hit.target,text:hit.combo?'连击':'暴击',color:'#FFE36D'});
     if(hit.damage)this.floating.push({target:hit.target,text:(hit.skill&&hit.actor<3?SKILL_NAMES[this.model.formation[hit.actor]][hit.skillSlot||0]+' ':'−')+hit.damage,color:hit.actor>=3?'#EE7463':hit.skill?'#FFCD58':'#FFFFFF'});
     if(hit.blocked)this.floating.push({target:hit.target,text:'吸收 '+hit.blocked,color:'#8BD8FF'});
     if(hit.heal)this.floating.push({target:hit.target,text:'+'+hit.heal,color:'#95EF72'});
-    if(hit.skill&&!hit.damage&&hit.actor<3&&this.model.formation[hit.actor]===0)this.floating.push({target:hit.actor,text:'护盾 +'+this.model.battleStats(hit.actor).power,color:'#8BD8FF'});
+    if(hit.skill&&!hit.damage&&hit.actor<3&&this.model.formation[hit.actor]===0)this.floating.push({target:hit.actor,text:'护盾 +'+this.model.shieldCapacity(this.model.formation[hit.actor]),color:'#8BD8FF'});
 
     this.floatTimer=0;
     if(this.floating.length>18)this.floating.splice(0,this.floating.length-18);

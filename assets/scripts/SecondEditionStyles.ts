@@ -746,4 +746,49 @@ html,body{background:#263b2c!important}
 #s6-v2 .attributes .stat-row>b{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 #s6-v2 .attribute-note{display:block;text-align:right;font-size:2.3cqw;color:#987653;margin-top:1.5cqw}
 #s6-v2 .hero-page>.v2-nav{margin-top:0;flex-shrink:0;padding-top:1.5cqw;bottom:0;padding-bottom:max(1.5cqw,env(safe-area-inset-bottom,0px))}
+
+/* One-screen hero composition: fixed controls, flexible illustrated stage. */
+#s6-v2 .hero-page{display:grid;grid-template-rows:8cqw 9.2cqw minmax(0,1fr) 5cqw 8cqw 29cqw 44cqw 13.5cqw;gap:1.5cqw;overflow:hidden;padding:max(12px,env(safe-area-inset-top,0px)) 2cqw max(0px,env(safe-area-inset-bottom,0px));background-image:linear-gradient(transparent,#fce7ce 24cqw),var(--scene);background-size:100% 100%,100% auto}
+#s6-v2 .hero-page>.wallet{min-height:0;margin:0 1cqw;align-self:center}
+#s6-v2 .hero-page .hero-tabs button{height:9.2cqw;font-size:3.2cqw}
+#s6-v2 .hero-page .hero-stage{height:auto;min-height:0;max-height:none;margin:0 -2cqw;container-type:size;background-size:cover;background-position:center bottom;overflow:hidden}
+#s6-v2 .hero-stage h1{position:absolute;top:0;left:0;width:100%;font-size:4.6cqw;line-height:1.2}
+#s6-v2 .hero-stage .stars{position:absolute;left:25%;top:7cqw;height:7cqw;margin:0;justify-content:flex-start;gap:1cqw}
+#s6-v2 .hero-stage .star-row{font-size:min(5cqw,7cqh);line-height:1}
+#s6-v2 .hero-stage .star-button{width:6cqw;height:6cqw;margin-left:1cqw;padding:.4cqw}
+#s6-v2 .hero-stage .roles{position:absolute;left:25%;top:15cqw;height:5cqw;justify-content:flex-start;font-size:3.1cqw;gap:.8cqw}
+#s6-v2 .hero-stage .hero-role-icon{width:4cqw;height:4cqw}
+#s6-v2 .hero-stage .hero-role-icon .ico{width:2.8cqw;height:2.8cqw}
+#s6-v2 .hero-stage .hero-figure{width:48%;height:65%;bottom:6%;left:50%;object-fit:contain}
+#s6-v2 .hero-stage .equipment-left,#s6-v2 .hero-stage .equipment-right{top:25%;bottom:1%;width:18%;padding:0;display:grid;grid-template-rows:repeat(3,minmax(0,1fr));gap:1cqh}
+#s6-v2 .hero-stage .equipment-left{left:3%}#s6-v2 .hero-stage .equipment-right{right:3%}
+#s6-v2 .hero-stage .equipment-slot{height:100%;gap:.3cqw;justify-content:center;align-items:center}
+#s6-v2 .hero-stage .equipment-slot .gear-tile{width:min(16cqw,18cqh);height:min(16cqw,18cqh)}
+#s6-v2 .hero-stage .equipment-slot small{height:3cqw;line-height:3cqw;font-size:2.8cqw}
+#s6-v2 .hero-stage .gear-level{font-size:2.8cqw}
+#s6-v2 .hero-stage .formation-link{height:5.2cqw;min-height:0;width:16%;font-size:2.5cqw;bottom:.6%;padding:0 .5cqw}
+#s6-v2 .hero-stage .formation-link .ico{width:3cqw;height:3cqw}
+#s6-v2 .hero-page>.experience{padding:0 2cqw;min-height:0}
+#s6-v2 .hero-page .experience-reset{width:4.4cqw;height:4.4cqw;min-height:0}
+#s6-v2 .hero-page>.page-actions{padding:0 5cqw;margin:0;align-items:center}
+#s6-v2 .hero-page>.page-actions button{height:7cqw;min-height:0;font-size:3.6cqw;width:44%}
+#s6-v2 .hero-page>.cream-card{padding:2cqw;border-radius:3cqw;min-height:0}
+#s6-v2 .hero-page .card-title{font-size:3.8cqw!important;line-height:1.1;margin:0 0 1.4cqw!important}
+#s6-v2 .hero-page .hero-skills{gap:.6cqw;grid-template-columns:repeat(4,1fr) 1px 1fr}
+#s6-v2 .hero-page .hero-skills button{gap:.5cqw}
+#s6-v2 .hero-page .hero-skills .kind{font-size:2.4cqw;line-height:1.1;padding:.2cqw 1.4cqw}
+#s6-v2 .hero-page .hero-skills img,#s6-v2 .hero-page .locked-skill-icon{width:11.5cqw;height:11.5cqw}
+#s6-v2 .hero-page .hero-skills b,#s6-v2 .hero-page .hero-skills small{font-size:2.9cqw;line-height:1.15}
+#s6-v2 .hero-page .tree-button img{width:12cqw!important;height:12cqw!important;margin-top:0}
+#s6-v2 .hero-page .hero-attribute-grid{gap:.5cqw 2cqw}
+#s6-v2 .hero-page .attributes .stat-row{font-size:3cqw;min-height:4.35cqw;height:4.35cqw;padding:.2cqw 1.4cqw;line-height:1.1}
+#s6-v2 .hero-page .attributes .ico{width:3cqw;height:3cqw}
+#s6-v2 .hero-page>.v2-nav{position:static;margin:0;padding:.5cqw 0;min-height:0;height:13.5cqw}
+#s6-v2 .hero-page>.v2-nav button{min-height:0;padding:0 .5cqw;font-size:3.2cqw}
+#s6-v2 .hero-page>.v2-nav img{width:7cqw;height:7cqw}
+/* One continuous illustration behind resources, tabs, hero and equipment. */
+#s6-v2 .hero-page{position:relative;background:#fce7ce!important}
+#s6-v2 .hero-page::before{content:'';position:absolute;inset:0 0 auto;height:calc(100% - 107.5cqw - env(safe-area-inset-bottom,0px));background-image:var(--scene);background-size:cover;background-position:center bottom;pointer-events:none}
+#s6-v2 .hero-page>*{z-index:1}
+#s6-v2 .hero-page .hero-stage{background-image:none!important}
 `;
