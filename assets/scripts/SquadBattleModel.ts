@@ -288,6 +288,7 @@ export class SquadBattleModel {
     this.materials-=material;this.gold-=gold;Object.assign(g,gearUpgradePreview(g));
     if(h)h.hp=h.hp>0?Math.max(1,Math.floor(this.stats(owner).hp*ratio)):0;return null;
   }
+  resetHeroExperience(i:number){if(!this.owns(i))return '请先招募该英雄';const h=this.heroes[i];if(h.level<=1)return '英雄已为1级';const refund=Array.from({length:h.level-1},(_,level)=>upgradeCost(level+1)).reduce((a,v)=>a+v,0);if(h.experience+refund>1e9)return '经验已达存储上限';const ratio=h.hp/this.stats(i).hp;h.level=1;h.experience+=refund;h.talents=[0,0,0,0];this.interfaceProgress.tree[i]=Array(15).fill(0);h.hp=h.hp>0?Math.max(1,Math.floor(this.stats(i).hp*ratio)):0;h.shield=Math.min(h.shield,this.stats(i).power);h.cooldown2=0;h.queued2=false;this.buildOrder();return null;}
   upgrade(i:number){const h=this.heroes[i];if(!this.owns(i))return '该英雄尚未招募';if(h.level>=LEVEL_CAP)return '已达到当前等级上限';const cost=upgradeCost(h.level);if(h.experience<cost)return '经验不足，需要'+cost+'经验，当前'+h.experience;
     const ratio=h.hp/this.stats(i).hp;h.experience-=cost;h.level++;h.hp=h.hp>0?Math.ceil(this.stats(i).hp*ratio):0;return null;
   }

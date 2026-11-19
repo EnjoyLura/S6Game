@@ -63,3 +63,17 @@ test('formation presets, target rates and legacy saves remain valid',()=>{
  const d=m.snapshot();delete d.interfaceProgress;assert.deepEqual(SquadBattleModel.restore(d).interfaceProgress.presets,[[0,1,2],[0,1,2],[0,1,2],[0,1,2]]);
  for(const presets of [[[0,0],[0],[0],[0]],[[0],[0],[0],[9]]]){const d=m.snapshot();d.interfaceProgress.presets=presets;assert.equal(SquadBattleModel.restore(d),null);}
 });
+
+
+test('experience reset refunds every paid level, resets talents and relocks skills without healing or losing gear',()=>{
+ const m=fresh();m.heroes[0].experience=10000;const start=m.heroes[0].experience;
+ for(let i=0;i<10;i++)assert.equal(m.upgrade(0),null);
+ assert.equal(m.trainTreeTalent(0,0),null);assert.equal(m.trainTreeTalent(0,5),null);
+ const g=generateGear(1,1);m.inventory=[g];m.nextGearId=2;m.equip(0,1,g.slot);
+ const equipment=structuredClone(m.loadouts),before=structuredClone(m.heroes[1]);
+ m.heroes[0].hp=0;m.heroes[0].cooldown2=5;m.heroes[0].queued2=true;
+ assert.equal(m.resetHeroExperience(0),null);assert.equal(m.heroes[0].level,1);assert.equal(m.heroes[0].experience,start);
+ assert.equal(m.heroes[0].hp,0);assert.equal(m.heroes[0].cooldown2,0);assert.equal(m.heroes[0].queued2,false);
+ assert.equal(m.unlocked(0,2),false);assert.equal(m.talentPoints(0),0);assert.deepEqual(m.loadouts,equipment);assert.deepEqual(m.heroes[1],before);
+ assert.deepEqual(reload(m).snapshot(),m.snapshot());const saved=m.snapshot();assert.ok(m.resetHeroExperience(0));assert.deepEqual(m.snapshot(),saved);
+});
