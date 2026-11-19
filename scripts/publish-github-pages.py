@@ -46,6 +46,7 @@ def main():
         subprocess.run(['git', 'clone', 'https://github.com/' + REPO + '.git', str(checkout)], check=True)
     if git('remote', 'get-url', 'origin', cwd=checkout) != 'https://github.com/' + REPO + '.git':
         raise RuntimeError('Unexpected release repository')
+    subprocess.run(['git', 'config', 'core.autocrlf', 'false'], cwd=checkout, check=True)
     subprocess.run(['git', 'pull', '--ff-only'], cwd=checkout, check=True)
     # Only remove files previously tracked in this dedicated runtime checkout.
     tracked = subprocess.check_output(['git', 'ls-files', '-z'], cwd=checkout).decode().split('\0')
@@ -82,6 +83,7 @@ def main():
     (checkout / 'index.html').write_bytes(payload)
     files.append({'path': 'index.html', 'bytes': len(payload), 'sha256': hashlib.sha256(payload).hexdigest()})
     (checkout / '.nojekyll').write_text('')
+    (checkout / '.gitattributes').write_text('* -text\n', encoding='utf-8')
     manifest = {'revision': revision, 'files': files}
     (checkout / 'release.json').write_text(json.dumps(manifest, indent=2), encoding='utf-8')
     for entry in files:
