@@ -876,4 +876,21 @@ html,body{background:#263b2c!important}
  #s6-v2 .hero-page .attributes .attribute-icon{width:3.4cqw;height:3.4cqw}
 }
 #s6-v2 .hero-stage .hero-figure{max-height:calc(100% - 32cqw)}
+/* Center the complete star control; the role follows its first star. */
+#s6-v2 .hero-stage .hero-identity{position:absolute;left:50%;top:8cqw;transform:translateX(-50%);display:flex;flex-direction:column;align-items:flex-start;width:max-content;gap:.4cqw}
+#s6-v2 .hero-stage .hero-identity .stars{position:static;height:6cqw;margin:0;transform:none}
+#s6-v2 .hero-stage .hero-identity .roles{position:static;height:4cqw;margin:0;transform:none}
+#s6-v2 .hero-stage .formation-link{width:19%;height:6cqw;font-size:2.8cqw}
+#s6-v2 .hero-page .hero-skill-art{display:block;flex:none;width:12.8cqw;height:12.8cqw;overflow:hidden;border-radius:2cqw}
+#s6-v2 .hero-page .hero-skill-art img{width:100%;height:100%;transform:scale(1.1)}
+#s6-v2 .hero-page .skill-divider{align-self:center;height:19cqw;margin:0}
+#s6-v2 .hero-page .hero-attribute-grid{gap:.7cqw 2cqw}
+#s6-v2 .hero-page .attributes .stat-row{line-height:1.2}
+#s6-v2 .attributes .attribute-help{width:3.5cqw;height:3.5cqw;font-size:2.7cqw;position:relative}
+#s6-v2 .attributes .attribute-help::after{content:'';position:absolute;inset:-.5cqw}
+@media(max-height:700px){
+ #s6-v2 .hero-page .hero-skill-art{width:11.8cqw;height:11.8cqw}
+ #s6-v2 .hero-page .hero-skill-art img{width:100%;height:100%}
+ #s6-v2 .hero-page .skill-divider{height:16cqw}
+}
 `;
