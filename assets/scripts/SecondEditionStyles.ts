@@ -893,4 +893,160 @@ html,body{background:#263b2c!important}
  #s6-v2 .hero-page .hero-skill-art img{width:100%;height:100%}
  #s6-v2 .hero-page .skill-divider{height:16cqw}
 }
+
+/* Main-page composition measured against the approved 941 x 1672 references. */
+#s6-v2 .bag-page,#s6-v2 .dungeon-page,#s6-v2 .recruit-page{padding:max(12px,env(safe-area-inset-top,0px)) 2cqw max(1.5cqw,env(safe-area-inset-bottom,0px));gap:2cqw}
+#s6-v2 .bag-page>.wallet,#s6-v2 .dungeon-page>.wallet{height:9cqw;min-height:0;padding:0 1cqw;gap:2.5cqw}
+#s6-v2 .bag-page .resource,#s6-v2 .dungeon-page .resource{height:7cqw;font-size:3.8cqw}
+#s6-v2 .bag-page>.main-tabs,#s6-v2 .dungeon-page>.main-tabs{height:9.5cqw;margin:1.5cqw 0 0;flex:none;gap:.6cqw}
+#s6-v2 .bag-page>.main-tabs button,#s6-v2 .dungeon-page>.main-tabs button{font-size:4.4cqw;padding:0 .5cqw;min-height:0}
+#s6-v2 .bag-page>.v2-nav,#s6-v2 .dungeon-page>.v2-nav,#s6-v2 .recruit-page>.v2-nav{height:15.5cqw;min-height:0;padding:0;margin:0;flex:none;gap:1cqw}
+#s6-v2 .bag-page>.v2-nav button,#s6-v2 .dungeon-page>.v2-nav button,#s6-v2 .recruit-page>.v2-nav button{min-height:0;font-size:3.8cqw;border-radius:4cqw;padding:.5cqw;gap:.3cqw}
+#s6-v2 .bag-page>.v2-nav img,#s6-v2 .dungeon-page>.v2-nav img,#s6-v2 .recruit-page>.v2-nav img{width:8.5cqw;height:8.5cqw}
+/* Inventory: one toolbar rhythm, square slots, reserved footer and navigation. */
+#s6-v2 .bag-page>.part-tabs{height:11.5cqw;flex:none;padding:0 1cqw;gap:1cqw}
+#s6-v2 .bag-page .part-tabs button{height:11.5cqw;min-height:0;padding:.5cqw;border-radius:3cqw}
+#s6-v2 .bag-page .part-tabs img{width:9.5cqw;height:9.5cqw}
+#s6-v2 .bag-page>.filter-row{height:8cqw;flex:none;padding:0 1.5cqw}
+#s6-v2 .bag-page .filter-row button{height:8cqw;min-height:0;font-size:3.8cqw;padding:0 3.5cqw}
+#s6-v2 .bag-page .filter-row .ico{width:4.5cqw;height:4.5cqw}
+#s6-v2 .bag-page>.bag-scroll{margin:0;min-height:0;padding:3cqw;border-radius:4cqw;scrollbar-gutter:stable}
+#s6-v2 .bag-page .five-grid{gap:1.8cqw;grid-auto-rows:max-content}
+#s6-v2 .bag-page .five-grid>.flat{aspect-ratio:1;align-self:start}
+#s6-v2 .bag-page .gear-tile{height:auto;aspect-ratio:1;border-radius:2cqw}
+#s6-v2 .bag-page>.bag-footer{height:13cqw;flex:none;padding:0 1cqw;gap:1.5cqw;font-size:3.5cqw}
+#s6-v2 .bag-footer>b{white-space:nowrap;font-size:3.4cqw}
+#s6-v2 .bag-page .bag-footer button{height:9cqw;min-height:0;font-size:3.4cqw;padding:0 2cqw;white-space:nowrap}
+#s6-v2 .bag-footer .expand-button{gap:.7cqw}
+#s6-v2 .bag-footer .expand-button img,#s6-v2 .bag-footer .expand-button .ico{width:4.6cqw;height:4.6cqw;flex:none}
+#s6-v2 .bag-footer .salvage-button{flex:1}
+/* Recruitment: clear hierarchy, large cast, compact pity and pill-shaped draws. */
+#s6-v2 .recruit-page{gap:1.7cqw;background-position:center;background-size:cover}
+#s6-v2 .recruit-page>.wallet{height:8cqw;min-height:0;padding:0;gap:2cqw}
+#s6-v2 .recruit-page .menu{width:8cqw;height:8cqw;min-height:0;font-size:5.8cqw;border-radius:2.4cqw}
+#s6-v2 .recruit-page>.wallet .resource{height:6.5cqw;font-size:3.8cqw}
+#s6-v2 .recruit-page>.wallet .resource img{width:6cqw;height:6cqw}
+#s6-v2 .recruit-page>.main-tabs{height:9cqw;margin:0;padding:0 6cqw;flex:none;gap:.8cqw}
+#s6-v2 .recruit-page>.main-tabs button{height:9cqw;min-height:0;padding:0;font-size:4.7cqw}
+#s6-v2 .recruit-banner{height:19cqw;margin:1cqw 0 0;flex:none;align-self:flex-start;justify-content:center}
+#s6-v2 .recruit-banner h1{font-size:8.8cqw;letter-spacing:0;line-height:1.1}
+#s6-v2 .recruit-banner .laurel{width:6cqw;height:9cqw}
+#s6-v2 .recruit-banner .ribbon{font-size:3.4cqw;margin-top:1cqw;padding:.5cqw 7cqw}
+#s6-v2 .recruit-cast{min-height:0;flex:1;margin:-1cqw -2cqw 0}
+#s6-v2 .c-front{width:59%;height:62%;left:22%;bottom:0}
+#s6-v2 .c-back{width:43%;height:48%;left:22%;top:4%}
+#s6-v2 .c-left{width:42%;height:47%;left:1%;top:29%}
+#s6-v2 .c-right{width:42%;height:47%;right:1%;top:19%}
+#s6-v2 .up .c-front{width:61%;height:67%;left:20%}
+#s6-v2 .up .c-back{left:10%;top:9%;width:35%;height:43%}
+#s6-v2 .up .c-left{left:0;top:34%;width:38%;height:44%}
+#s6-v2 .up .c-right{right:0;top:30%;width:36%;height:44%}
+#s6-v2 .recruit-bottom{flex:none;padding:0 5cqw 1.5cqw;gap:2cqw}
+#s6-v2 .pity-panel{width:72%;min-width:62cqw;height:11.5cqw;border-radius:7cqw;padding:.8cqw 2cqw;gap:2cqw;border-width:1.5px;box-shadow:0 2px 3px #79542f33}
+#s6-v2 .pity-panel .crown{width:8.5cqw;height:8.5cqw}
+#s6-v2 .pity-panel .crown .ico{width:6.5cqw;height:6.5cqw}
+#s6-v2 .pity-panel>div{font-size:3.2cqw;gap:.4cqw}
+#s6-v2 .pity-panel .exp-track{height:1.9cqw}
+#s6-v2 .pity-panel small{font-size:2.7cqw}
+#s6-v2 .pool-links{padding:0 9cqw}
+#s6-v2 .pool-links button{min-height:0;height:6cqw;font-size:3.2cqw;padding:0 2.5cqw;border-radius:5cqw;gap:1cqw}
+#s6-v2 .pool-links .ico{width:4.5cqw;height:4.5cqw}
+#s6-v2 .recruit-bottom .page-actions{gap:3cqw}
+#s6-v2 .recruit-bottom .page-actions button{min-width:0;width:50%;height:14cqw;min-height:0;border-radius:9cqw;padding:1cqw;font-size:4cqw;gap:.4cqw}
+#s6-v2 .recruit-bottom .page-actions b{font-size:4.6cqw}
+#s6-v2 .recruit-bottom .ticket-chip{background:none;font-size:3.6cqw;padding:0}
+#s6-v2 .recruit-bottom .ticket-chip img{width:5cqw;height:5cqw}
+/* Resource dungeons: landscape illustrations, tight content and shared baselines. */
+#s6-v2 .dungeon-list{overflow:hidden;padding:.5cqw 0 1cqw;gap:2cqw;display:grid;grid-template-rows:repeat(4,minmax(0,1fr))}
+#s6-v2 .dungeon-card{grid-template-columns:45% minmax(0,1fr);height:100%;border-radius:4cqw;padding:1cqw;gap:0}
+#s6-v2 .dungeon-card>img{height:100%;width:100%;object-fit:cover;object-position:center;border-radius:3cqw}
+#s6-v2 .dungeon-card>div{padding:.6cqw .4cqw .5cqw 2.7cqw;gap:1.2cqw;justify-content:flex-start}
+#s6-v2 .dungeon-card h2{font-size:4.5cqw;line-height:1.2}
+#s6-v2 .dungeon-card .drop-icons{gap:1.4cqw}
+#s6-v2 .dungeon-card .drop-icons>.reward{width:12.5cqw;height:12.5cqw;flex:none}
+#s6-v2 .dungeon-card footer{gap:1cqw}
+#s6-v2 .dungeon-card footer small{font-size:2.9cqw;gap:.5cqw}
+#s6-v2 .dungeon-card footer .ico{width:3.5cqw;height:3.5cqw;flex:none}
+#s6-v2 .dungeon-card footer button{height:8cqw;min-height:0;width:20cqw;font-size:4cqw;padding:0;border-radius:6cqw}
+#s6-v2 .dungeon-page .feature-card{border-radius:4cqw}
+#s6-v2 .dungeon-page .feature-art{min-height:0}
+#s6-v2 .feature-panel{padding:.5cqw 2cqw 1cqw}
+#s6-v2 .feature-row{min-height:0;padding:1.5cqw 0;gap:2cqw;font-size:3.6cqw}
+#s6-v2 .feature-row.record{height:10cqw}
+#s6-v2 .feature-row.record strong{font-size:4cqw}
+#s6-v2 .feature-row small{font-size:2.8cqw}
+#s6-v2 .feature-row .feature-rewards{gap:3cqw}
+#s6-v2 .feature-rewards .reward{width:13.5cqw;height:13.5cqw}
+#s6-v2 .feature-row .round-face{width:14cqw;height:14cqw}
+#s6-v2 .lineup{gap:2cqw;padding-bottom:1.4cqw}
+#s6-v2 .lineup-button{min-height:0;height:12cqw;border-radius:3cqw}
+#s6-v2 .go-button{min-height:0;height:9.5cqw;min-width:28%;font-size:4.7cqw;border-radius:7cqw}
+#s6-v2 .daily-card header{padding:2.4cqw 1.5cqw}
+#s6-v2 .daily-card header h2{font-size:5.5cqw}
+#s6-v2 .today{font-size:3cqw;padding:.5cqw 1.5cqw;gap:.5cqw}
+#s6-v2 .daily-card .feature-panel{margin:1.5cqw 1.5cqw 1.5cqw;padding:1cqw 2.5cqw}
+/* Adventure HUD: safe top rail, a shared title axis and an uncluttered lower tray. */
+#s6-v2 .battle-hud{padding:max(12px,env(safe-area-inset-top,0px)) 1.5cqw max(1.5cqw,env(safe-area-inset-bottom,0px))}
+#s6-v2 .battle-hud>.wallet{top:max(12px,env(safe-area-inset-top,0px));left:11.5cqw;gap:.8cqw;padding:0}
+#s6-v2 .battle-hud>.wallet .resource{height:5cqw;font-size:3.1cqw}
+#s6-v2 .battle-hud>.wallet img{width:5.8cqw;height:5.8cqw}
+#s6-v2 .battle-hud>.menu{top:max(12px,env(safe-area-inset-top,0px));left:2cqw;width:8cqw;height:8cqw;min-height:0}
+#s6-v2 .battle-hud .stage-heading{margin:0 0 0 19cqw;height:20cqw;min-height:0}
+#s6-v2 .stage-heading h1{font-size:6.2cqw;line-height:1.15}
+#s6-v2 .stage-heading>b{font-size:3.7cqw;line-height:1.3}
+#s6-v2 .stage-heading small{font-size:2.8cqw}
+#s6-v2 .checkpoint{width:45cqw;justify-content:space-between;gap:0;margin-top:2cqw}
+#s6-v2 .turn-order{margin:1cqw 0 0;height:8cqw;gap:.9cqw;justify-content:center;white-space:nowrap}
+#s6-v2 .turn-order>b{font-size:3cqw}
+#s6-v2 .turn-portrait{width:8.5cqw;height:8.5cqw;flex:none}
+#s6-v2 .battle-tools{right:2cqw;top:36cqw;gap:2cqw}
+#s6-v2 .battle-tools button{width:8.3cqw;height:8.3cqw;border-radius:2.5cqw}
+#s6-v2 .field-actions{padding:1.5cqw .5cqw;gap:2cqw;background:none}
+#s6-v2 .field-actions button{height:7cqw;min-height:0;font-size:3.4cqw;padding:0 2.5cqw;border-radius:6cqw}
+#s6-v2 .skill-bar{height:39cqw;min-height:0;flex:none;margin:0 -1.5cqw;padding:2.5cqw 2cqw 1.5cqw;gap:2cqw;border:0}
+#s6-v2 .party-card{padding-right:1.3cqw;display:flex;flex-direction:column;gap:1.2cqw}
+#s6-v2 .party-card>header{height:15cqw;min-height:0;gap:.8cqw;align-items:flex-start}
+#s6-v2 .party-card>header>.face{width:11.5cqw;height:11.5cqw;flex:none;object-fit:contain}
+#s6-v2 .party-card>header>div{gap:.4cqw}
+#s6-v2 .party-card b{font-size:3cqw;line-height:1.2;text-align:left}
+#s6-v2 .party-card small{font-size:2.5cqw}
+#s6-v2 .active-skills{margin:0;gap:1cqw}
+#s6-v2 .skill-button{gap:.7cqw;border:0!important;border-image:none!important;background:none!important;box-shadow:none!important}
+#s6-v2 .skill-button>img,#s6-v2 .skill-button>.locked-skill-icon{width:13cqw;height:13cqw;border-radius:2.4cqw;background:none}
+#s6-v2 .skill-button>.locked-skill-icon{background:#ddc7aa}
+#s6-v2 .skill-button small{font-size:2.8cqw;line-height:1.2}
+#s6-v2 .battle-hud>.v2-nav{height:15.5cqw;min-height:0;margin:0 -1.5cqw;padding:.5cqw 1.5cqw 0;background:#fff0d7;gap:1cqw}
+#s6-v2 .battle-hud>.v2-nav button{height:100%;min-height:0;font-size:3.8cqw;padding:.5cqw;gap:.3cqw}
+#s6-v2 .battle-hud>.v2-nav img{width:8.5cqw;height:8.5cqw}
+@media(max-height:700px){
+ #s6-v2 .bag-page,#s6-v2 .dungeon-page,#s6-v2 .recruit-page{gap:1.5cqw}
+ #s6-v2 .dungeon-card>div{gap:.8cqw}
+ #s6-v2 .dungeon-card .drop-icons>.reward{width:10.5cqw;height:10.5cqw}
+ #s6-v2 .dungeon-card h2{font-size:4.2cqw}
+ #s6-v2 .dungeon-card footer button{height:7cqw;font-size:3.6cqw}
+ #s6-v2 .dungeon-card footer small{font-size:2.7cqw}
+ #s6-v2 .recruit-banner{height:17cqw}
+ #s6-v2 .recruit-bottom .page-actions button{height:13cqw}
+ #s6-v2 .feature-rewards .reward{width:12cqw;height:12cqw}
+ #s6-v2 .feature-row{font-size:3.3cqw;padding:1cqw 0}
+ #s6-v2 .feature-row small{font-size:2.5cqw}
+ #s6-v2 .battle-hud .skill-bar{height:36cqw}
+}
+/* Keep art centered without its source-atlas frame; tickets use their own silhouette. */
+#s6-v2 .ticket-art{width:5cqw;height:5cqw;flex:none;color:#ffc334;overflow:visible}
+#s6-v2 .ticket-art.up-ticket{color:#c587ed;filter:none}
+#s6-v2 .ticket-resource .ticket-art{width:6cqw;height:6cqw}
+#s6-v2 .ticket-chip{display:inline-flex;align-items:center;justify-content:center;gap:.5cqw}
+#s6-v2 .party-portrait{display:block;width:11.5cqw;height:11.5cqw;flex:none;border-radius:50%;overflow:hidden;background:#ffedce}
+#s6-v2 .party-portrait .face{width:100%;height:100%;max-width:none;transform:scale(1.6);transform-origin:center 12%}
+#s6-v2 .party-card .party-tags{flex-wrap:nowrap;gap:.4cqw}
+#s6-v2 .party-card .party-tags i{padding:0 .7cqw;font-size:2.3cqw;white-space:nowrap}
+#s6-v2 .party-card .role-pill .ico{width:2.2cqw;height:2.2cqw}
+#s6-v2 .dungeon-page>.wallet .resource:nth-child(2) img,#s6-v2 .battle-hud>.wallet .resource:nth-child(2) img{filter:hue-rotate(40deg) saturate(1.35)}
+#s6-v2 .dungeon-card .drop-icons{flex:1;align-items:center}
+#s6-v2 .dungeon-card footer{margin-top:0}
+#s6-v2 .outline-filter path,#s6-v2 .outline-chevron path,#s6-v2 .outline-grid path{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#s6-v2 .filter-row .outline-chevron{width:3cqw;height:3cqw;margin-left:.4cqw}
+#s6-v2 .filter-row .sort-direction{width:3.8cqw;height:3.8cqw}
+#s6-v2 .sort-direction.ascending{transform:rotate(180deg)}
 `;

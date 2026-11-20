@@ -8,7 +8,8 @@
     "test": "node --test tests/*.test.mjs",
     "build": "powershell -ExecutionPolicy Bypass -File scripts/build-web-mobile.ps1",
     "serve": "node scripts/serve.cjs",
-    "test:ui": "node scripts/verify-second-edition.mjs"
+    "test:ui": "node scripts/verify-second-edition.mjs",
+    "test:main-layout": "node scripts/verify-main-layout.mjs"
   },
   "uuid": "d8c41e5f-aa69-4969-b5be-1a8ee1cc3328",
   "devDependencies": {

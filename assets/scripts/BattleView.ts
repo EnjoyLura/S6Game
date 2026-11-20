@@ -24,7 +24,7 @@ export class BattleView{
     this.ui=art.ui;this.heroTextures=art.heroes;this.monsters=art.monsters;this.battleArt=[art.forest,art.nav,art.bag];this.rebuildBattle();
   }
   externalPresentation=false;private externalForest:Texture2D|null=null;
-  useExternalPresentation(texture?:Texture2D){this.externalPresentation=true;if(texture)this.externalForest=texture;for(const n of this.root.children)n.active=n===this.actors||n.name==='Forest';const forest=this.root.getChildByName('Forest');if(forest&&this.externalForest){const f=new SpriteFrame();f.texture=this.externalForest;f.rect=new Rect(0,0,this.externalForest.width/2,this.externalForest.height/3);forest.getComponent(Sprite)!.spriteFrame=f;}}
+  useExternalPresentation(texture?:Texture2D){this.externalPresentation=true;if(texture)this.externalForest=texture;for(const n of this.root.children)n.active=n===this.actors||n.name==='Forest';const forest=this.root.getChildByName('Forest');if(forest&&this.externalForest){const f=new SpriteFrame();f.texture=this.externalForest;f.rect=new Rect(4,4,this.externalForest.width/2-8,this.externalForest.height/3-8);forest.getComponent(Sprite)!.spriteFrame=f;}}
   getSpeed(){return this.speed;}
   cycleSpeed(){this.speed=this.speed===1?2:1;}
   update(dt:number){const visual=battleDelta(dt,this.model.paused,this.speed);this.feedback.update(visual);for(const hit of this.model.step(visual))this.feedback.play(hit);this.updateFloats(this.model.paused?0:dt);this.sync();}

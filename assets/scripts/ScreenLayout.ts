@@ -1,5 +1,6 @@
 import {Node,UITransform,Sprite,Graphics,view,Color,Camera} from 'cc';
 const original=new WeakMap<Node,{x:number;y:number;height:number;width:number;scaleX:number;scaleY:number;applied?:number}>();
+const battleLayouts=new WeakMap<Node,{height:number;hud:Element;scale:number;y:number}>();
 // Preserve icon/label geometry; distribute their anchors over the real visible height.
 export function fitScreen(canvas:Node,camera:Camera){
  const height=view.getVisibleSize().height;
@@ -15,8 +16,23 @@ export function fitScreen(canvas:Node,camera:Camera){
   if(n.getChildByName('Modal card')){fitModal(n,height);continue;}
   const u=n.getComponent(UITransform);if(!u)continue;
   if(n.name==='Battle actors'){
-    const shrink=Math.min(1,Math.max(.65,1+(height-1774)/1100));
-    n.setScale(shrink,shrink,1);n.setPosition(0,Math.max(0,(1774-height)*.6),0);continue;
+    let shrink=Math.min(1,Math.max(.65,1+(height-1774)/1100)),y=Math.max(0,(1774-height)*.6);
+    // Center the six actors between the live HUD rails, including short screens.
+    const hud=typeof document!=='undefined'?document.querySelector('.battle-hud'):null;
+    if(hud){
+      let layout=battleLayouts.get(n);
+      if(!layout||layout.height!==height||layout.hud!==hud){
+        const frame=hud.getBoundingClientRect(),order=hud.querySelector('.turn-order'),actions=hud.querySelector('.field-actions');
+        if(order&&actions&&frame.height>0){
+          const top=order.getBoundingClientRect().bottom+frame.width*.05,bottom=actions.getBoundingClientRect().top-frame.width*.05;
+          shrink=Math.min(shrink,Math.max(.5,(bottom-top)*height/frame.height/760));
+          y=height/2-((top+bottom)/2-frame.top)*height/frame.height-50*shrink;
+          layout={height,hud,scale:shrink,y};battleLayouts.set(n,layout);
+        }
+      }
+      if(layout){shrink=layout.scale;y=layout.y;}
+    }
+    n.setScale(shrink,shrink,1);n.setPosition(0,y,0);continue;
   }
   if(!original.has(n))original.set(n,{x:n.position.x,y:n.position.y,height:u.height,width:u.width,scaleX:n.scale.x,scaleY:n.scale.y});
   const o=original.get(n)!;if(o.applied===height)continue;o.applied=height;
