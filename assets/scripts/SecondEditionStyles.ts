@@ -753,9 +753,9 @@ html,body{background:#263b2c!important}
 #s6-v2 .hero-page .hero-tabs button{height:9.2cqw;font-size:3.2cqw}
 #s6-v2 .hero-page .hero-stage{height:auto;min-height:0;max-height:none;margin:0 -2cqw;container-type:size;background-size:cover;background-position:center bottom;overflow:hidden}
 #s6-v2 .hero-stage h1{position:absolute;top:0;left:0;width:100%;font-size:4.6cqw;line-height:1.2}
-#s6-v2 .hero-stage .stars{position:absolute;left:25%;top:7cqw;height:7cqw;margin:0;justify-content:flex-start;gap:1cqw}
+#s6-v2 .hero-stage .stars{position:absolute;left:32%;top:8cqw;height:7cqw;margin:0;justify-content:flex-start;gap:1cqw}
 #s6-v2 .hero-stage .star-row{font-size:min(5cqw,7cqh);line-height:1}
-#s6-v2 .hero-stage .star-button{width:6cqw;height:6cqw;margin-left:1cqw;padding:.4cqw}
+#s6-v2 .hero-stage .star-button{width:6cqw;height:6cqw;margin-left:3cqw;padding:.4cqw}
 #s6-v2 .hero-stage .roles{position:absolute;left:25%;top:15cqw;height:5cqw;justify-content:flex-start;font-size:3.1cqw;gap:.8cqw}
 #s6-v2 .hero-stage .hero-role-icon{width:4cqw;height:4cqw}
 #s6-v2 .hero-stage .hero-role-icon .ico{width:2.8cqw;height:2.8cqw}
@@ -824,12 +824,12 @@ html,body{background:#263b2c!important}
 #s6-v2 .v2-dialog:not(.fullscreen)::before{content:'';position:absolute;inset:-3px;pointer-events:none;z-index:2;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 44'%3E%3Cpath d='M5 39Q22 20 55 7' fill='none' stroke='%23bd8a2b' stroke-width='4'/%3E%3Cpath d='M19 31Q4 24 7 5Q27 8 27 25Z' fill='%23b4d849' stroke='%237c9a28' stroke-width='2'/%3E%3Cpath d='M22 31Q25 8 48 8Q48 29 22 31Z' fill='%2399c83f' stroke='%237c9a28' stroke-width='2'/%3E%3Cpath d='M35 24Q45 25 57 35Q37 41 30 30Z' fill='%23c7dc59' stroke='%237c9a28' stroke-width='2'/%3E%3C/svg%3E"),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 44'%3E%3Cpath d='M5 39Q22 20 55 7' fill='none' stroke='%23bd8a2b' stroke-width='4'/%3E%3Cpath d='M19 31Q4 24 7 5Q27 8 27 25Z' fill='%23b4d849' stroke='%237c9a28' stroke-width='2'/%3E%3Cpath d='M22 31Q25 8 48 8Q48 29 22 31Z' fill='%2399c83f' stroke='%237c9a28' stroke-width='2'/%3E%3Cpath d='M35 24Q45 25 57 35Q37 41 30 30Z' fill='%23c7dc59' stroke='%237c9a28' stroke-width='2'/%3E%3C/svg%3E");background-position:left bottom,right bottom;background-repeat:no-repeat;background-size:8cqw 5.5cqw}
 
 /* Hero reference pass: equipment begins beside the stars, compact skill rows. */
-#s6-v2 .hero-page{grid-template-rows:8cqw 9.2cqw minmax(0,1fr) 6cqw 9cqw calc(34cqw + var(--hero-room)*.04) calc(44cqw + var(--hero-room)*.4) 13.5cqw}
-#s6-v2 .hero-page::before{height:calc(100% - 114.5cqw - var(--hero-room)*.44 - env(safe-area-inset-bottom,0px))}
+#s6-v2 .hero-page{grid-template-rows:8cqw 9.2cqw minmax(0,1fr) 6cqw 9cqw 31cqw calc(40cqw + var(--hero-room)*.06) 13.5cqw}
+#s6-v2 .hero-page::before{height:calc(100% - 107.5cqw - var(--hero-room)*.06 - env(safe-area-inset-bottom,0px))}
 #s6-v2 .hero-stage .equipment-left,#s6-v2 .hero-stage .equipment-right{top:7cqw;bottom:4cqw;width:19%;gap:1cqw}
 #s6-v2 .hero-stage .equipment-slot .gear-tile{width:min(17cqw,calc((100cqh - 24cqw)/3));height:min(17cqw,calc((100cqh - 24cqw)/3))}
 #s6-v2 .hero-stage .equipment-slot{justify-content:flex-start}
-#s6-v2 .hero-stage .roles{left:25%;top:15cqw;gap:1.2cqw;font-size:2.9cqw;white-space:nowrap}
+#s6-v2 .hero-stage .roles{left:32%;top:16cqw;gap:1.2cqw;font-size:2.9cqw;white-space:nowrap}
 #s6-v2 .hero-stage .roles>span{display:inline-flex;align-items:center;gap:.5cqw;margin:0;color:#623719;font-size:inherit}
 #s6-v2 .hero-stage .roles .attribute-icon{width:3.5cqw;height:3.5cqw}
 #s6-v2 .hero-stage .hero-figure{height:63%;bottom:10cqw}
@@ -838,17 +838,17 @@ html,body{background:#263b2c!important}
 #s6-v2 .hero-page>.experience{padding:0 7cqw;gap:1.5cqw}
 #s6-v2 .hero-page .experience .exp-track{height:2.4cqw}
 #s6-v2 .hero-page .experience-reset{color:#75401b}
-#s6-v2 .hero-page>.skills-card{padding:2cqw 2.5cqw}
+#s6-v2 .hero-page>.skills-card{padding:1.5cqw 2.5cqw}
 #s6-v2 .hero-page .hero-skills{align-items:start;gap:.8cqw;padding-top:.6cqw}
 #s6-v2 .hero-page .hero-skills img,#s6-v2 .hero-page .locked-skill-icon{width:12.8cqw;height:12.8cqw}
-#s6-v2 .hero-page .hero-skills .tree-button img{width:15cqw!important;height:15cqw!important;margin:0}
-#s6-v2 .hero-page .tree-button{padding-top:2.8cqw}
+#s6-v2 .hero-page .hero-skills .tree-button img{width:13cqw!important;height:13cqw!important;margin:0}
+#s6-v2 .hero-page .tree-button{padding-top:1cqw}
 #s6-v2 .hero-page .skill-divider{margin:2.8cqw 0 0}
-#s6-v2 .attribute-icon{width:3.8cqw;height:3.8cqw;flex:none;fill:#a4713d;stroke:#825327;stroke-width:.7;stroke-linecap:round;stroke-linejoin:round}
+#s6-v2 .attribute-icon{width:3.8cqw;height:3.8cqw;flex:none;fill:#a4713d;stroke:none;stroke-width:0;stroke-linecap:round;stroke-linejoin:round}
 #s6-v2 .attribute-icon.gilded{fill:#e7aa35;stroke:#9d6226;stroke-width:1.2}
 #s6-v2 .attribute-icon .inlay{fill:#ffe4a0;stroke:none}
 #s6-v2 .hero-page .attributes .stat-row>span{gap:1.2cqw}
-#s6-v2 .attribute-help{display:inline-flex;align-items:center;justify-content:center;width:3.6cqw;height:3.6cqw;margin-left:-.5cqw;color:#a47543}
+#s6-v2 .attributes .attribute-help{display:inline-flex;align-items:center;justify-content:center;align-self:center;flex:none;width:4.6cqw;height:4.6cqw;min-height:0;padding:0;margin:0 0 0 .2cqw;border:0!important;border-radius:50%;background:#a47543!important;color:#fff3dc;font-size:3.4cqw;line-height:1;font-weight:800;box-shadow:none!important}
 #s6-v2 .attributes .attribute-help .ico{width:3.4cqw;height:3.4cqw;stroke:none}
 @media(max-height:700px){
  #s6-v2 .hero-stage .hero-figure{height:47%;bottom:7cqw}
@@ -859,13 +859,13 @@ html,body{background:#263b2c!important}
 }
 
 @media(max-height:700px){
- #s6-v2 .hero-page{grid-template-rows:8cqw 9.2cqw minmax(0,1fr) 5cqw 8cqw 29cqw 41cqw 13.5cqw;gap:1.5cqw}
- #s6-v2 .hero-page::before{height:calc(100% - 104cqw - env(safe-area-inset-bottom,0px))}
+ #s6-v2 .hero-page{grid-template-rows:8cqw 9.2cqw minmax(0,1fr) 5cqw 8cqw 27cqw 38cqw 13.5cqw;gap:1.5cqw}
+ #s6-v2 .hero-page::before{height:calc(100% - 99cqw - env(safe-area-inset-bottom,0px))}
  #s6-v2 .hero-page>.skills-card,#s6-v2 .hero-page>.attributes{padding:1.5cqw 2cqw}
  #s6-v2 .hero-page .card-title{margin-bottom:.8cqw!important}
  #s6-v2 .hero-page .hero-skills b,#s6-v2 .hero-page .hero-skills small{font-size:2.6cqw}
  #s6-v2 .hero-page .hero-skills .tree-button img{width:11.8cqw!important;height:11.8cqw!important}
- #s6-v2 .hero-page .tree-button{padding-top:2.2cqw}
+ #s6-v2 .hero-page .tree-button{padding-top:0}
  #s6-v2 .hero-page .hero-skills{padding-top:.3cqw}
 }
 
@@ -875,5 +875,5 @@ html,body{background:#263b2c!important}
  #s6-v2 .hero-page .attributes .stat-row{font-size:2.9cqw}
  #s6-v2 .hero-page .attributes .attribute-icon{width:3.4cqw;height:3.4cqw}
 }
-#s6-v2 .hero-stage .hero-figure{max-height:calc(100% - 30cqw)}
+#s6-v2 .hero-stage .hero-figure{max-height:calc(100% - 32cqw)}
 `;
