@@ -1099,4 +1099,75 @@ html,body{background:#263b2c!important}
 #s6-v2 .hero-stage .formation-link{left:0;right:0;margin:0 auto;transform:none}
 /* Buttons centred with translate(-50%,-50%): scale from the top-left so the press keeps their centre in place. */
 #s6-v2 .talent-node,#s6-v2 .standing-heroes .v2-button.standing,#s6-v2 .standing-heroes .empty-position{transform-origin:0 0}
+/* Hero marks atlas: painted stars, star-up button and role glyphs (masks tinted by currentColor). */
+#s6-v2 .role-glyph{padding:0;margin:0;border:0;display:inline-block;flex:none;width:1.15em;height:1.15em;background:currentColor;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
+#s6-v2 .hero-stage .roles .role-glyph{width:3.8cqw;height:3.8cqw;color:#8a552a}
+#s6-v2 .role-badge .role-glyph{width:3.8cqw;height:3.8cqw;color:#fff}
+#s6-v2 .role-tag .role-badge .role-glyph{width:3cqw;height:3cqw}
+#s6-v2 .party-card .role-pill .role-glyph{width:2.4cqw;height:2.4cqw}
+#s6-v2.has-marks .star-row i{display:inline-block;width:1em;height:1em;color:transparent!important;text-shadow:none!important;-webkit-text-stroke:0!important;background:var(--star-off) center/contain no-repeat;overflow:hidden}
+#s6-v2.has-marks .star-row i.on{background-image:var(--star-on)}
+#s6-v2.has-marks .star-row{gap:.06em}
+#s6-v2.has-marks .hero-page .hero-stage .v2-button.star-button{width:7.4cqw;height:7.4cqw;padding:0;border:0!important;box-shadow:none!important;background:var(--star-button) center/contain no-repeat!important;filter:drop-shadow(0 .3cqw .3cqw #8a4f1a44)}
+#s6-v2.has-marks .hero-page .hero-stage .v2-button.star-button:not(:disabled):active{background-image:var(--star-button-down)!important;filter:drop-shadow(0 .1cqw .15cqw #8a4f1a44)}
+#s6-v2.has-marks .hero-stage .star-button .ico{display:none}
+#s6-v2 .small .info-pad{font-size:3cqw;line-height:1.7;font-weight:600;color:#6b4426;padding:3cqw 3.5cqw;min-height:0}
+/* 2026-11-21 shared popup frame (codex art, nine-slice) and detail popups matched to concept. */
+#s6-v2.has-frame .v2-dialog:not(.fullscreen){border:2.2cqw solid transparent!important;border-radius:0!important;background:none!important;box-shadow:none!important;border-image:var(--dialog-frame) 72 64 80 64 fill / 7.9cqw 7cqw 8.8cqw 7cqw stretch!important;filter:drop-shadow(0 1.2cqw 2cqw #160e0866);padding:0 2.6cqw 3.6cqw}
+#s6-v2.has-frame .v2-dialog:not(.fullscreen)::before,#s6-v2.has-frame .v2-dialog:not(.fullscreen)::after{display:none!important}
+#s6-v2.has-frame .v2-dialog .dialog-actions button:not(.flat){border:1px solid transparent!important;box-shadow:none!important;background:none!important;border-image:var(--btn-gold) 56 60 fill / 5cqw 5.4cqw stretch!important;min-height:10cqw;height:10cqw;min-width:36%;padding:0 4cqw;font-size:4.4cqw;color:#5d3216;text-shadow:0 1px #fff6}
+#s6-v2.has-frame .v2-dialog .dialog-actions button.peach{border-image-source:var(--btn-peach)!important;color:#6a3416}
+#s6-v2 .v2-dialog .dialog-actions{gap:4cqw;padding:1cqw 0 0}
+#s6-v2 .v2-dialog .item-heading{align-items:flex-start;gap:3.6cqw;padding:1.2cqw 0 0}
+#s6-v2 .v2-dialog .item-heading>div:not(.gear-tile):not(.skill-preview){align-items:flex-start;text-align:left;gap:1.3cqw;padding-top:1cqw;min-width:0}
+#s6-v2 .v2-dialog .item-heading h3{text-align:left;font-size:5.2cqw;line-height:1.2;margin:0}
+#s6-v2 .v2-dialog .item-heading .pill,#s6-v2 .v2-dialog .item-heading .quality-pill{align-self:flex-start;border-radius:1.8cqw;padding:.45cqw 2.6cqw;font-size:3.2cqw;font-weight:700;line-height:1.35}
+#s6-v2 .v2-dialog .item-heading .pill{background:#fbe1bf;color:#7a4a26}
+#s6-v2 .v2-dialog .quality-pill{background:color-mix(in srgb,var(--tone) 24%,#fff)!important;color:color-mix(in srgb,var(--tone) 82%,#2a1206)!important}
+#s6-v2 .v2-dialog .lock-button{position:absolute;right:1cqw;top:1.2cqw;width:8cqw;height:8cqw;min-height:0;padding:0;background:none!important;border:0!important;box-shadow:none!important}
+#s6-v2 .v2-dialog .lock-button img{width:100%;height:100%;object-fit:contain}
+#s6-v2 .v2-dialog .ornament-line{margin:1cqw 0 .4cqw;gap:2.4cqw}
+#s6-v2 .v2-dialog .ornament-line:before,#s6-v2 .v2-dialog .ornament-line:after{background:linear-gradient(90deg,transparent,#e8c58c 30%,#e8c58c 70%,transparent)}
+#s6-v2 .ornament-mark{display:block;width:3.4cqw;height:3.4cqw;object-fit:contain;flex:none}
+#s6-v2 .v2-dialog .section-title{margin:1cqw 0 .4cqw!important}
+#s6-v2 .v2-dialog .section-title:after{display:none!important}
+#s6-v2 .v2-dialog .section-title>span{background:#fde0b0!important;border-radius:3cqw;padding:.6cqw 3.2cqw .6cqw 1.6cqw;gap:1.4cqw;font-size:3.6cqw;line-height:1.3}
+#s6-v2 .section-mark{display:block;width:4.2cqw;height:4.2cqw;object-fit:contain;flex:none}
+#s6-v2 .v2-dialog .stat-row{background:#f9e2c3!important;border-radius:3.2cqw;padding:.8cqw 4cqw .8cqw 3cqw;margin:.6cqw 0;min-height:7cqw;font-size:3.5cqw}
+#s6-v2 .v2-dialog .stat-row>span{display:flex;align-items:center;gap:3cqw}
+#s6-v2 .v2-dialog .stat-row .stat-glyph{width:4.4cqw;height:4.4cqw;color:#8a552a}
+#s6-v2 .v2-dialog .stat-row>span>.ico{width:4.4cqw;height:4.4cqw;color:#8a552a}
+#s6-v2 .v2-dialog .effect-line{display:flex;align-items:center;gap:2.4cqw;padding:.6cqw 1.6cqw;font-size:3.4cqw;line-height:1.4}
+#s6-v2 .effect-mark{display:block;width:7cqw;height:7cqw;object-fit:contain;flex:none}
+#s6-v2 .v2-dialog .effect-line em,#s6-v2 .skill-description em.green{color:#3e9a2b;font-style:normal;font-weight:800}
+#s6-v2 .v2-dialog .effect-line.empty{color:#9a7a5c;font-size:3.2cqw;padding-left:3cqw}
+#s6-v2 .v2-dialog .ornament-line .ornament-mark[src*='data']{opacity:1}
+#s6-v2 .v2-dialog .equip-owner{display:block;text-align:center;font-size:2.8cqw;color:#8a6a4c;margin:-.4cqw 0 0}
+#s6-v2 .v2-dialog .skill-description{font-size:3.2cqw;line-height:1.7;padding:2.4cqw 3cqw;background:#f9e4c8!important;border-radius:2.6cqw;font-weight:600;color:#6b4426}
+#s6-v2 .v2-dialog .stat-row{min-height:5.8cqw;margin:.45cqw 0;padding:.5cqw 4cqw .5cqw 3cqw}
+/* Talent tree: trunk + curved branches with sprouts, round head portrait, left-aligned info. */
+#s6-v2 .talent-wallet{display:flex;align-items:center;justify-content:center;gap:2cqw;font-size:3.8cqw}
+#s6-v2 .talent-wallet .talent-face{width:9cqw;height:9cqw;background:#ffe9c4;border:2px solid #f3d29a}
+#s6-v2 .talent-wallet .talent-face .face{transform:scale(1.75);transform-origin:center 14%}
+#s6-v2 .talent-tree .trunk{stroke:#a8692f;stroke-width:8px}
+#s6-v2 .talent-tree .branch{stroke:#b07a42;stroke-width:4.5px;fill:none;stroke-linecap:round;vector-effect:non-scaling-stroke}
+#s6-v2 .talent-tree .sprout path{fill:none;stroke:#8a6a2f;stroke-width:1.6px;vector-effect:non-scaling-stroke}
+#s6-v2 .talent-tree .sprout ellipse{fill:#8fc94a;stroke:#5b8a25;stroke-width:1px;vector-effect:non-scaling-stroke}
+#s6-v2 .v2-button.talent-node{width:11cqw;height:11cqw}
+#s6-v2 .talent-tree>button:nth-of-type(-n+5){width:13.5cqw;height:13.5cqw}
+#s6-v2 .talent-info{padding:2cqw 3.4cqw}
+#s6-v2 .talent-info>div{align-items:flex-start;text-align:left;gap:.6cqw}
+#s6-v2 .talent-info h3{font-size:4cqw;text-align:left;margin:0}
+#s6-v2 .talent-info p{font-size:3cqw;text-align:left;margin:0}
+#s6-v2 .talent-info>b{font-size:3.3cqw;font-weight:700}
+#s6-v2 .talent-info em{font-size:4cqw;color:#3e9a2b;font-style:normal}
+#s6-v2 .talent-tree{height:86cqw;margin-top:-4.5cqw}
+#s6-v2 .v2-button.talent-node.learned{background:radial-gradient(circle at 50% 32%,#fff8bd,#ffc72d 55%,#e2890b)!important;color:#fff}
+/* Talent medallions (codex art): gold when learned, desaturated silver otherwise. */
+#s6-v2 .v2-button.talent-node:has(.talent-medal){background:none!important;border:0!important;box-shadow:none!important;border-radius:50%;overflow:visible}
+#s6-v2 .talent-medal{display:block;width:100%;height:100%;object-fit:contain;filter:grayscale(1) brightness(1.18) contrast(.85) drop-shadow(0 .3cqw .3cqw #6b4a2a40);pointer-events:none}
+#s6-v2 .talent-node.ready .talent-medal{filter:grayscale(1) brightness(1.08) contrast(.95) drop-shadow(0 .3cqw .3cqw #6b4a2a40)}
+#s6-v2 .talent-node.learned .talent-medal{filter:drop-shadow(0 .3cqw .4cqw #9a5a0a55)}
+#s6-v2 .v2-button.talent-node.current:has(.talent-medal){box-shadow:0 0 0 .7cqw #62d036,0 0 2.6cqw 1cqw #8cf05acc!important}
+#s6-v2 .talent-node b{z-index:1}
 `;

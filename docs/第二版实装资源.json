@@ -142,6 +142,67 @@
         "闪避率"
       ],
       "source": "由 docs/美术参考/第二版/属性图标-v1.png（codex 生图，透明背景4×4）切出14个剪影，统一缩放居中，仅保留白色+透明度作为蒙版；界面用 CSS mask 以暖棕色着色。"
+    },
+    {
+      "file": "assets/resources/art/v2-hero-marks.png",
+      "grid": "9×1（每格192px）",
+      "cells": [
+        "点亮星",
+        "未点亮星",
+        "升星按钮",
+        "坦克",
+        "战士（预留）",
+        "法术输出",
+        "辅助",
+        "远程输出",
+        "升星按钮按下"
+      ],
+      "source": "codex 生图 docs/美术参考/第二版/英雄页资源-v1.png（3×3），定位图标转为白色蒙版由界面着色。"
+    },
+    {
+      "file": "assets/resources/art/v2-popup-marks.png",
+      "grid": "7×1（每格128px）",
+      "cells": [
+        "闭合锁",
+        "打开锁",
+        "分区叶枝",
+        "装备效果星",
+        "分隔花饰",
+        "分隔叶饰",
+        "恢复效果"
+      ],
+      "source": "codex 生图 docs/美术参考/第二版/装备弹窗资源-v1.png 的十六宫格小图标。"
+    },
+    {
+      "file": "assets/resources/art/v2-popup-buttons.png",
+      "grid": "1×2",
+      "cells": [
+        "杏桃次按钮",
+        "金黄主按钮"
+      ],
+      "source": "codex 生图 docs/美术参考/第二版/装备弹窗资源-v1.png 的四宫格中等资源，按九宫格拉伸。"
+    },
+    {
+      "file": "assets/resources/art/v2-popup-frame.png",
+      "grid": "单图",
+      "cells": [
+        "通用弹窗底板"
+      ],
+      "source": "codex 生图 docs/美术参考/第二版/弹窗底板-v2.png；去除生成时附带的不透明底色与烘焙关闭按钮，标题牌与关闭按钮仍由界面渲染，按九宫格拉伸。"
+    },
+    {
+      "file": "assets/resources/art/v2-talent-marks.png",
+      "grid": "7×1（每格192px）",
+      "cells": [
+        "生命",
+        "攻击",
+        "防御",
+        "速度（预留）",
+        "火焰",
+        "技能流转",
+        "光芒"
+      ],
+      "source": "codex 生图 docs/美术参考/第二版/天赋树资源-v1.png；已学习显示金色，未学习去色为银色。"
     }
   ],
   "reused": [
