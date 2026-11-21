@@ -1049,4 +1049,37 @@ html,body{background:#263b2c!important}
 #s6-v2 .filter-row .outline-chevron{width:3cqw;height:3cqw;margin-left:.4cqw}
 #s6-v2 .filter-row .sort-direction{width:3.8cqw;height:3.8cqw}
 #s6-v2 .sort-direction.ascending{transform:rotate(180deg)}
+/* 2026-11-21 hero page: portrait tabs, concept experience bar, foot shadow, breathing room, shared nav height. */
+#s6-v2 .page>.v2-nav{height:15.5cqw;min-height:0;padding:0;margin:0;flex:none;gap:1cqw;position:static}
+#s6-v2 .page>.v2-nav button{height:100%;min-height:0;font-size:3.8cqw;border-radius:4cqw;padding:.5cqw;gap:.3cqw}
+#s6-v2 .page>.v2-nav img{width:8.5cqw;height:8.5cqw}
+#s6-v2 .battle-hud>.v2-nav{height:16cqw}
+#s6-v2 .hero-page{grid-template-rows:8cqw 10cqw minmax(0,1fr) calc(6cqw + var(--hero-room)*.06) 8.5cqw calc(27cqw + var(--hero-room)*.16) calc(37cqw + var(--hero-room)*.2) 15.5cqw;padding-bottom:max(1.5cqw,env(safe-area-inset-bottom,0px))}
+#s6-v2 .hero-page::before{height:calc(100% - 95.5cqw - var(--hero-room)*.36 - env(safe-area-inset-bottom,0px));-webkit-mask-image:linear-gradient(#000 calc(100% - 13cqw),transparent);mask-image:linear-gradient(#000 calc(100% - 13cqw),transparent)}
+#s6-v2 .hero-page .hero-tabs{align-items:end;gap:1.4cqw}
+#s6-v2 .hero-page .hero-tabs button{height:9.6cqw;overflow:visible;padding:0 1cqw 0 0;gap:.4cqw;justify-content:flex-start;align-items:flex-end;font-size:3.6cqw}
+#s6-v2 .hero-page .hero-tabs button b{align-self:center;flex:1;text-align:center;white-space:nowrap}
+#s6-v2 .hero-tabs .tab-portrait{display:block;flex:none;width:12cqw;height:12.8cqw;margin-top:-3.2cqw;overflow:hidden;border-radius:0 0 0 3cqw}
+#s6-v2 .hero-tabs .tab-portrait .face{display:block;width:100%;height:100%;max-width:none;margin:0;object-fit:cover;transform:scale(1.5);transform-origin:center 13%}
+#s6-v2 .hero-page>.experience{padding:0 5.5cqw;gap:2cqw;align-items:center}
+#s6-v2 .hero-page .experience small{font-size:3.4cqw;font-weight:800;color:#6b3a17}
+#s6-v2 .hero-page .experience .exp-track{height:3.2cqw;border-radius:3cqw;background:linear-gradient(#cdc6bf,#e4dfda);border:.35cqw solid #ab9e92;box-shadow:inset 0 .4cqw .6cqw #0000001f}
+#s6-v2 .hero-page .experience .exp-track i{border-radius:3cqw;background:linear-gradient(#fff3a6,#ffd83f 38%,#f5b417 78%,#e39c0f);box-shadow:inset 0 -.3cqw 0 #c3800d55}
+#s6-v2 .hero-page .experience-reset{width:7cqw;height:7cqw;min-height:0;padding:0;background:none!important;border:0!important;box-shadow:none!important;color:#5c3216}
+#s6-v2 .hero-page .experience-reset .reset-icon{display:block;width:5.8cqw;height:5.8cqw}
+#s6-v2 .hero-page .experience-reset:disabled{opacity:.5;filter:none}
+#s6-v2 .hero-stage{--fig-bottom:10cqw}
+#s6-v2 .hero-stage .hero-figure{bottom:var(--fig-bottom);object-position:center bottom;z-index:1}
+#s6-v2 .hero-shadow{position:absolute;left:50%;bottom:calc(var(--fig-bottom) - 1.8cqw);width:32cqw;height:6.5cqw;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,#5c3a1e66,#5c3a1e33 62%,#5c3a1e00);pointer-events:none;z-index:0}
+@media(max-height:700px){#s6-v2 .hero-stage{--fig-bottom:7cqw}#s6-v2 .hero-shadow{width:26cqw;height:5.4cqw}}
+#s6-v2 .hero-page .card-title{margin-bottom:1.4cqw!important}
+#s6-v2 .hero-page>.skills-card{padding:2cqw 2.5cqw}
+#s6-v2 .hero-page .hero-skills{align-items:center;padding-top:0}
+#s6-v2 .hero-page>.attributes{padding:2.2cqw 2.5cqw 2.5cqw}
+#s6-v2 .hero-page .hero-attribute-grid{gap:.9cqw 2.5cqw}
+#s6-v2 .hero-page .attributes .stat-row{font-size:2.65cqw;padding:0 2cqw}
+#s6-v2 .hero-page .attributes .attribute-icon{width:3cqw;height:3cqw}
+#s6-v2 .stat-glyph{display:inline-block;flex:none;background:currentColor;color:#94602f;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
+#s6-v2 .hero-page .attributes .stat-glyph{width:3.3cqw;height:3.3cqw}
+@media(max-height:700px){#s6-v2 .hero-page{grid-template-rows:8cqw 10cqw minmax(0,1fr) 5.5cqw 8cqw 26cqw 33cqw 15.5cqw}#s6-v2 .hero-page::before{height:calc(100% - 90cqw - env(safe-area-inset-bottom,0px))}#s6-v2 .hero-page .hero-skill-art,#s6-v2 .hero-page .locked-skill-icon,#s6-v2 .hero-page .hero-skills .tree-button img{width:10.6cqw!important;height:10.6cqw!important}#s6-v2 .hero-page .hero-skills .kind{font-size:2.3cqw}}
 `;

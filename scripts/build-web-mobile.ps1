@@ -13,5 +13,7 @@ $entry=Join-Path $projectRoot 'build/web-mobile/index.html'
 if(-not(Test-Path -LiteralPath $entry)){throw 'Missing web-mobile/index.html'}
 Write-Host "Web-mobile built: $entry"
 
+node (Join-Path $PSScriptRoot 'brand-build.cjs')
+if($LASTEXITCODE -ne 0){throw 'Applying the page title failed'}
 node (Join-Path $PSScriptRoot 'verify-build.cjs')
 if($LASTEXITCODE -ne 0){throw 'Build artifact verification failed'}
