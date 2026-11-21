@@ -18,7 +18,7 @@ html,body{background:#263b2c!important}
 #s6-v2 .page,#s6-v2 .secondary{height:100%;pointer-events:auto;background:#fce7ce;overflow:hidden;display:flex;flex-direction:column;padding:2cqw 2cqw 0;gap:1.5cqw;background-image:var(--scene);background-size:100% auto;background-repeat:no-repeat}
 #s6-v2 .v2-button{border:1px solid #eda516;border-radius:2.8cqw;background:linear-gradient(#ffe45d 0%,#ffcc20 65%,#ffbc10);box-shadow:inset 0 1px 1px #fffbd1,0 2px 2px #be813040;min-height:7cqw;padding:1cqw 3cqw;display:inline-flex;align-items:center;justify-content:center;gap:.7cqw;position:relative;flex-shrink:0;pointer-events:auto;text-shadow:0 1px #ffffff50}
 #s6-v2 .v2-button:hover{filter:brightness(1.035)}
-#s6-v2 .v2-button:active{transform:translateY(1px)}
+#s6-v2 .v2-button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none}
 #s6-v2 .v2-button:focus-visible{outline:3px solid #2a83ce;outline-offset:2px}
 #s6-v2 .quiet{background:linear-gradient(#fff6e8,#ffe4c1);border-color:#ecd1ae}
 #s6-v2 .selected{background:linear-gradient(#ffe969,#ffc213);border-color:#eaaa22;box-shadow:inset 0 0 0 1px #fff6bf,0 2px 3px #a96b3140}
@@ -1082,4 +1082,21 @@ html,body{background:#263b2c!important}
 #s6-v2 .stat-glyph{display:inline-block;flex:none;background:currentColor;color:#94602f;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
 #s6-v2 .hero-page .attributes .stat-glyph{width:3.3cqw;height:3.3cqw}
 @media(max-height:700px){#s6-v2 .hero-page{grid-template-rows:8cqw 10cqw minmax(0,1fr) 5.5cqw 8cqw 26cqw 33cqw 15.5cqw}#s6-v2 .hero-page::before{height:calc(100% - 90cqw - env(safe-area-inset-bottom,0px))}#s6-v2 .hero-page .hero-skill-art,#s6-v2 .hero-page .locked-skill-icon,#s6-v2 .hero-page .hero-skills .tree-button img{width:10.6cqw!important;height:10.6cqw!important}#s6-v2 .hero-page .hero-skills .kind{font-size:2.3cqw}}
+/* 2026-11-21 follow-up: smaller tab portraits, tighter stars, larger attribute glyphs, darker reset, centered formation icon. */
+#s6-v2 .hero-tabs .tab-portrait{width:10.8cqw;height:11.4cqw;margin-top:-2.2cqw}
+#s6-v2 .hero-stage .hero-identity{top:6.2cqw}
+#s6-v2 .hero-page .attributes .stat-glyph{width:3.8cqw;height:3.8cqw}
+#s6-v2 .hero-page .experience-reset{color:#3d1f0a}
+#s6-v2 .hero-page .experience-reset:disabled{opacity:.78}
+#s6-v2 .hero-stage .formation-link{display:flex;align-items:center;justify-content:center;gap:.8cqw;line-height:1}
+#s6-v2 .hero-stage .formation-link .ico{display:block;vertical-align:0;transform:translateY(.08em)}
+/* Press feedback uses the independent scale/translate properties so it composes with layout transforms (e.g. translateX(-50%) centering). */
+#s6-v2 .v2-button{transition:scale .18s cubic-bezier(.34,1.56,.64,1),translate .18s ease,filter .12s ease}
+#s6-v2 .v2-button:not(:disabled):active{scale:.93;translate:0 .25cqw;transition-duration:.06s}
+#s6-v2 .v2-button:not(:disabled):not(.unavailable):active{filter:brightness(.9) saturate(1.08)}
+#s6-v2 .v2-nav .v2-button:not(:disabled):active{scale:.9}
+@media(prefers-reduced-motion:reduce){#s6-v2 .v2-button:not(:disabled):active{scale:1;translate:none}}
+#s6-v2 .hero-stage .formation-link{left:0;right:0;margin:0 auto;transform:none}
+/* Buttons centred with translate(-50%,-50%): scale from the top-left so the press keeps their centre in place. */
+#s6-v2 .talent-node,#s6-v2 .standing-heroes .v2-button.standing,#s6-v2 .standing-heroes .empty-position{transform-origin:0 0}
 `;

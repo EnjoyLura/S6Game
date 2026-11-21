@@ -64,6 +64,8 @@ export class SecondEditionUI{
   this.backdrop=document.createElement('div');this.backdrop.id='s6-backdrop';document.body.appendChild(this.backdrop);
   this.root=document.createElement('div');this.root.id='s6-v2';this.root.setAttribute('aria-label','森林挂机冒险');this.root.innerHTML='<main class="v2-content"></main><div class="v2-modal-host"></div><div class="v2-toast" role="status"></div>';
   for(const [key,value] of [['gold',this.urls.control0],['cream',this.urls.control1],['panel',this.urls.control2],['plaque',this.urls.control3],['close',this.urls.roundClose||this.urls.control4],['peach',this.urls.peach||this.urls.control1]])this.root.style.setProperty('--'+key+'-art',`url("${value}")`);document.body.appendChild(this.root);this.content=this.root.querySelector('main')!;this.modal=this.root.querySelector('.v2-modal-host')!;
+  // A touchstart listener lets mobile Safari apply :active press styles to buttons.
+  this.root.addEventListener('touchstart',()=>{},{passive:true});
   this.root.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest<HTMLElement>('[data-action]');if(b&&!b.hasAttribute('disabled')){e.stopPropagation();this.actions.get(b.dataset.action!)?.();this.pruneActions();}});
   const viewport=document.querySelector('meta[name=viewport]');if(viewport&&!viewport.getAttribute('content')?.includes('viewport-fit'))viewport.setAttribute('content',viewport.getAttribute('content')+', viewport-fit=cover');
   document.addEventListener('keydown',this.onKey);
