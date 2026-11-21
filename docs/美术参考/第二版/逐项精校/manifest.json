@@ -1,0 +1,190 @@
+{
+  "viewport": "430×764 @2x",
+  "reference_previews": "470px, WebP quality 96; full references remain in original collection",
+  "actual_images": "original screenshot resolution, lossless WebP",
+  "checks": 145,
+  "screens": [
+    {
+      "id": "01-adventure",
+      "title": "冒险页",
+      "source": "冒险页概念-v5.png",
+      "note": "更新四英雄与底部导航美术，统一图标可见面积；保留实时战斗站位与血量。",
+      "before": true
+    },
+    {
+      "id": "02-hero",
+      "title": "英雄页",
+      "source": "英雄页概念-v4.png",
+      "note": "校准人物、装备、技能与属性的比例，立绘输出提高到640像素；短屏完整显示十四项真实属性。",
+      "before": true
+    },
+    {
+      "id": "03-recruit-normal",
+      "title": "招募页 · 常驻池",
+      "source": "招募页-常驻池-v2.png",
+      "note": "重绘星门场景、四英雄、导航；校准英雄构图、描边标题、丝带和底部控件间距。",
+      "before": true
+    },
+    {
+      "id": "04-recruit-up",
+      "title": "招募页 · UP池",
+      "source": "招募页-UP池-v2.png",
+      "note": "UP池复用新场景与四英雄，保留法师前置构图及独立券数、概率和保底。",
+      "before": true
+    },
+    {
+      "id": "05-bag",
+      "title": "背包页",
+      "source": "背包页概念-v1.png",
+      "note": "统一五列正方形格、分类栏和底部容量操作区，调整奶油底色、间距与圆角。",
+      "before": true
+    },
+    {
+      "id": "06-dungeons",
+      "title": "副本页",
+      "source": "副本页概念-v1.png",
+      "note": "调整四张副本卡的插画、名称、奖励和挑战按钮对齐；奖励来自真实配置。",
+      "before": true
+    },
+    {
+      "id": "07-endless",
+      "title": "副本页 · 无尽挑战",
+      "source": "副本页-无尽挑战-v1.png",
+      "note": "校准插画标题、奖励和阵容各行的间距，更新英雄头像与导航。",
+      "before": true
+    },
+    {
+      "id": "08-daily",
+      "title": "副本页 · 每日副本",
+      "source": "副本页-每日副本-v1.png",
+      "note": "校准插画位置、奖励和阵容基线，保留实际每日次数。",
+      "before": true
+    },
+    {
+      "id": "09-offline",
+      "title": "弹窗 · 挂机奖励",
+      "source": "弹窗-挂机奖励-v2.png",
+      "note": "压缩标题与资源行，按实际列宽计算两行半奖励视口，校准领取按钮。",
+      "before": true
+    },
+    {
+      "id": "10-equipment",
+      "title": "弹窗 · 装备详情",
+      "source": "弹窗-装备详情-v1.png",
+      "note": "收紧底板、字号、品质标签、属性行、分区胶囊与按钮，数值和效果取实际装备。",
+      "before": true
+    },
+    {
+      "id": "11-confirm",
+      "title": "弹窗 · 通用小提示",
+      "source": "弹窗-通用小提示-v2.png",
+      "note": "校准窄弹窗宽度、提示文字行高和两按钮尺寸，保留实际扩容价格与容量。",
+      "before": true
+    },
+    {
+      "id": "12-equipment-picker",
+      "title": "弹窗 · 装备选择",
+      "source": "弹窗-装备选择-v1.png",
+      "note": "校准五列四行格、筛选栏和部位栏，保持方格与横向边界。",
+      "before": true
+    },
+    {
+      "id": "13-star",
+      "title": "弹窗 · 英雄升星",
+      "source": "弹窗-英雄升星-v1.png",
+      "note": "统一头像、星星、分区标题、变化箭头和两列数值，消耗卡依实际数量显示。",
+      "before": true
+    },
+    {
+      "id": "14-skill",
+      "title": "弹窗 · 技能详情",
+      "source": "弹窗-技能详情-v2.png",
+      "note": "收紧技能图标、等级标签与描述卡，属性行字号和高度与装备弹窗一致。",
+      "before": true
+    },
+    {
+      "id": "15-talents",
+      "title": "弹窗 · 天赋树",
+      "source": "弹窗-天赋树-v1.png",
+      "note": "校准树区高度、点数、节点说明与底部操作；徽章明暗按真实学习状态显示。",
+      "before": true
+    },
+    {
+      "id": "16-pool-normal",
+      "title": "弹窗 · 常驻池详情",
+      "source": "弹窗-常驻池详情-v2.png",
+      "note": "统一卡池弹窗宽度、头像间距、三条概率行与规则行距；仅展示已实现四英雄。",
+      "before": true
+    },
+    {
+      "id": "17-pool-up",
+      "title": "弹窗 · UP池详情",
+      "source": "弹窗-UP池详情-v2.png",
+      "note": "复用常驻池弹窗尺度，保留真实UP角色与独立规则。",
+      "before": true
+    },
+    {
+      "id": "18-formation",
+      "title": "编队二级页",
+      "source": "编队页概念-v2.png",
+      "note": "更新三人站位美术，收紧预设工具行，统一卡片与关闭按钮；仅展示四位实际英雄。",
+      "before": true
+    },
+    {
+      "id": "19-ten",
+      "title": "招募十连结果",
+      "source": "弹窗-招募十连结果-v2.png",
+      "note": "独立星门背景避免底层控件透出，标题与五列双排卡重新对齐，修复双行按钮的九切片中缝。",
+      "before": true
+    },
+    {
+      "id": "20-single",
+      "title": "招募单抽结果",
+      "source": "弹窗-招募单抽结果-v2.png",
+      "note": "单卡居中、标题与十连共用基线，两招募按钮完整显示券数。",
+      "before": true
+    },
+    {
+      "id": "21-formations",
+      "title": "阵型选择弹窗",
+      "source": "弹窗-阵型选择-v1.png",
+      "note": "校准四个阵型卡、三人缩略站位、受击率字号和底部按钮，防止缩略人物溢出。",
+      "before": true
+    },
+    {
+      "id": "22-rewards",
+      "title": "获取奖励全屏弹窗",
+      "source": "弹窗-获取奖励-v1.png",
+      "note": "校准金色大标题、分隔线和五列两行半奖励带，数量与图标来自实际领取。",
+      "before": true
+    },
+    {
+      "id": "23-challenge",
+      "title": "副本挑战确认弹窗",
+      "source": "弹窗-副本挑战-v2.png",
+      "note": "校准插画、难度、属性和按钮，奖励预览保持五列两行半，奖励种类按实际副本。",
+      "before": true
+    },
+    {
+      "id": "24-salvage",
+      "title": "装备分解弹窗",
+      "source": "弹窗-装备分解-v2.png",
+      "note": "校准品质勾选、三行半装备视口、材料预览和分解按钮；排除锁定/穿戴装备。",
+      "before": true
+    },
+    {
+      "id": "25-upgrade",
+      "title": "装备普通升级",
+      "source": "装备强化页-普通升级-v3.png",
+      "note": "重绘铁匠场景，校准装备悬浮位置、等级箭头、属性胶囊、材料与两组按钮。",
+      "before": true
+    },
+    {
+      "id": "26-breakthrough",
+      "title": "装备突破升级",
+      "source": "装备强化页-突破升级-v3.png",
+      "note": "与普通升级共用版式，保留实际突破前后数值与材料需求。",
+      "before": true
+    }
+  ]
+}

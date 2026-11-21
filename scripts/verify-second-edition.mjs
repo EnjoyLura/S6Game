@@ -1,16 +1,19 @@
 // Run against `npm run serve` after `npm run build`. Saves real browser screenshots.
 import {chromium} from 'playwright';
-import {mkdir,writeFile} from 'node:fs/promises';
+import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import assert from 'node:assert/strict';
 import {SquadBattleModel,generateGear,recruit} from '../assets/scripts/SquadBattleModel.ts';
+import {auditLayout} from './ui-layout-audit.mjs';
 import {SAVE_KEY} from '../assets/scripts/LocalSave.ts';
 
 const base=process.env.S6_URL||'http://127.0.0.1:7456';
-const out=resolve('docs/美术参考/第二版/实装效果');await mkdir(out,{recursive:true});
+const out=resolve(process.env.S6_SCREENSHOTS||'docs/美术参考/第二版/实装效果');await mkdir(out,{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true});
-const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2});
+const viewport={width:Number(process.env.S6_WIDTH||390),height:Number(process.env.S6_HEIGHT||844)};
+const context=await browser.newContext({viewport,deviceScaleFactor:2});
 const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(String(e)));
+if(process.env.S6_PREVIEW_CSS){const css=await readFile(process.env.S6_PREVIEW_CSS,'utf8');await context.addInitScript(css=>{addEventListener('DOMContentLoaded',()=>{const style=document.createElement('style');style.textContent=css;new MutationObserver(()=>{if(document.getElementById('second-edition-style')&&!style.isConnected)document.head.append(style);}).observe(document.head,{childList:true});});},css);}
 page.on('console',m=>{if(m.type()==='error')errors.push(m.text()+' '+m.location().url);});
 const fixtures=()=>{const m=new SquadBattleModel(0,()=>.5,3,true);recruit(m.recruitment,0,10,()=>.99);m.gold=48320;m.materials=500;m.paused=true;
  m.heroes.forEach((h,id)=>{h.level=12;h.experience=10000;h.hp=m.stats(id).hp;});
@@ -21,8 +24,8 @@ const button=(name,scope=page)=>scope.getByRole('button',{name,exact:true});
 const click=async(name,scope=page)=>button(name,scope).click();
 const nav=async name=>page.locator('.v2-nav').getByRole('button',{name,exact:true}).click();
 const close=async()=>{await page.keyboard.press('Escape');};
-const shots=[];
-const shot=async(id,title)=>{const controls=await page.locator('.v2-button:visible').evaluateAll(nodes=>nodes.filter(n=>!['flat','equipment-slot','talent-node','standing','skill-button','empty-position','star-button','help-button','close'].some(c=>n.classList.contains(c))).map(n=>({name:n.textContent,art:getComputedStyle(n).borderImageSource,skin:!!n.closest('.has-frame .dialog-actions'),shadow:getComputedStyle(n).boxShadow})));for(const control of controls){assert.ok(control.art==='none'||control.skin,id+' '+control.name+' has no baked inner border (popup action buttons use the codex button skin)');assert.ok(!control.shadow.includes('inset'),id+' '+control.name+' has no inset stroke');}await page.waitForFunction(()=>!document.querySelector('.v2-toast.visible'));await page.waitForTimeout(180);await page.screenshot({path:resolve(out,id+'.png')});shots.push({id,title});};
+const shots=[],layoutChecks=[];
+const shot=async(id,title)=>{const controls=await page.locator('.v2-button:visible').evaluateAll(nodes=>nodes.filter(n=>!['flat','equipment-slot','talent-node','standing','skill-button','empty-position','star-button','help-button','close'].some(c=>n.classList.contains(c))).map(n=>({name:n.textContent,art:getComputedStyle(n).borderImageSource,skin:!!n.closest('.has-frame .dialog-actions'),shadow:getComputedStyle(n).boxShadow})));for(const control of controls){assert.ok(control.art==='none'||control.skin,id+' '+control.name+' has no baked inner border (popup action buttons use the codex button skin)');assert.ok(!control.shadow.includes('inset'),id+' '+control.name+' has no inset stroke');}await page.waitForFunction(()=>!document.querySelector('.v2-toast.visible'));await page.waitForTimeout(180);await page.screenshot({path:resolve(out,id+'.png')});shots.push({id,title});if(process.env.S6_AUDIT){for(const size of [{width:360,height:640},{width:390,height:844},{width:430,height:764},{width:430,height:932},{width:487,height:986}]){await page.setViewportSize(size);await page.waitForTimeout(100);layoutChecks.push(await auditLayout(page,id,size));}await page.setViewportSize(viewport);}};
 const dialog=()=>page.getByRole('dialog');
 try{
  await load(fixtures());await shot('01-adventure','冒险页');
@@ -79,9 +82,12 @@ try{
   }
   await page.screenshot({path:resolve(out,`responsive-${width}x${height}.png`)});
  }
- assert.deepEqual(errors,[]);await writeFile(resolve(out,'manifest.json'),JSON.stringify({viewport:'390×844 @2x',screens:shots,checks:['26 screens','manual controls','single/ten draw','tree purchase','capacity expansion','dungeon entry/result/exit','save reload','four responsive viewports'],errors},null,2));
+ assert.deepEqual(errors,[]);await writeFile(resolve(out,'manifest.json'),JSON.stringify({viewport:viewport.width+'×'+viewport.height+' @2x',screens:shots,checks:['26 screens','manual controls','single/ten draw','tree purchase','capacity expansion','dungeon entry/result/exit','save reload','four responsive viewports'],errors},null,2));
+ if(process.env.S6_AUDIT)await writeFile(resolve(out,'layout-audit.json'),JSON.stringify(layoutChecks,null,2));
+ if(!process.env.S6_SCREENSHOTS){
  const cards=shots.slice().sort((a,b)=>a.id.localeCompare(b.id)).map(s=>`<figure><a href="美术参考/第二版/实装效果/${s.id}.png" target="_blank"><img loading="lazy" src="美术参考/第二版/实装效果/${s.id}.png" alt="${s.title}"></a><figcaption>${s.title}</figcaption></figure>`).join('');
  const responsive=['360x640','430x932','768x1024','1280x720'].map(s=>`<figure><a target="_blank" href="美术参考/第二版/实装效果/responsive-${s}.png"><img loading="lazy" src="美术参考/第二版/实装效果/responsive-${s}.png" alt="${s}"></a><figcaption>${s}</figcaption></figure>`).join('');
  await writeFile(resolve('docs/第二版实装验收.html'),`<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>第二版游戏 · 实装验收</title><style>*{box-sizing:border-box}body{margin:0;background:#173529;color:#f9edcf;font:16px/1.8 system-ui,sans-serif}header,main{max-width:1600px;margin:auto;padding:24px}h1{color:#ffd568}p{max-width:1000px}a{color:#ffd568}nav{display:flex;gap:24px;flex-wrap:wrap}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:22px}figure{margin:0;padding:14px;background:#234638;border:1px solid #536b4e;border-radius:16px}figure>a{display:block;height:470px}img{width:100%;height:100%;object-fit:contain}figcaption{text-align:center;padding-top:10px;font-weight:700}.badge{background:#e8bb52;color:#422e16;padding:5px 14px;border-radius:20px}small{color:#c6d5bc}footer{padding:30px;text-align:center}@media(max-width:600px){header,main{padding:16px}.grid{grid-template-columns:1fr}figure>a{height:620px}}</style><header><span class="badge">实装效果 · 浏览器真实截图</span><h1>第二版游戏界面验收</h1><p>26个参考界面及三种副本结算，均来自本次构建的实际运行截图。使用单独测试存档展示已培养角色、装备和奖励；测试存档不替换玩家存档。保留现有四名英雄与真实十四项属性，未把概念图的8人卡池作为已实现内容。</p><nav><a href="#screens">29张实装截图</a><a href="#responsive">屏幕适配</a><a href="第二版界面效果图合集.html" target="_blank">概念图合集</a><a href="第二版实装说明.md">实现与测试配置</a></nav><p><small>118项模型回归通过；浏览器真实点击、刷新恢复和四组尺寸检查通过；无页面异常和资源加载错误。点击截图可查看原尺寸。</small></p></header><main><h2 id="screens">页面、二级页与弹窗</h2><div class="grid">${cards}</div><h2 id="responsive">屏幕适配</h2><div class="grid">${responsive}</div></main><footer>通过 npm run test:ui 可重新生成本页及全部实装截图。</footer></html>`);
+ }
  console.log(`Verified ${shots.length} real screens, 4 responsive sizes and save reload; no browser errors.`);
 }finally{await browser.close();}
