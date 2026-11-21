@@ -23,19 +23,33 @@ export const SECOND_EDITION_POLISH = `
 #s6-v2 .feature-row .resource-art{width:4cqw;height:4cqw}
 #s6-v2 .feature-rewards .reward>.resource-art{width:90%;height:90%}
 #s6-v2 .dialog-actions small .resource-art{width:3.2cqw;height:3.2cqw}
-#s6-v2 .formation-link>img,#s6-v2 .lineup-button>img{width:4.5cqw;height:4.5cqw}
+#s6-v2 .formation-glyph{width:3.6cqw;height:3.6cqw;display:block;flex:none;color:#79502c}
+#s6-v2 .lineup-button .formation-glyph{width:4.2cqw;height:4.2cqw}
+#s6-v2 .menu,#s6-v2 .recruit-page .menu,#s6-v2 .battle-hud>.menu{width:6.8cqw;height:6.8cqw;min-height:0;border-radius:2.2cqw;padding:0;display:flex;align-items:center;justify-content:center}
+#s6-v2 .menu-glyph{width:3.8cqw;height:3.8cqw;stroke:#704124;stroke-width:2.6;stroke-linecap:round;fill:none}
 #s6-v2 .ticket-art{display:inline-block;position:relative;vertical-align:middle;width:5.5cqw;height:4.8cqw}
-#s6-v2 .ticket-art>img{display:block;width:100%;height:100%}
-#s6-v2 .ticket-art>b{position:absolute!important;left:21%;top:35%;font:900 1.9cqw/1 Arial,sans-serif!important;color:#fff!important;text-shadow:.12cqw .12cqw #5d287c,-.12cqw -.12cqw #5d287c;transform:rotate(-17deg)}
+#s6-v2 .ticket-art>img{display:block;width:100%;height:100%;object-fit:contain}
+#s6-v2 .ticket-lettering{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+#s6-v2 .ticket-lettering text{fill:#fff9e8;stroke:#77399b;stroke-width:3;paint-order:stroke fill;font:900 23px Arial,sans-serif;text-anchor:middle}
 #s6-v2 .ticket-resource .ticket-art{width:7cqw;height:6cqw}
-#s6-v2 .ticket-resource .ticket-art>b{font-size:2.4cqw!important}
 
 /* Adventure tray keeps the reference share of the screen, including tall phones. */
-#s6-v2 .battle-hud{--battle-room:max(0px,100dvh - 178cqw)}
+#s6-v2 .battle-hud{--battle-room:max(0px,100dvh - 178cqw);padding-bottom:0}
+#s6-v2 .battle-hud>.v2-nav{height:calc(17.5cqw + env(safe-area-inset-bottom,0px));padding-bottom:max(1.5cqw,env(safe-area-inset-bottom,0px));flex:none}
 #s6-v2 .battle-hud .stage-heading{margin:0;height:20cqw}
 #s6-v2 .battle-hud .stage-heading h1{font-size:6.5cqw;text-shadow:none}
 #s6-v2 .battle-hud .stage-heading h1>span{paint-order:stroke fill;-webkit-text-stroke:.6cqw #fff9e9;filter:drop-shadow(0 .25cqw 0 #b58c59)}
 #s6-v2 .battle-hud .stage-heading>b,#s6-v2 .battle-hud .stage-heading small{-webkit-text-stroke:.3cqw #fff9e9;paint-order:stroke fill}
+#s6-v2 .checkpoint{position:relative;width:45cqw;height:3.2cqw;border:0;margin:.8cqw 0 .6cqw;padding-right:5cqw;flex:none;isolation:isolate}
+#s6-v2 .checkpoint:before,#s6-v2 .checkpoint:after{content:'';position:absolute;left:0;right:4cqw;top:50%;height:.9cqw;transform:translateY(-50%);border:.25cqw solid #fff6dc;border-radius:1cqw;background:#cba474;z-index:-1}
+#s6-v2 .checkpoint:after{right:auto;width:calc(41cqw * var(--progress,0));background:#6ac91f}
+#s6-v2 .checkpoint i{width:2.7cqw;height:2.7cqw;margin:0;border:.3cqw solid #fff8dc;background:#cba474;box-shadow:0 0 0 .15cqw #ac8050;flex:none}
+#s6-v2 .checkpoint i.passed{background:#6ac91f}
+#s6-v2 .checkpoint-flag{position:absolute;right:-.3cqw;top:-.7cqw;width:4.2cqw;height:4.2cqw;fill:#c69a6a;stroke:#fff7dd;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+#s6-v2 .turn-order>b,#s6-v2 .turn-arrow{color:#63391e;-webkit-text-stroke:.4cqw #fff7df;paint-order:stroke fill;filter:drop-shadow(0 .15cqw .1cqw #6f4c35)}
+#s6-v2 .battle-tools button{height:8.8cqw;gap:.25cqw}
+#s6-v2 .battle-tools .tool-glyph{display:block;width:4.5cqw;height:4.5cqw;color:#79502c;fill:currentColor;flex:none}
+#s6-v2 .battle-tools small{font-size:2cqw;line-height:1.1;font-weight:800}
 #s6-v2 .turn-portrait{overflow:hidden;border-radius:50%}
 #s6-v2 .turn-portrait .face{width:100%;height:100%;object-fit:cover;transform:scale(1.65);transform-origin:center 12%}
 #s6-v2 .skill-bar{height:calc(42cqw + var(--battle-room)*.34);padding:3cqw 1.8cqw 2cqw;gap:1.5cqw}
@@ -45,14 +59,18 @@ export const SECOND_EDITION_POLISH = `
 #s6-v2 .party-card>header>div{gap:.8cqw}
 #s6-v2 .party-card>header>div>b{font-size:3.5cqw;line-height:1.3}
 #s6-v2 .party-card .party-portrait{width:11.5cqw;height:12cqw;border:.4cqw solid #ffe1a6}
-#s6-v2 .party-card .party-tags{font-size:2.5cqw;gap:.3cqw}
-#s6-v2 .party-card .party-tags i{font-size:2.4cqw;padding:0 .3cqw}
+#s6-v2 .party-card .party-tags{font-size:2.9cqw;gap:.35cqw}
+#s6-v2 .party-card .party-tags i{font-size:2.9cqw;line-height:1.25;padding:0 .2cqw;gap:.2cqw}
+#s6-v2 .party-card .role-pill .role-glyph{width:2.9cqw;height:2.9cqw}
 #s6-v2 .party-card small[data-hp-label],#s6-v2 .party-card small[data-shield]{display:flex;align-items:center;gap:.3cqw;font-size:2.7cqw;line-height:1.15;min-height:3.4cqw}
 #s6-v2 .party-card .resource-art{width:3cqw;height:3cqw}
 #s6-v2 .party-card .health-track{height:2cqw;margin-top:1cqw}
 #s6-v2 .skill-button>img,#s6-v2 .skill-button>.locked-skill-icon{width:13.3cqw;height:13.3cqw}
 #s6-v2 .skill-button small{font-size:3cqw;line-height:1.3}
 #s6-v2 .active-skills{gap:1.2cqw}
+#s6-v2 .skill-button>span[data-cooldown]{left:50%;top:0;transform:translateX(-50%);width:13.3cqw;height:13.3cqw;display:grid;place-items:center;line-height:1;font-size:4.2cqw;font-weight:800;text-shadow:0 .2cqw .4cqw #34210a;-webkit-text-stroke:.08cqw #704124;paint-order:stroke fill;pointer-events:none}
+#s6-v2 .skill-button>.locked-skill-icon{display:grid;place-items:center;padding:0}
+#s6-v2 .skill-button>.locked-skill-icon .ico{width:6cqw;height:6cqw;display:block;margin:0}
 
 /* Hero: reserve identity and action rails, give the sprite all space between them. */
 #s6-v2 .hero-page{grid-template-rows:7cqw 10cqw minmax(0,1fr) calc(6cqw + var(--hero-room)*.06) 8.5cqw calc(27cqw + var(--hero-room)*.16) calc(35cqw + var(--hero-room)*.2) 15.5cqw;gap:1.5cqw}
@@ -70,8 +88,11 @@ export const SECOND_EDITION_POLISH = `
 #s6-v2 .hero-page .card-title{font-size:4.1cqw!important;margin-bottom:.8cqw!important}
 #s6-v2 .hero-page>.wallet .resource{height:6.5cqw;font-size:3.8cqw}
 #s6-v2 .hero-page .hero-skills{min-height:0}
-#s6-v2 .hero-page .tree-button{padding-top:0}
-#s6-v2 .hero-page .hero-skills .tree-button img{width:11.5cqw!important;height:11.5cqw!important}
+#s6-v2 .hero-page .hero-tabs .tab-portrait{width:8.8cqw;height:9.8cqw;margin-top:-1cqw;margin-left:.5cqw}
+#s6-v2 .hero-page .tree-button{padding:0;gap:.5cqw;align-self:center}
+#s6-v2 .hero-page .hero-skills .tree-button img{width:14.2cqw!important;height:14.2cqw!important;flex:none;margin:0}
+#s6-v2 .hero-page .hero-skills .tree-button>b{font-size:2.9cqw;line-height:1.15;font-weight:800;color:#643b20}
+#s6-v2 .hero-page .hero-skills .tree-button>small{font-size:2.5cqw;line-height:1.15;font-weight:600;color:#8b6c51}
 
 /* Main pages: artwork composition and bottom controls stay on distinct rails. */
 #s6-v2 .bag-page>.part-tabs,#s6-v2 .bag-page .part-tabs button{height:10cqw}
@@ -85,13 +106,18 @@ export const SECOND_EDITION_POLISH = `
 #s6-v2 .recruit-banner .laurel{display:none}
 #s6-v2 .recruit-banner .ribbon{position:absolute;left:11%;right:11%;bottom:6%;height:25%;display:flex;align-items:center;justify-content:center;font-size:3.3cqw;padding:0;background:none;clip-path:none;margin:0;color:#fff9e6;text-shadow:0 .15cqw #a16b24}
 #s6-v2 .recruit-banner .ribbon:before,#s6-v2 .recruit-banner .ribbon:after{display:none}
-#s6-v2 .up-badge{width:23cqw;height:13cqw;right:5%;bottom:10%;background:var(--up-badge) center/100% 100% no-repeat;border:0;border-radius:0;box-shadow:none;padding:0;transform:none;display:block}
-#s6-v2 .up-badge strong{position:absolute;left:13%;top:25%;font-size:4.3cqw;transform:rotate(-5deg);text-shadow:.2cqw .2cqw #50256e}
-#s6-v2 .up-badge b{position:absolute;left:34%;top:66%;padding:0;background:none;font:900 3.7cqw/1 Arial,sans-serif;transform:rotate(-5deg)}
+#s6-v2 .up-badge{width:23cqw;height:auto;aspect-ratio:503/283;right:5%;bottom:10%;background:var(--up-badge) center/contain no-repeat;border:0;border-radius:0;box-shadow:none;padding:0;transform:none;display:block}
+#s6-v2 .up-badge strong{position:absolute;left:9%;top:31%;width:52%;height:31%;display:flex;align-items:center;justify-content:center;font-size:3.7cqw;line-height:1;transform:rotate(-5deg);text-shadow:.15cqw .15cqw #50256e;white-space:nowrap}
+#s6-v2 .up-badge b{position:absolute;left:28%;top:71%;width:38%;height:21%;display:flex;align-items:center;justify-content:center;padding:0;background:none;font:900 3.1cqw/1 Arial,sans-serif;transform:rotate(-5deg)}
 #s6-v2 .pity-panel .crown{width:10cqw;height:10cqw;background:none;border:0}
 #s6-v2 .pity-panel .crown img{width:100%;height:100%}
 #s6-v2 .pity-panel .exp-track{background:#c6a17f;border:1px solid #785232}
 #s6-v2 .pity-panel .exp-track i{background:linear-gradient(#adff52,#64e71a 60%,#3ab815)}
+#s6-v2 .pity-panel{height:auto;min-height:0;padding:.9cqw 2cqw;align-items:center}
+#s6-v2 .pity-panel>div{gap:.9cqw}
+#s6-v2 .pity-panel p,#s6-v2 .pity-panel small{display:block;margin:0;line-height:1.15}
+#s6-v2 .pity-panel p{font-size:3.2cqw}
+#s6-v2 .pity-panel small{font-size:2.6cqw}
 #s6-v2 .pool-links button>img{width:4.5cqw;height:4.5cqw}
 #s6-v2 .recruit-cast .cast{filter:drop-shadow(0 .8cqw .5cqw #321d3455)}
 #s6-v2 .recruit-cast .c-front{width:63%;height:73%;left:18.5%;bottom:0}
@@ -123,19 +149,21 @@ export const SECOND_EDITION_POLISH = `
 #s6-v2 .v2-dialog.small{width:70cqw}
 #s6-v2 .v2-dialog.large{width:88cqw}
 #s6-v2 .dialog-head:not(.celebrate){min-height:6.5cqw;margin:-4.4cqw 0 0;flex-shrink:0}
-#s6-v2 .dialog-head .plate{font-size:3.9cqw;padding:1.4cqw 4.2cqw;gap:1.6cqw}
-#s6-v2.has-decoration .plate{background:var(--title-plaque) center/100% 100% no-repeat!important;border:0!important;border-radius:0;box-shadow:none!important;clip-path:none;min-width:40cqw;height:8.4cqw;padding:.7cqw 8cqw 0;justify-content:center;gap:0}
+#s6-v2 .dialog-head .plate{font-size:4.2cqw}
+#s6-v2.has-decoration .plate{background:var(--title-plaque) center/contain no-repeat!important;border:0!important;border-radius:0;box-shadow:none!important;clip-path:none;width:46cqw;min-width:0;height:auto;aspect-ratio:var(--title-aspect);padding:0;justify-content:center;gap:0}
+#s6-v2.has-decoration .plate>span{position:absolute;left:15%;right:15%;top:60%;transform:translateY(-50%);text-align:center;line-height:1.15}
 #s6-v2.has-decoration .plate>i{display:none}
 #s6-v2.has-decoration .plate:before,#s6-v2.has-decoration .plate:after{display:none}
-#s6-v2.has-decoration .dialog-head:not(.celebrate){margin-top:-5.4cqw;min-height:6cqw}
-#s6-v2.has-decoration .dialog-head .v2-button.close{top:-.1cqw}
+#s6-v2.has-decoration .plaque:before,#s6-v2.has-decoration .plaque:after{display:none}
+#s6-v2.has-decoration .dialog-head:not(.celebrate){position:static;height:2.5cqw;min-height:2.5cqw;margin:0}
+#s6-v2.has-decoration .dialog-head .plaque{position:absolute;left:50%;top:-.9cqw;transform:translate(-50%,-60%);filter:none}
 #s6-v2 .dialog-head .plate>i{font-size:2.2cqw}
 #s6-v2 .dialog-head .plate>i:first-child:before,#s6-v2 .dialog-head .plate>i:last-child:before{width:5.8cqw;height:4cqw;top:.2cqw}
 #s6-v2 .dialog-head .plate>i:first-child:before{left:-4.5cqw}
 #s6-v2 .dialog-head .plate>i:last-child:before{right:-4.5cqw}
-#s6-v2 .dialog-head .v2-button.close{width:7cqw;height:7cqw;right:-3.4cqw;top:-3.5cqw;font-size:5.4cqw;border-width:2px!important}
+#s6-v2.has-decoration .dialog-head .v2-button.close{width:8.2cqw;height:8.2cqw;right:.4cqw;top:-3.4cqw;border:0!important;background:var(--close-art) center/contain no-repeat!important;box-shadow:none!important;color:transparent!important;font-size:0;overflow:visible}
 #s6-v2 .dialog-body{gap:.4cqw;padding:.4cqw .5cqw;flex-shrink:1;overflow-x:hidden}
-#s6-v2 .outside-hint{font-size:2.7cqw;gap:1.7cqw;flex-shrink:0}
+#s6-v2 .outside-hint{font-size:3cqw;gap:1.7cqw;flex-shrink:0;font-weight:600}
 #s6-v2 .outside-hint .ico{width:2.8cqw;height:2.8cqw}
 #s6-v2 .v2-dialog .item-heading{gap:2.4cqw;padding:.5cqw 0}
 #s6-v2 .v2-dialog .item-heading>.gear-tile{width:17cqw;border:0}
@@ -165,9 +193,9 @@ export const SECOND_EDITION_POLISH = `
 #s6-v2.has-frame .v2-dialog .dialog-actions button:not(.flat){border-image-slice:52 60 fill!important}
 #s6-v2.has-frame .v2-dialog:not(.fullscreen) .dialog-actions button:not(.flat){height:9cqw;min-height:9cqw;font-size:3.8cqw;line-height:1.1;padding:0 3cqw;min-width:36%;border-image-width:4.4cqw 4.6cqw!important}
 #s6-v2 .v2-dialog .dialog-actions button small{font-size:2.5cqw;line-height:1.15}
-#s6-v2 .small .info-pad{font-size:2.9cqw;padding:2.8cqw 2cqw;line-height:1.7;background:#f5e7d5}
-#s6-v2 .small .info-pad b{font-size:3.2cqw}
-#s6-v2 .small .info-pad small{font-size:2.5cqw}
+#s6-v2 .small .info-pad{font-size:3.2cqw;padding:3cqw 2cqw;line-height:1.7;background:#f5e7d5}
+#s6-v2 .small .info-pad b{font-size:3.4cqw}
+#s6-v2 .small .info-pad small{font-size:2.7cqw}
 #s6-v2 .small .inline-icon{width:4cqw;height:4cqw}
 #s6-v2 .star-heading>.portrait-tile.small{width:16cqw}
 #s6-v2 .star-mark{width:4.5cqw;height:4.5cqw}
@@ -220,6 +248,13 @@ export const SECOND_EDITION_POLISH = `
 #s6-v2 .pool-dialog{width:78cqw!important}
 #s6-v2 .pool-dialog .pool-name{font-size:3.1cqw;padding:.5cqw 3cqw}
 #s6-v2 .pool-heroes{gap:2.5cqw;padding:1.2cqw 1cqw}
+#s6-v2 .pool-featured{display:flex;align-items:center;gap:4cqw;padding:1.2cqw 1cqw 2cqw}
+#s6-v2 .pool-featured>.portrait-tile{width:19cqw;flex:none;overflow:visible}
+#s6-v2 .pool-featured .portrait-crop{position:absolute;inset:0;overflow:hidden;border-radius:inherit}
+#s6-v2 .pool-featured .ticket-art{position:absolute;left:-2cqw;top:-2cqw;width:7cqw;height:6cqw}
+#s6-v2 .pool-featured>div:last-child{display:flex;flex-direction:column;align-items:flex-start;gap:1.5cqw;font-size:3.7cqw}
+#s6-v2 .pool-featured .pill{font-size:3.2cqw;padding:.5cqw 2cqw;color:#713b17;background:#ffe3aa}
+#s6-v2 .pool-heroes.other-heroes{grid-template-columns:repeat(3,19cqw);justify-content:space-between}
 #s6-v2 .pool-dialog .rules{font-size:2.9cqw;line-height:1.8;padding:1.7cqw 1.5cqw 1.7cqw 5cqw}
 
 /* Celebrations use a clean scene, with a true two-line action area. */
@@ -238,8 +273,8 @@ export const SECOND_EDITION_POLISH = `
 #s6-v2 .result-cards.single{width:29cqw;margin:7cqw auto 0}
 #s6-v2 .result-cards .hero-card{padding:.6cqw .6cqw 1cqw;border-width:1px;border-radius:2cqw;gap:.4cqw}
 #s6-v2 .result-cards .hero-card .portrait{aspect-ratio:.9;border-radius:1.5cqw}
-#s6-v2 .result-cards .hero-card>b{font-size:2.9cqw}
-#s6-v2 .result-cards .hero-card .star-row{font-size:2.5cqw}
+#s6-v2 .result-cards .hero-card>b{font-size:3.2cqw}
+#s6-v2 .result-cards .hero-card .star-row{font-size:2.7cqw}
 #s6-v2 .result-cards .role-badge{width:6cqw;height:6cqw;border-width:1px}
 #s6-v2 .result-cards .role-glyph{width:4cqw;height:4cqw}
 #s6-v2 .result-cards .card-tag{font-size:2.5cqw;padding:.35cqw .9cqw}
@@ -259,13 +294,19 @@ export const SECOND_EDITION_POLISH = `
 #s6-v2 .rewards-fullscreen .reward-scroll{--tile:16.2cqw;height:calc(var(--tile)*2.5 + 6.2cqw);padding:1.6cqw 2cqw;border-color:#e0b762;border-radius:0}
 
 /* Formation: compact presets and readable, bounded miniature positions. */
-#s6-v2 .formation-scene{height:38%;min-height:63cqw;background-size:100% 100%}
-#s6-v2 .title-plaque .plate{font-size:5.3cqw;padding:1.6cqw 6cqw}
-#s6-v2 .standing-heroes{inset:17cqw 3% 6cqw}
-#s6-v2 .standing .face{height:23cqw}
-#s6-v2 .standing.front .face{height:27cqw}
+#s6-v2 .formation-scene{height:66cqw;min-height:66cqw;background-size:100% 100%}
+#s6-v2 .title-plaque .plate{font-size:5.3cqw;padding:0;letter-spacing:.15cqw}
+#s6-v2 .standing-heroes{inset:15cqw 3% 1cqw}
+#s6-v2 .standing .face{height:15cqw}
+#s6-v2 .standing.front .face{height:21cqw}
+#s6-v2 .standing-heroes:has(.front:nth-child(2)) .front .face{height:15cqw}
+#s6-v2 .standing .role-tag{font-size:2.6cqw;line-height:1.15;padding:.2cqw 1cqw .2cqw .3cqw;margin-bottom:.3cqw}
+#s6-v2 .standing .role-tag .role-badge{width:3.2cqw;height:3.2cqw}
+#s6-v2 .standing .role-tag .role-glyph{width:2.4cqw;height:2.4cqw}
+#s6-v2 .standing .row-plaque{font-size:2.5cqw;line-height:1.15;border-width:1px;margin-top:-.8cqw;padding:0 2.2cqw}
+#s6-v2 .standing small{font-size:2.6cqw;line-height:1.15;margin-top:.2cqw}
 #s6-v2 .role-tag{font-size:2.9cqw}
-#s6-v2 .formation-sheet{background:#ffecd7;box-shadow:none;border-radius:4cqw 4cqw 0 0}
+#s6-v2 .formation-sheet{background:#ffecd7;box-shadow:none;border-radius:4cqw 4cqw 0 0;margin-top:0}
 #s6-v2 .formation-toolbar{padding:2cqw;gap:1.1cqw;font-size:3.3cqw;border:0}
 #s6-v2 .formation-toolbar .preset-buttons{gap:1cqw}
 #s6-v2 .preset-buttons .v2-button{width:6.3cqw;height:6.3cqw;font-size:3.6cqw}
@@ -281,14 +322,21 @@ export const SECOND_EDITION_POLISH = `
 #s6-v2 .v2-button.formation-option{padding:1.2cqw;border-width:1px;overflow:hidden}
 #s6-v2 .formation-option header{gap:.5cqw;flex-wrap:wrap}
 #s6-v2 .formation-option header>.ico{width:4cqw;height:4cqw;padding:.6cqw}
-#s6-v2 .formation-option h3{font-size:3cqw}
-#s6-v2 .formation-option header small{font-size:1.9cqw}
+#s6-v2 .formation-option h3{font-size:3.3cqw}
+#s6-v2 .formation-option header small{font-size:2.2cqw}
 #s6-v2 .formation-option .radio{width:3.5cqw;height:3.5cqw;margin-left:auto}
-#s6-v2 .formation-mini{height:36cqw}
-#s6-v2 .formation-mini .face{width:13cqw;height:13cqw}
-#s6-v2 .formation-mini b{font-size:2.1cqw;padding:0 .2cqw;line-height:1.3}
+#s6-v2 .formation-mini{height:38cqw}
+#s6-v2 .formation-mini .face{width:14.5cqw;height:14.5cqw}
+#s6-v2 .formation-mini b{font-size:2.45cqw;padding:0 .2cqw;line-height:1.3}
 #s6-v2 .formation-note{font-size:2.4cqw;padding:.8cqw;gap:1cqw}
-#s6-v2 .talent-tree{height:76cqw;margin-top:-2cqw}
+#s6-v2 .talent-tree{height:76cqw;margin-top:-4.5cqw}
+#s6-v2 .talent-tree .branch-outline,#s6-v2 .talent-tree .trunk-outline{fill:none;stroke:#8c582a;stroke-width:1.8;stroke-linecap:round;vector-effect:none}
+#s6-v2 .talent-tree .trunk-outline{stroke-width:2.9}
+#s6-v2 .talent-tree .branch,#s6-v2 .talent-tree .trunk{stroke:#bf8a48;stroke-width:1.2;vector-effect:none}
+#s6-v2 .talent-tree .trunk{stroke-width:2.1}
+#s6-v2 .talent-tree .branch-light,#s6-v2 .talent-tree .trunk-light{fill:none;stroke:#e5b875;stroke-width:.3;stroke-linecap:round;vector-effect:none;transform:translateY(-.22px)}
+#s6-v2 .talent-tree .trunk-light{stroke-width:.5;transform:translateX(-.4px)}
+#s6-v2 .talent-sprout{position:absolute;width:4.5cqw;height:auto;transform:translate(-50%,-100%);pointer-events:none;object-fit:contain}
 #s6-v2 .talent-wallet{font-size:3.2cqw}
 #s6-v2 .talent-wallet em{font-size:3.8cqw}
 #s6-v2 .talent-info{padding:1.7cqw 2cqw;border:0;background:none}
@@ -300,7 +348,7 @@ export const SECOND_EDITION_POLISH = `
 #s6-v2 .forge-scene .wallet{top:max(10px,env(safe-area-inset-top,0px));left:2cqw;z-index:2}
 #s6-v2 .forge-scene .wallet .resource{height:5.5cqw;font-size:3.2cqw}
 #s6-v2 .forge-scene>.title-plaque{top:max(2cqw,env(safe-area-inset-top,0px));margin:0!important;left:60%}
-#s6-v2 .forge-scene .title-plaque .plate{font-size:4.6cqw;padding:1.5cqw 4cqw;gap:1.4cqw}
+#s6-v2 .forge-scene .title-plaque .plate{font-size:4.6cqw;padding:0;gap:0}
 #s6-v2 .forge-item{top:22cqw}
 #s6-v2 .forge-item>.gear-tile{width:15cqw;border:0}
 #s6-v2 .forge-item h2{font-size:4.1cqw}
@@ -323,13 +371,14 @@ export const SECOND_EDITION_POLISH = `
 
 /* Use aspect ratio as well as height: 430×764 needs the same fit as 360×640. */
 @media(max-height:700px),(min-aspect-ratio:9/17){
- #s6-v2 .hero-page{grid-template-rows:6.5cqw 9cqw minmax(0,1fr) 5.5cqw 8cqw 25.5cqw 30.7cqw 15.5cqw}
- #s6-v2 .hero-page::before{height:calc(100% - 83.2cqw - env(safe-area-inset-bottom,0px))}
+ #s6-v2 .hero-page{grid-template-rows:6.5cqw 9cqw minmax(0,1fr) 5.5cqw 8cqw 27cqw 30.7cqw 15.5cqw}
+ #s6-v2 .hero-page::before{height:calc(100% - 84.7cqw - env(safe-area-inset-bottom,0px))}
  #s6-v2 .hero-page .card-title{line-height:1.1}
  #s6-v2 .hero-page>.skills-card{padding:.7cqw 2.5cqw}
  #s6-v2 .hero-stage .hero-figure{height:calc(100% - 27cqw);max-height:58cqw;bottom:9.3cqw}
  #s6-v2 .hero-page .hero-skills .kind{font-size:2.3cqw}
  #s6-v2 .hero-page .hero-skill-art,#s6-v2 .hero-page .locked-skill-icon,#s6-v2 .hero-page .hero-skills .tree-button img{width:10.6cqw!important;height:10.6cqw!important}
+ #s6-v2 .hero-page .hero-skills .tree-button img{width:12.4cqw!important;height:12.4cqw!important}
  #s6-v2 .formation-scene{min-height:64cqw}
  #s6-v2 .v2-dialog .talent-tree{height:70cqw}
 }

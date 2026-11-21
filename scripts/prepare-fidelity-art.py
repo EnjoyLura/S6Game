@@ -44,3 +44,39 @@ for i, name in enumerate(['recruit-title', 'up-badge', 'title-plaque', 'celebrat
     assert bounds, name
     sprite.crop(bounds).save(DEST / f'v2-{name}.png', optimize=True)
 print('Prepared standalone battle forest, resource atlas and 4 title/tag decorations')
+
+# The wide title uses more than half the sheet; preserve the actual generated layout.
+detail = Image.open(SOURCE / '弹窗标题关闭与嫩芽-v3.png').convert('RGBA')
+w, h = detail.size
+for name, box in [
+    ('title-plaque', (0, 0, .62, .5)), ('close', (.62, 0, 1, .5)),
+    ('sprout-left', (0, .5, .5, 1)), ('sprout-right', (.5, .5, 1, 1)),
+]:
+    sprite = detail.crop(tuple(round(v * (w if i % 2 == 0 else h)) for i, v in enumerate(box)))
+    bounds = sprite.getchannel('A').point(lambda a: 255 if a > 48 else 0).getbbox()
+    assert bounds, name
+    sprite = sprite.crop(bounds)
+    if name.startswith('sprout'):
+        # Put the painted stem tip at bottom-centre, without squeezing the leaves.
+        alpha = sprite.getchannel('A')
+        tip = [x for y in range(max(0, sprite.height - 3), sprite.height) for x in range(sprite.width) if alpha.getpixel((x, y)) > 48]
+        root = round(sum(tip) / len(tip))
+        half = max(root, sprite.width - root)
+        aligned = Image.new('RGBA', (half * 2, sprite.height))
+        aligned.alpha_composite(sprite, (half - root, 0))
+        sprite = aligned
+    sprite.save(DEST / f'v2-{name}-v3.png', optimize=True)
+print('Prepared undistorted title, close button and stem-anchored sprouts')
+copyfile(SOURCE / 'UP招募独立背景-v3.png', DEST / 'v2-up-scene-v3.png')
+
+# Identical normalized files are used by Cocos Sprite and the DOM resource labels.
+symbols = Image.open(DEST / 'v2-resource-symbols.png').convert('RGBA')
+cell = symbols.width // 3
+for i, name in [(6, 'heart'), (7, 'shield')]:
+    sprite = symbols.crop((i % 3 * cell, i // 3 * cell, (i % 3 + 1) * cell, (i // 3 + 1) * cell))
+    sprite = sprite.crop(sprite.getchannel('A').point(lambda a: 255 if a > 32 else 0).getbbox())
+    sprite.thumbnail((243, 243), Image.Resampling.LANCZOS)
+    canvas = Image.new('RGBA', (256, 256))
+    canvas.alpha_composite(sprite, ((256 - sprite.width)//2, (256 - sprite.height)//2))
+    canvas.save(DEST / f'v2-status-{name}.png', optimize=True)
+print('Prepared shared battlefield and party status icons')

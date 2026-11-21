@@ -28,11 +28,13 @@ export function fitScreen(canvas:Node,camera:Camera){
       let layout=battleLayouts.get(n);
       if(!layout||layout.key!==field.key||layout.hud!==hud){
           const {frame,order,actions,bar,ratio}=field,fieldBottom=bar.top;
-          const top=order.bottom+frame.width*.08,bottom=actions.top-frame.width*.025;
-          shrink=Math.min(1.03,Math.max(.5,(bottom-top)*ratio/745));
+          const top=order.bottom+frame.width*.025,bottom=actions.top-frame.width*.025;
           // Lowest health label sits above field actions. The back-row feet must
           // clear the 42%-high horizon in the standalone forest texture.
           const ground=frame.top+(fieldBottom-frame.top)*.42;
+          // Fit the real 400..-310 actor span; do not reserve a second empty strip
+          // above it. A separate ground constraint keeps the rear row on the grass.
+          shrink=Math.min(1.08,(bottom-top)*ratio/710,(bottom-ground-frame.width*.035)*ratio/470);
           const minimumY=height/2-(bottom-frame.top)*ratio+310*shrink;
           const maximumY=height/2-(ground+frame.width*.035-frame.top)*ratio-160*shrink;
           y=Math.min(minimumY,maximumY);

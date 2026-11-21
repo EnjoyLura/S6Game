@@ -5,12 +5,12 @@ import {BattleFeedback} from './BattleFeedback';
 import {drawNavigation} from './GearView';
 import {ModalView,modalButton,modalText,modalSection} from './ModalView';
 const C={ink:'#704124',cream:'#FFF6E4'};
-export type BattleArt={forest:Texture2D;ui:Texture2D;nav:Texture2D;bag:Texture2D;heroes:Texture2D[];monsters:Texture2D};
+export type BattleArt={forest:Texture2D;ui:Texture2D;nav:Texture2D;bag:Texture2D;heroes:Texture2D[];monsters:Texture2D;heart?:Texture2D;shield?:Texture2D};
 export type BattleOptions={title:string;dungeon?:boolean;subtitle?:()=>string;onChange:()=>void;onIncome?:()=>void;onFormation:()=>void;navigate:(index:number)=>void;onLeave?:()=>void;onEnd?:()=>void;onRestart?:(index?:number)=>void};
 /** Shared adventure/dungeon presentation. Resource settlement stays with the owning page. */
 export class BattleView{
  readonly root:Node;private speed=1;private battleArt:Texture2D[];
- private actors!:Node;private resultButton:Node|null=null;
+ private statusArt:{heart?:Texture2D;shield?:Texture2D}={};private actors!:Node;private resultButton:Node|null=null;
  private get model(){return this.getModel();}
   private units:Node[]=[]; private hpLabels:Label[]=[]; private bars:Graphics[]=[];
   private contactShadows:{node:Node;offset:number}[]=[];
@@ -22,7 +22,7 @@ export class BattleView{
   private floating:{target:number;text:string;color:string}[]=[]; private floatTimer=0; private floatSerial=0; private effects=new Set<Node>();
   constructor(parent:Node,private getModel:()=>SquadBattleModel,art:BattleArt,private options:BattleOptions){
     this.root=new Node(options.dungeon?'Dungeon battle':'Adventure page');this.root.layer=Layers.Enum.UI_2D;this.root.parent=parent;this.root.addComponent(UITransform).setContentSize(887,1774);
-    this.ui=art.ui;this.heroTextures=art.heroes;this.monsters=art.monsters;this.battleArt=[art.forest,art.nav,art.bag];this.rebuildBattle();
+    this.statusArt={heart:art.heart,shield:art.shield};this.ui=art.ui;this.heroTextures=art.heroes;this.monsters=art.monsters;this.battleArt=[art.forest,art.nav,art.bag];this.rebuildBattle();
   }
   externalPresentation=false;private externalForest:Texture2D|null=null;
   useExternalPresentation(texture?:Texture2D){this.externalPresentation=true;if(texture)this.externalForest=texture;for(const n of this.root.children)n.active=n===this.actors||n.name==='Forest';const forest=this.root.getChildByName('Forest');if(forest&&this.externalForest){const f=new SpriteFrame();f.texture=this.externalForest;f.rect=new Rect(0,0,this.externalForest.width,this.externalForest.height);forest.getComponent(Sprite)!.spriteFrame=f;}}
@@ -66,7 +66,7 @@ export class BattleView{
   private bar(x:number,y:number){const n=this.base('Health',x,y,150,18),g=n.addComponent(Graphics);return g;}
   private paintBar(g:Graphics,value:number,max:number,color:string,shield=0){g.clear();g.fillColor=new Color().fromHEX('#65502E');g.roundRect(-76,-9,152,18,9);g.fill();g.fillColor=new Color().fromHEX('#DDD2AA');g.roundRect(-73,-6,146,12,6);g.fill();if(value>0){const w=Math.max(8,146*value/max);g.fillColor=new Color().fromHEX(color);g.roundRect(-73,-6,w,12,6);g.fill();g.fillColor=new Color(255,255,210,110);g.roundRect(-71,1,Math.max(4,w-4),4,2);g.fill();}if(shield>0){const w=158*Math.min(1,shield/max),left=79-w,r=Math.min(11,w/2);g.strokeColor=new Color().fromHEX('#6EDBFF');g.lineWidth=4;g.moveTo(left,12);g.lineTo(79-r,12);g.quadraticCurveTo(79,12,79,12-r);g.lineTo(79,-12+r);g.quadraticCurveTo(79,-12,79-r,-12);g.lineTo(left,-12);g.stroke();}}
   private valueLabel(text:string,x:number,y:number,w:number,size:number){const l=this.label(text,x,y,w,36,size,'#FFFFFF');l.enableOutline=true;l.outlineWidth=2;l.outlineColor=new Color(28,47,45,255);l.horizontalAlign=0;return l;}
-  private statusIcon(kind:'heart'|'shield',x:number,y:number,color:string){const n=this.base(kind,x,y,24,24),g=n.addComponent(Graphics);g.fillColor=new Color().fromHEX(color);g.strokeColor=new Color(38,86,75,255);g.lineWidth=1.5;
+  private statusIcon(kind:'heart'|'shield',x:number,y:number,color:string){const texture=this.statusArt[kind];if(texture)return this.picture(texture,new Rect(0,0,texture.width,texture.height),x,y,24,24,kind);const n=this.base(kind,x,y,24,24),g=n.addComponent(Graphics);g.fillColor=new Color().fromHEX(color);g.strokeColor=new Color(38,86,75,255);g.lineWidth=1.5;
     if(kind==='heart'){g.moveTo(0,-10);g.bezierCurveTo(-23,3,-8,21,0,8);g.bezierCurveTo(8,21,23,3,0,-10);}else{g.moveTo(-10,8);g.lineTo(0,12);g.lineTo(10,8);g.lineTo(8,-4);g.lineTo(0,-12);g.lineTo(-8,-4);}g.close();g.fill();g.stroke();return n;}
   refreshFormation(){this.rebuildBattle();}
   resetFeedback(){this.feedback.reset([...[0,1,2].map(i=>this.model.party[i]?.hp||0),...this.model.enemies.map(e=>e.hp)],[...[0,1,2].map(i=>this.model.party[i]?.shield||0),0,0,0]);}

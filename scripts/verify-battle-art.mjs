@@ -7,6 +7,18 @@ const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];
 page.on('pageerror',e=>errors.push(String(e)));
 try{
  await page.goto(process.env.S6_URL||'http://127.0.0.1:7456');await page.locator('.battle-hud').waitFor();
+ const shared=await page.evaluate(async()=>{
+  const cc=await System.import('cc'),a=cc.director.getScene().getComponentsInChildren(cc.Component).find(c=>c.__classname__==='Adventure'),v=a.view,m=a.model;
+  m.paused=true;m.heroes[m.formation[0]].shield=88;v.resetFeedback();a.second.lastUpdate=0;a.second.update();
+  const source=n=>{const frame=n.getComponent(cc.Sprite)?.spriteFrame;return (frame?._original?._texture||frame?.texture)?.image?.data.src;};
+  const heart=document.querySelector('[data-resource="heart"]').src,shield=document.querySelector('[data-resource="shield"]').src;
+  const checkpoints=[];for(const wave of [1,4,7,10,11]){m.wave=wave;a.second.lastUpdate=0;a.second.update();const p=document.querySelector('.checkpoint');checkpoints.push({wave,value:+p.getAttribute('aria-valuenow'),passed:p.querySelectorAll('.passed').length,next:document.querySelector('[data-live="checkpoint"]').textContent});}m.wave=1;
+  return {heart:v.heartIcons.every(n=>source(n)===heart),shield:v.shieldIcons.every(n=>source(n)===shield),checkpoints};
+ });
+ assert.ok(shared.heart&&shared.shield,'Cocos and DOM use identical status textures');
+ assert.deepEqual(shared.checkpoints.map(x=>x.value),[0,3,6,9,0]);
+ assert.deepEqual(shared.checkpoints.map(x=>x.passed),[1,2,4,5,1]);
+ assert.ok(shared.checkpoints.every(x=>x.next.includes(x.wave<=10?'第10波':'第20波')),'checkpoint label agrees with progress');
  const lifecycle=await page.evaluate(async()=>{
   const cc=await System.import('cc'),adventure=cc.director.getScene().getComponentsInChildren(cc.Component).find(c=>c.__classname__==='Adventure'),v=adventure.view,m=adventure.model;
   m.heroes.forEach((h,id)=>{h.level=50;h.hp=m.stats(id).hp;});m.paused=false;m.autoSkill=true;v.resetFeedback();

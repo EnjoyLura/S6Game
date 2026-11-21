@@ -61,7 +61,7 @@ try{
  await click('资源副本');await page.locator('.dungeon-card button').first().click();await shot('23-challenge','挑战确认');assert.equal(await dialog().locator('.main-tabs button').count(),3);await click('困难',dialog());await click('普通',dialog());
  await click('开始挑战',dialog());await page.locator('.battle-hud').waitFor();assert.ok((await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).dungeon.run,SAVE_KEY)));
  // Leave via the result action, not by dismissing its shade.
- await click('☰');await click('结束挑战',dialog());await page.getByRole('dialog',{name:'挑战失败'}).waitFor();await shot('28-dungeon-defeat','副本失败结算');await close();await click('查看结算');await click('退出',dialog());await page.locator('.dungeon-list').waitFor();
+ await click('菜单');await click('结束挑战',dialog());await page.getByRole('dialog',{name:'挑战失败'}).waitFor();await shot('28-dungeon-defeat','副本失败结算');await close();await click('查看结算');await click('退出',dialog());await page.locator('.dungeon-list').waitFor();
  await nav('冒险');await click('阵型');await shot('18-formation','编队二级页');await page.locator('.formation-toolbar>button').click();await shot('21-formations','阵型选择');await close();await click('关闭');
  // Check wallet and UI persistence with no automatic fixture replay on reload.
  const saved=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);await page.reload();await page.locator('#s6-v2 .v2-nav').waitFor();const restored=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
