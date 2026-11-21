@@ -13,6 +13,7 @@ export class BattleView{
  private actors!:Node;private resultButton:Node|null=null;
  private get model(){return this.getModel();}
   private units:Node[]=[]; private hpLabels:Label[]=[]; private bars:Graphics[]=[];
+  private contactShadows:{node:Node;offset:number}[]=[];
   private partyHP:Label[]=[]; private partyBars:Graphics[]=[]; private skillLabels:Label[]=[]; private skillShades:Graphics[]=[];
   private turns:Node[]=[]; private positions=[[-95,75],[-290,260],[-290,-55],[260,270],[210,70],[270,-135]];
   private status!:Label; private notice!:Label; private speedLabel!:Label; private pauseLabel!:Label; private stats!:Label; private enemyNames:Label[]=[]; private goldLabel!:Label; private incomeLabel!:Label;
@@ -24,14 +25,14 @@ export class BattleView{
     this.ui=art.ui;this.heroTextures=art.heroes;this.monsters=art.monsters;this.battleArt=[art.forest,art.nav,art.bag];this.rebuildBattle();
   }
   externalPresentation=false;private externalForest:Texture2D|null=null;
-  useExternalPresentation(texture?:Texture2D){this.externalPresentation=true;if(texture)this.externalForest=texture;for(const n of this.root.children)n.active=n===this.actors||n.name==='Forest';const forest=this.root.getChildByName('Forest');if(forest&&this.externalForest){const f=new SpriteFrame();f.texture=this.externalForest;f.rect=new Rect(4,4,this.externalForest.width/2-8,this.externalForest.height/3-8);forest.getComponent(Sprite)!.spriteFrame=f;}}
+  useExternalPresentation(texture?:Texture2D){this.externalPresentation=true;if(texture)this.externalForest=texture;for(const n of this.root.children)n.active=n===this.actors||n.name==='Forest';const forest=this.root.getChildByName('Forest');if(forest&&this.externalForest){const f=new SpriteFrame();f.texture=this.externalForest;f.rect=new Rect(0,0,this.externalForest.width,this.externalForest.height);forest.getComponent(Sprite)!.spriteFrame=f;}}
   getSpeed(){return this.speed;}
   cycleSpeed(){this.speed=this.speed===1?2:1;}
   update(dt:number){const visual=battleDelta(dt,this.model.paused,this.speed);this.feedback.update(visual);for(const hit of this.model.step(visual))this.feedback.play(hit);this.updateFloats(this.model.paused?0:dt);this.sync();}
   destroy(){this.effects.forEach(n=>{Tween.stopAllByTarget(n);n.destroy();});this.effects.clear();this.root.active=false;this.root.destroy();}
   private rebuildBattle(){
     this.effects.forEach(n=>{Tween.stopAllByTarget(n);n.destroy();});this.effects.clear();this.floating=[];
-    this.root.destroyAllChildren();this.units=[];this.turns=[];this.enemyPortraits=[];this.partyHP=[];this.partyBars=[];this.skillLabels=[];this.skillShades=[];this.partyShields=[];this.partyShieldIcons=[];
+    this.root.destroyAllChildren();this.units=[];this.contactShadows=[];this.turns=[];this.enemyPortraits=[];this.partyHP=[];this.partyBars=[];this.skillLabels=[];this.skillShades=[];this.partyShields=[];this.partyShieldIcons=[];
     this.panel('Page',0,0,887,1774,C.cream,0);
     const [forest,heroUI,bagUI]=this.battleArt;this.shownWave=0;
       this.picture(forest,new Rect(0,0,forest.width,forest.height),0,277,887,1220,'Forest');
@@ -41,8 +42,21 @@ export class BattleView{
       this.model.enemies.forEach((e,j)=>{const [x,y]=this.positions[j+3];this.units.push(this.picture(this.monsters,this.monsterRect(j),x,y,260,260,'Monster '+j));});
       this.units.forEach(n=>n.parent=this.actors);
       if(this.model.formation.length>1)this.units[1].setSiblingIndex(0);
+      this.units.forEach((unit,i)=>{
+        const size=unit.getComponent(UITransform)!.contentSize,offset=this.contactOffset(unit),shadow=this.base('Contact shadow '+i,this.positions[i][0],this.positions[i][1]+offset,190,28,this.actors),g=shadow.addComponent(Graphics);
+        g.fillColor=new Color(58,68,24,85);g.ellipse(0,0,size.width*.32,13);g.fill();shadow.setSiblingIndex(0);this.contactShadows.push({node:shadow,offset});
+      });
       const fxLayer=this.base('Combat effects',0,0,887,1774,this.actors);this.feedback=new BattleFeedback(this.units,this.positions,fxLayer,h=>this.impactText(h));this.resetFeedback();
       this.drawPage(heroUI,bagUI);this.sync();if(this.externalPresentation)this.useExternalPresentation();this.pauseLabel.string=this.model.paused?'继续战斗':'暂停战斗';
+  }
+  private contactOffset(unit:Node){
+    const frame=unit.getComponent(Sprite)!.spriteFrame!,rect=frame.rect,height=unit.getComponent(UITransform)!.height;
+    if(typeof document==='undefined')return -height*.43+2;
+    const canvas=document.createElement('canvas');canvas.width=rect.width;canvas.height=rect.height;
+    const ctx=canvas.getContext('2d')!;ctx.drawImage((frame.texture as Texture2D).image.data as CanvasImageSource,rect.x,rect.y,rect.width,rect.height,0,0,rect.width,rect.height);
+    const pixels=ctx.getImageData(0,0,rect.width,rect.height).data;
+    for(let y=rect.height-1;y>=0;y--)for(let x=0;x<rect.width;x++)if(pixels[(y*rect.width+x)*4+3]>32)return -height*((y+1)/rect.height-.5)+2;
+    return -height*.43+2;
   }
   private base(name:string,x:number,y:number,w:number,h:number,parent=this.root){const n=new Node(name);n.layer=Layers.Enum.UI_2D;n.parent=parent;n.setPosition(x,y);n.addComponent(UITransform).setContentSize(w,h);return n;}
   private panel(name:string,x:number,y:number,w:number,h:number,color:string,r=24,parent=this.root){const n=this.base(name,x,y,w,h,parent);const g=n.addComponent(Graphics);g.fillColor=new Color().fromHEX(color);g.roundRect(-w/2,-h/2,w,h,r);g.fill();return n;}
@@ -139,7 +153,7 @@ export class BattleView{
   }
   toast(s:string){this.notice.string=s;}
   private monsterRect(slot=0){const i=this.model.enemies[slot].kind;return new Rect((i%2)*this.monsters.width/2,Math.floor(i/2)*this.monsters.height/2,this.monsters.width/2,this.monsters.height/2);}
-  private setMonsterFrame(n:Node,slot:number){const f=new SpriteFrame();f.texture=this.monsters;f.rect=this.monsterRect(slot);n.getComponent(Sprite)!.spriteFrame=f;}
+  private setMonsterFrame(n:Node,slot:number){const f=new SpriteFrame();f.texture=this.monsters;f.rect=this.monsterRect(slot);n.getComponent(Sprite)!.spriteFrame=f;const shadow=this.contactShadows[slot+3];if(shadow&&n===this.units[slot+3])shadow.offset=this.contactOffset(n);}
   private sync(){
     const b=this.model;if(this.resultButton){this.resultButton.active=b.result!=='fighting';this.notice.node.active=b.result==='fighting';}
     this.status.string=this.options.dungeon?this.options.subtitle!():b.regrouping?'整备后重试':b.waveDelay>0?'下一波即将入场':'第 '+b.wave+' 波';
@@ -147,6 +161,7 @@ export class BattleView{
     if(this.shownWave!==b.wave||(this.shownRegroup&&!b.regrouping)){
       this.shownWave=b.wave;this.model.enemies.forEach((e,j)=>{const n=this.units[j+3];const size=b.encounter&&b.encounter.id!==5&&b.wave>DUNGEON_CONFIG.mobWaves&&j===0?330:260;n.getComponent(UITransform)!.setContentSize(size,size);this.setMonsterFrame(n,j);this.setMonsterFrame(this.enemyPortraits[j],j);});this.resetFeedback();this.feedback.enter();
     }this.shownRegroup=b.regrouping;
+    this.contactShadows.forEach(({node,offset},i)=>{const unit=this.units[i],angle=unit.angle*Math.PI/180,foot=(offset-2)*unit.scale.y;node.active=(this.feedback.hp[i]||0)>0;node.setPosition(unit.position.x-foot*Math.sin(angle),unit.position.y+foot*Math.cos(angle)+2,0);node.setScale(unit.scale.x,1,1);});
     b.enemies.forEach((e,j)=>{const i=j+3,hp=this.feedback.hp[i];this.hpLabels[i].string=hp+'/'+e.maxHp;this.paintBar(this.bars[i],hp,e.maxHp,'#F38B71');this.enemyNames[j].string=b.encounter&&b.encounter.id!==5&&b.wave>DUNGEON_CONFIG.mobWaves&&j===0&&hp>0?'BOSS':'';this.heartIcons[i].active=hp>0;this.hpLabels[i].node.active=hp>0;this.bars[i].node.active=hp>0;this.shields[i].node.active=false;this.shieldIcons[i].active=false;});
     for(let i=0;i<3;i++){const active=i<b.formation.length;this.bars[i].node.active=active;this.hpLabels[i].node.active=active;this.heartIcons[i].active=active;if(!active){this.shields[i].node.active=false;this.shieldIcons[i].active=false;}}
     b.party.forEach((h,i)=>{

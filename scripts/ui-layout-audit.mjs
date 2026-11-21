@@ -18,10 +18,27 @@ export async function auditLayout(page,id,viewport){
    skills:[...document.querySelectorAll('.hero-skills button')].map(n=>({box:rect(n),parent:rect(n.closest('.skills-card'))})),
    hero:document.querySelector('.hero-figure')?{box:rect(document.querySelector('.hero-figure')),stage:rect(document.querySelector('.hero-stage')),identity:rect(document.querySelector('.hero-identity')),action:rect(document.querySelector('.formation-link'))}:null,
    brokenImages:[...document.images].filter(n=>visible(n)&&(!n.complete||!n.naturalWidth)).map(n=>n.alt||n.className),
+   resources:[...document.querySelectorAll('img[data-resource]')].filter(visible).map(n=>({kind:n.dataset.resource,src:n.currentSrc,filter:getComputedStyle(n).filter})),
+   rewardArt:[...document.querySelectorAll('.reward>.resource-art')].filter(visible).map(n=>({image:rect(n),tile:rect(n.parentElement)})),
+   battle:document.querySelector('.battle-hud')?.dataset.battleLayout?{...JSON.parse(document.querySelector('.battle-hud').dataset.battleLayout),tray:rect(document.querySelector('.skill-bar')),frame:rect(document.querySelector('.battle-hud'))}:null,
   };
  });
  const tag=`${id} ${viewport.width}×${viewport.height}`;
  assert.deepEqual(report.brokenImages,[],tag+' loaded artwork');
+ for(const kind of new Set(report.resources.map(r=>r.kind))){
+  const same=report.resources.filter(r=>r.kind===kind);
+  assert.equal(new Set(same.map(r=>r.src)).size,1,tag+' shared '+kind+' artwork');
+  assert.equal(new Set(same.map(r=>r.filter)).size,1,tag+' shared '+kind+' color');
+ }
+ // Store compact evidence, not the full data-URL atlas contents in every row.
+ report.resources=report.resources.map(({kind,filter})=>({kind,filter}));
+ for(const r of report.rewardArt)assert.ok(r.image.w>=r.tile.w*.7&&r.image.h>=r.tile.h*.7,tag+' reward art fills its tile');
+ if(report.battle){const b=report.battle;
+  assert.ok(b.backFeet>b.horizon+1,tag+' back-row feet below forest horizon');
+  assert.ok(b.lowestLabel<=b.actionsTop+1,tag+' bottom health labels clear field actions');
+  assert.ok(Math.abs(b.fieldBottom-(b.tray.y-b.frame.y))<1,tag+' forest stops at information tray');
+  assert.ok((b.frame.h-b.fieldBottom)/b.frame.h>=.3,tag+' information and navigation occupy at least 30%');
+ }
  if(report.dialog){const d=report.dialog,r=report.root;
   assert.ok(d.box.x>=r.x-1&&d.box.right<=r.right+1,tag+' dialog horizontal bounds');
   assert.ok(d.box.y>=r.y-1&&d.box.bottom<=r.bottom+1,tag+' dialog vertical bounds');

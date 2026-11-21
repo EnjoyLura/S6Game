@@ -32,3 +32,15 @@ for i, name in enumerate(['knight', 'mage', 'priest', 'archer']):
     canvas.alpha_composite(sprite, ((640 - sprite.width)//2, (640 - sprite.height)//2))
     canvas.save(DEST / f'v2-hero-{name}.png', optimize=True)
 print('Prepared 3 scene/icon textures and 4 transparent hero textures')
+
+# Second precision pass: standalone forest and reusable text-free UI decorations.
+for source, target in [('战斗森林-精校-v2.png', 'v2-battle-forest.png'), ('票券与共用资源-精校-v2.png', 'v2-resource-symbols.png')]:
+    copyfile(SOURCE / source, DEST / target)
+decor = Image.open(SOURCE / '标题装饰与UP标签-精校-v2.png').convert('RGBA')
+cell = decor.width // 2
+for i, name in enumerate(['recruit-title', 'up-badge', 'title-plaque', 'celebration']):
+    sprite = decor.crop((i % 2 * cell, i // 2 * cell, (i % 2 + 1) * cell, (i // 2 + 1) * cell))
+    bounds = sprite.getchannel('A').point(lambda a: 255 if a > 48 else 0).getbbox()
+    assert bounds, name
+    sprite.crop(bounds).save(DEST / f'v2-{name}.png', optimize=True)
+print('Prepared standalone battle forest, resource atlas and 4 title/tag decorations')

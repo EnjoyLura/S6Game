@@ -4,6 +4,7 @@ import {resolve} from 'node:path';
 import assert from 'node:assert/strict';
 import {SquadBattleModel,generateGear,recruit} from '../assets/scripts/SquadBattleModel.ts';
 import {SAVE_KEY} from '../assets/scripts/LocalSave.ts';
+import {auditLayout} from './ui-layout-audit.mjs';
 
 const out=resolve('docs/美术参考/第二版/主界面修订');await mkdir(out,{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true});
@@ -49,7 +50,10 @@ try{
  await page.locator('.filter-row button').last().click();assert.equal(await page.locator('.sort-direction.ascending').count(),1);await click('材料');assert.equal(await page.locator('.bag-scroll .reward').count(),1);await click('道具');assert.ok(await page.locator('.bag-scroll').getByText('暂无道具',{exact:true}).isVisible());
  // A fresh party must use the same lock component as the hero page.
  const fresh=new SquadBattleModel(0,()=>.5,3,true);fresh.paused=true;fresh.markSeen(Date.now());await page.goto('about:blank');await page.addInitScript(({key,data})=>{localStorage.clear();localStorage.setItem(key,JSON.stringify(data));},{key:SAVE_KEY,data:fresh.snapshot()});await page.goto(process.env.S6_URL||'http://127.0.0.1:7456');await page.locator('.battle-hud').waitFor();assert.equal(await page.locator('.skill-button>.locked-skill-icon').count(),3);
- await page.setViewportSize({width:390,height:844});await page.addStyleTag({content:'.battle-hud{padding-top:47px!important}.battle-hud>.wallet,.battle-hud>.menu{top:47px!important}.page:not(.hero-page){padding-top:47px!important}'});
+ await page.setViewportSize({width:390,height:844});await page.waitForTimeout(150);
+ await auditLayout(page,'adventure-before-inset',{width:390,height:844});
+ await page.addStyleTag({content:'.battle-hud{padding-top:47px!important}.battle-hud>.wallet,.battle-hud>.menu{top:47px!important}.page:not(.hero-page){padding-top:47px!important}'});
+ await page.waitForTimeout(150);await auditLayout(page,'adventure-after-inset',{width:390,height:844});
  for(const name of ['冒险','招募','背包','副本']){await nav(name);assert.ok((await page.locator('.wallet').boundingBox()).y>=47);assert.ok(await page.locator('.v2-nav').evaluate(n=>n.getBoundingClientRect().bottom<=innerHeight+1));}
  assert.deepEqual(errors,[]);await writeFile(resolve(out,'manifest.json'),JSON.stringify({checks,safeArea:'47px, four main pages',freshPartyLockedSkills:3,errors},null,2));const references=['冒险页概念-v5.png','招募页-常驻池-v2.png','招募页-UP池-v2.png','背包页概念-v1.png','副本页概念-v1.png','副本页-无尽挑战-v1.png','副本页-每日副本-v1.png'];
  const titles=['冒险','常驻招募','UP招募','背包','资源副本','无尽挑战','每日副本'];

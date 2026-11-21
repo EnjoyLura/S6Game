@@ -42,7 +42,17 @@ try{
  await page.locator('.equipment-slot').first().click();await click('卸下',dialog());await page.locator('.equipment-slot').first().click();await shot('12-equipment-picker','装备穿戴');await close();
  await nav('背包');await shot('05-bag','背包页');
  await page.locator('.expand-button').click();await shot('11-confirm','小提示弹窗');await click('确定',dialog());
- await click('批量分解');await shot('24-salvage','装备分解');await close();
+ await click('批量分解');assert.equal(await dialog().getByRole('button',{name:'分解装备',exact:true}).isDisabled(),true);
+ const salvageBefore=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY),salvageModel=SquadBattleModel.restore(salvageBefore);
+ const salvageIds=salvageModel.inventory.filter(g=>!g.locked&&salvageModel.owner(g.id)<0).slice(0,8).map(g=>g.id),salvageMaterials=salvageModel.salvagePreview(salvageIds).materials;
+ for(let i=0;i<8;i++)await dialog().locator('.salvage-scroll button').nth(i).click();
+ assert.equal(await dialog().locator('.checked').count(),8);assert.match(await dialog().locator('.list-heading').textContent(),/8件/);
+ assert.ok(salvageMaterials>0);assert.match(await dialog().locator('.material-line').textContent(),new RegExp('×'+salvageMaterials+'$'));
+ await shot('24-salvage','装备分解');await click('分解装备',dialog());await click('确定',dialog());
+ const salvageAfter=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE_KEY);
+ assert.equal(salvageAfter.materials,salvageBefore.materials+salvageMaterials);assert.deepEqual(salvageAfter.inventory.map(g=>g.id),salvageBefore.inventory.filter(g=>!salvageIds.includes(g.id)).map(g=>g.id));
+ await close();await page.reload();await page.locator('.v2-nav').waitFor();assert.equal(await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).materials,SAVE_KEY),salvageAfter.materials);
+ salvageModel.markSeen(Date.now());await load(salvageModel); // Restore without manufacturing a new offline interval.
  await nav('招募');await shot('03-recruit-normal','常驻招募');await click('卡池详情');await shot('16-pool-normal','常驻卡池详情');await close();
  await page.locator('.recruit-bottom .page-actions button').first().click();await shot('20-single','单抽结果');assert.equal(await dialog().locator('.hero-card').count(),1);assert.equal(await dialog().locator('.dialog-actions button').count(),2);await close();
  await page.locator('.recruit-bottom .page-actions button').last().click();await shot('19-ten','十连结果');assert.equal(await dialog().locator('.hero-card').count(),10);await close();
