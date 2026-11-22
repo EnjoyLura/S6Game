@@ -6,7 +6,7 @@ Cocos Creator 3.8.8 竖屏挂机游戏原型，设计画布 887×1774。
 
 ## 本地运行
 
-需要 Windows、Cocos Creator 3.8.8，以及支持原生 TypeScript 类型剥离的 Node.js（建议22.18及以上）。
+需要 Windows、Cocos Creator 3.8.8、支持原生 TypeScript 类型剥离的 Node.js（建议22.18及以上），以及安装了 Pillow 的 Python。浏览器构建会将导出的美术转为原尺寸 WebP Q92。
 
 在 Creator 中打开本工程并等待资源导入，然后可以编辑/预览；也可在工程根目录执行：
 

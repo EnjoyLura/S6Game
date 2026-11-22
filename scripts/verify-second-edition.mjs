@@ -13,6 +13,25 @@ const browser=await chromium.launch({channel:'chrome',headless:true});
 const viewport={width:Number(process.env.S6_WIDTH||390),height:Number(process.env.S6_HEIGHT||844)};
 const context=await browser.newContext({viewport,deviceScaleFactor:2});
 const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(String(e)));
+const profiling=!!process.env.S6_PROFILE;
+const cpuRate=Number(process.env.S6_CPU_RATE||4);
+const profile={cpuRate,viewport,screens:[],scenarios:[]};
+const cdp=profiling?await context.newCDPSession(page):null;
+if(cdp){
+ await cdp.send('Emulation.setCPUThrottlingRate',{rate:cpuRate});
+ await cdp.send('Performance.enable');
+ await context.addInitScript(()=>{
+  window.sampleClick=null;
+  addEventListener('click',event=>{
+   if(!event.target.closest('#s6-v2 button'))return;
+   const scheduled=performance.now();
+   window.sampleClick=null;
+   requestAnimationFrame(()=>requestAnimationFrame(time=>{
+    window.sampleClick={inputToFrame:time-event.timeStamp,dispatchToFrame:time-scheduled};
+   }));
+  },true);
+ });
+}
 if(process.env.S6_PREVIEW_CSS){const css=await readFile(process.env.S6_PREVIEW_CSS,'utf8');await context.addInitScript(css=>{addEventListener('DOMContentLoaded',()=>{const style=document.createElement('style');style.textContent=css;new MutationObserver(()=>{if(document.getElementById('second-edition-style')&&!style.isConnected)document.head.append(style);}).observe(document.head,{childList:true});});},css);}
 page.on('console',m=>{if(m.type()==='error')errors.push(m.text()+' '+m.location().url);});
 const fixtures=()=>{const m=new SquadBattleModel(0,()=>.5,3,true);recruit(m.recruitment,0,10,()=>.99);m.gold=48320;m.materials=500;m.paused=true;
@@ -25,10 +44,53 @@ const click=async(name,scope=page)=>button(name,scope).click();
 const nav=async name=>page.locator('.v2-nav').getByRole('button',{name,exact:true}).click();
 const close=async()=>{await page.keyboard.press('Escape');};
 const shots=[],layoutChecks=[];
-const shot=async(id,title)=>{const controls=await page.locator('.v2-button:visible').evaluateAll(nodes=>nodes.filter(n=>!['flat','equipment-slot','talent-node','standing','skill-button','empty-position','star-button','help-button','close'].some(c=>n.classList.contains(c))).map(n=>({name:n.textContent,art:getComputedStyle(n).borderImageSource,skin:!!n.closest('.has-frame .dialog-actions')||n.matches('.has-frame .formation-page>.secondary-close'),shadow:getComputedStyle(n).boxShadow})));for(const control of controls){assert.ok(control.art==='none'||control.skin,id+' '+control.name+' has no baked inner border (popup action buttons use the codex button skin)');assert.ok(!control.shadow.includes('inset'),id+' '+control.name+' has no inset stroke');}await page.waitForFunction(()=>!document.querySelector('.v2-toast.visible'));await page.waitForFunction(()=>!document.querySelector('.recruit-reveal')||document.querySelector('.recruit-reveal').getAnimations({subtree:true}).filter(a=>a.effect.getTiming().iterations!==Infinity).every(a=>a.playState==='finished'));await page.waitForTimeout(180);await page.screenshot({path:resolve(out,id+'.png')});shots.push({id,title});if(process.env.S6_AUDIT){for(const size of [{width:360,height:640},{width:390,height:844},{width:430,height:764},{width:430,height:932},{width:487,height:986}]){await page.setViewportSize(size);await page.waitForTimeout(100);layoutChecks.push(await auditLayout(page,id,size));}await page.setViewportSize(viewport);}};
+const shot=async(id,title)=>{if(profiling){const sample=await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{done(window.sampleClick);window.sampleClick=null;})))));profile.screens.push({id,title,sample});shots.push({id,title});return;}const controls=await page.locator('.v2-button:visible').evaluateAll(nodes=>nodes.filter(n=>!['flat','equipment-slot','talent-node','standing','skill-button','empty-position','star-button','help-button','close'].some(c=>n.classList.contains(c))).map(n=>({name:n.textContent,art:getComputedStyle(n).borderImageSource,skin:!!n.closest('.has-frame .dialog-actions')||n.matches('.has-frame .formation-page>.secondary-close'),shadow:getComputedStyle(n).boxShadow})));for(const control of controls){assert.ok(control.art==='none'||control.skin,id+' '+control.name+' has no baked inner border (popup action buttons use the codex button skin)');assert.ok(!control.shadow.includes('inset'),id+' '+control.name+' has no inset stroke');}await page.waitForFunction(()=>!document.querySelector('.v2-toast.visible'));await page.waitForFunction(()=>!document.querySelector('.recruit-reveal')||document.querySelector('.recruit-reveal').getAnimations({subtree:true}).filter(a=>a.effect.getTiming().iterations!==Infinity).every(a=>a.playState==='finished'));await page.waitForTimeout(180);await page.screenshot({path:resolve(out,id+'.png')});shots.push({id,title});if(process.env.S6_AUDIT){for(const size of [{width:360,height:640},{width:390,height:844},{width:430,height:764},{width:430,height:932},{width:487,height:986}]){await page.setViewportSize(size);await page.waitForTimeout(100);layoutChecks.push(await auditLayout(page,id,size));}await page.setViewportSize(viewport);}};
+const browserMetrics=async()=>Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map(({name,value})=>[name,value]));
+const frameSample=async name=>{
+ const before=await browserMetrics();
+ const frames=await page.evaluate(()=>new Promise(done=>{
+  const samples=[];
+  let start=0,previous=0;
+  function frame(time){
+   if(!start)start=time;
+   if(previous)samples.push(time-previous);
+   previous=time;
+   if(time-start<5000)requestAnimationFrame(frame);else done(samples);
+  }
+  requestAnimationFrame(frame);
+ }));
+ const after=await browserMetrics();
+ profile.scenarios.push({name,frames,taskMs:(after.TaskDuration-before.TaskDuration)*1000,layouts:after.LayoutCount-before.LayoutCount});
+};
+const timedClicks=async(name,action)=>{
+ const samples=[];
+ for(let i=0;i<12;i++){
+  await page.evaluate(()=>{window.sampleClick=null;});
+  await action(i);
+  await page.waitForFunction(()=>window.sampleClick);
+  samples.push(await page.evaluate(()=>window.sampleClick));
+ }
+ profile.scenarios.push({name,samples});
+};
 const dialog=()=>page.getByRole('dialog');
 try{
  await load(fixtures());await shot('01-adventure','冒险页');
+ if(!profiling){
+  const toggle=()=>page.getByRole('switch',{name:'性能测试'});
+  await click('菜单');assert.equal(await toggle().getAttribute('aria-checked'),'false');await toggle().click();
+  await page.locator('.s6-performance-overlay').waitFor();
+  await click('统计');await close();
+  await page.waitForFunction(()=>document.querySelector('.s6-performance-overlay')?.textContent.includes('点击'));
+  await click('菜单');assert.equal(await toggle().getAttribute('aria-checked'),'true');await toggle().click();
+  await page.locator('.s6-performance-overlay').waitFor({state:'detached'});
+  await click('菜单');
+  const downloadPromise=page.waitForEvent('download');await click('导出性能数据',dialog());
+  const download=await downloadPromise;
+  assert.equal(download.suggestedFilename(),'s6-performance.json');
+  const data=JSON.parse(await readFile(await download.path(),'utf8'));
+  for(const key of ['frame','click','handler','battle','hud'])assert.ok(data.samples[key].length,`${key} samples exported`);
+  await close();
+ }
  // Manual commands, speed and auto-skill controls are live, not decorative.
  await click('1×');assert.equal(await button('2×').count(),1);await click('2×');await page.locator('.active-skills button').first().click();assert.equal(await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).heroes[0].queued,SAVE_KEY),true);
  await click('自动技能');await click('自动技能');
@@ -83,6 +145,25 @@ try{
   assert.notEqual(battle.result,'fighting');const snapshot=battle.snapshot();snapshot.version=9;delete snapshot.dungeon;m.dungeon.run.battle=snapshot;assert.equal(m.settleDungeon(),null);
   await load(m);await dialog().waitFor();await shot(id,title);await close();await click('查看结算');await click('退出',dialog());
  }
+ if(profiling){
+  const m=fixtures();m.paused=false;m.autoSkill=true;
+  while(m.inventory.length<200)m.inventory.push(generateGear(m.nextGearId++,5));
+  assert.ok(SquadBattleModel.restore(m.snapshot()),'200-item performance fixture restores');
+  await load(m);
+  await frameSample('冒险战斗');
+  await nav('副本');await page.locator('.dungeon-card button').first().click();await click('开始挑战',dialog());
+  await page.locator('.battle-hud').waitFor();await frameSample('副本战斗');
+  if(await dialog().count())await close();
+  await nav('背包');await frameSample('背包停留');
+  await timedClicks('背包类别切换（200件）',i=>click(i%2?'装备':'材料'));
+  await click('批量分解');
+  await timedClicks('分解选取（200件列表）',i=>dialog().locator('.salvage-scroll button').nth(i).click());
+  await close();
+  assert.deepEqual(errors,[]);
+  await writeFile(resolve(out,'performance.json'),JSON.stringify(profile,null,2));
+  console.log(`Profiled ${profile.screens.length} screens and ${profile.scenarios.length} performance scenarios at ${cpuRate}× CPU throttle.`);
+  process.exitCode=0;
+ }else{
  // All main pages remain reachable on short, tall, tablet and landscape screens.
  for(const [width,height] of [[360,640],[430,932],[768,1024],[1280,720]]){
   await page.setViewportSize({width,height});for(const name of ['英雄','招募','冒险','背包','副本']){
@@ -100,4 +181,5 @@ try{
  await writeFile(resolve('docs/第二版实装验收.html'),`<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>第二版游戏 · 实装验收</title><style>*{box-sizing:border-box}body{margin:0;background:#173529;color:#f9edcf;font:16px/1.8 system-ui,sans-serif}header,main{max-width:1600px;margin:auto;padding:24px}h1{color:#ffd568}p{max-width:1000px}a{color:#ffd568}nav{display:flex;gap:24px;flex-wrap:wrap}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:22px}figure{margin:0;padding:14px;background:#234638;border:1px solid #536b4e;border-radius:16px}figure>a{display:block;height:470px}img{width:100%;height:100%;object-fit:contain}figcaption{text-align:center;padding-top:10px;font-weight:700}.badge{background:#e8bb52;color:#422e16;padding:5px 14px;border-radius:20px}small{color:#c6d5bc}footer{padding:30px;text-align:center}@media(max-width:600px){header,main{padding:16px}.grid{grid-template-columns:1fr}figure>a{height:620px}}</style><header><span class="badge">实装效果 · 浏览器真实截图</span><h1>第二版游戏界面验收</h1><p>26个参考界面及三种副本结算，均来自本次构建的实际运行截图。使用单独测试存档展示已培养角色、装备和奖励；测试存档不替换玩家存档。保留现有四名英雄与真实十四项属性，未把概念图的8人卡池作为已实现内容。</p><nav><a href="#screens">29张实装截图</a><a href="#responsive">屏幕适配</a><a href="第二版界面效果图合集.html" target="_blank">概念图合集</a><a href="第二版实装说明.md">实现与测试配置</a></nav><p><small>118项模型回归通过；浏览器真实点击、刷新恢复和四组尺寸检查通过；无页面异常和资源加载错误。点击截图可查看原尺寸。</small></p></header><main><h2 id="screens">页面、二级页与弹窗</h2><div class="grid">${cards}</div><h2 id="responsive">屏幕适配</h2><div class="grid">${responsive}</div></main><footer>通过 npm run test:ui 可重新生成本页及全部实装截图。</footer></html>`);
  }
  console.log(`Verified ${shots.length} real screens, 4 responsive sizes and save reload; no browser errors.`);
+ }
 }finally{await browser.close();}

@@ -89,7 +89,10 @@
       await artReady;
       if (failed) throw new Error('Startup failed');
       const fromPreload = (url, options, done) => {
-        const image = images.get(normalize(url));
+        const key = normalize(url);
+        // Cocos still requests the source extension from its serialized ImageAsset.
+        // The web build ships the same texture path with a WebP extension.
+        const image = images.get(key) || images.get(key.replace(/\.(png|jpe?g)$/i, '.webp'));
         if (!image) return done(new Error('Unlisted startup artwork: '+url));
         done(null, image);
       };

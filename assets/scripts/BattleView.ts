@@ -4,6 +4,7 @@ import {SquadBattleModel,HERO_CONFIG,SquadHit,SKILL_NAMES,DROP_SECONDS,DUNGEON_C
 import {BattleFeedback} from './BattleFeedback';
 import {drawNavigation} from './GearView';
 import {ModalView,modalButton,modalText,modalSection} from './ModalView';
+const feetByTexture=new WeakMap<Texture2D,Map<string,number>>();
 const C={ink:'#704124',cream:'#FFF6E4'};
 export type BattleArt={forest:Texture2D;ui:Texture2D;nav:Texture2D;bag:Texture2D;heroes:Texture2D[];monsters:Texture2D;heart?:Texture2D;shield?:Texture2D};
 export type BattleOptions={title:string;dungeon?:boolean;subtitle?:()=>string;onChange:()=>void;onIncome?:()=>void;onFormation:()=>void;navigate:(index:number)=>void;onLeave?:()=>void;onEnd?:()=>void;onRestart?:(index?:number)=>void};
@@ -13,6 +14,7 @@ export class BattleView{
  private statusArt:{heart?:Texture2D;shield?:Texture2D}={};private actors!:Node;private resultButton:Node|null=null;
  private get model(){return this.getModel();}
   private units:Node[]=[]; private hpLabels:Label[]=[]; private bars:Graphics[]=[];
+  private paintedBars=new WeakMap<Graphics,{value:number;max:number;color:string;shield:number}>();
   private contactShadows:{node:Node;offset:number}[]=[];
   private partyHP:Label[]=[]; private partyBars:Graphics[]=[]; private skillLabels:Label[]=[]; private skillShades:Graphics[]=[];
   private turns:Node[]=[]; private positions=[[-95,75],[-290,260],[-290,-55],[260,270],[210,70],[270,-135]];
@@ -52,11 +54,23 @@ export class BattleView{
   private contactOffset(unit:Node){
     const frame=unit.getComponent(Sprite)!.spriteFrame!,rect=frame.rect,height=unit.getComponent(UITransform)!.height;
     if(typeof document==='undefined')return -height*.43+2;
-    const canvas=document.createElement('canvas');canvas.width=rect.width;canvas.height=rect.height;
-    const ctx=canvas.getContext('2d')!;ctx.drawImage((frame.texture as Texture2D).image.data as CanvasImageSource,rect.x,rect.y,rect.width,rect.height,0,0,rect.width,rect.height);
-    const pixels=ctx.getImageData(0,0,rect.width,rect.height).data;
-    for(let y=rect.height-1;y>=0;y--)for(let x=0;x<rect.width;x++)if(pixels[(y*rect.width+x)*4+3]>32)return -height*((y+1)/rect.height-.5)+2;
-    return -height*.43+2;
+    const texture=frame.texture as Texture2D;
+    let feet=feetByTexture.get(texture);
+    if(!feet){feet=new Map();feetByTexture.set(texture,feet);}
+    const key=[rect.x,rect.y,rect.width,rect.height].join(':');
+    let ratio=feet.get(key);
+    if(ratio===undefined){
+      const canvas=document.createElement('canvas');canvas.width=rect.width;canvas.height=rect.height;
+      const ctx=canvas.getContext('2d')!;
+      ctx.drawImage(texture.image.data as CanvasImageSource,rect.x,rect.y,rect.width,rect.height,0,0,rect.width,rect.height);
+      const pixels=ctx.getImageData(0,0,rect.width,rect.height).data;
+      ratio=.43;
+      findFoot:for(let y=rect.height-1;y>=0;y--)for(let x=0;x<rect.width;x++){
+        if(pixels[(y*rect.width+x)*4+3]>32){ratio=(y+1)/rect.height-.5;break findFoot;}
+      }
+      feet.set(key,ratio);
+    }
+    return -height*ratio+2;
   }
   private base(name:string,x:number,y:number,w:number,h:number,parent=this.root){const n=new Node(name);n.layer=Layers.Enum.UI_2D;n.parent=parent;n.setPosition(x,y);n.addComponent(UITransform).setContentSize(w,h);return n;}
   private panel(name:string,x:number,y:number,w:number,h:number,color:string,r=24,parent=this.root){const n=this.base(name,x,y,w,h,parent);const g=n.addComponent(Graphics);g.fillColor=new Color().fromHEX(color);g.roundRect(-w/2,-h/2,w,h,r);g.fill();return n;}
@@ -64,7 +78,11 @@ export class BattleView{
   private button(text:string,x:number,y:number,w:number,h:number,fn:()=>void,color=C.cream){const n=this.panel(text,x,y,w,h,color,22);const l=this.label(text,0,0,w-12,h-8,28,C.ink,n);n.on(Node.EventType.TOUCH_END,()=>{fn();});return l;}
   private picture(t:Texture2D,rect:Rect,x:number,y:number,w:number,h:number,name:string){const n=this.base(name,x,y,w,h);const f=new SpriteFrame();f.texture=t;f.rect=rect;const s=n.addComponent(Sprite);s.sizeMode=Sprite.SizeMode.CUSTOM;s.spriteFrame=f;n.getComponent(UITransform)!.setContentSize(w,h);return n;}
   private bar(x:number,y:number){const n=this.base('Health',x,y,150,18),g=n.addComponent(Graphics);return g;}
-  private paintBar(g:Graphics,value:number,max:number,color:string,shield=0){g.clear();g.fillColor=new Color().fromHEX('#65502E');g.roundRect(-76,-9,152,18,9);g.fill();g.fillColor=new Color().fromHEX('#DDD2AA');g.roundRect(-73,-6,146,12,6);g.fill();if(value>0){const w=Math.max(8,146*value/max);g.fillColor=new Color().fromHEX(color);g.roundRect(-73,-6,w,12,6);g.fill();g.fillColor=new Color(255,255,210,110);g.roundRect(-71,1,Math.max(4,w-4),4,2);g.fill();}if(shield>0){const w=158*Math.min(1,shield/max),left=79-w,r=Math.min(11,w/2);g.strokeColor=new Color().fromHEX('#6EDBFF');g.lineWidth=4;g.moveTo(left,12);g.lineTo(79-r,12);g.quadraticCurveTo(79,12,79,12-r);g.lineTo(79,-12+r);g.quadraticCurveTo(79,-12,79-r,-12);g.lineTo(left,-12);g.stroke();}}
+  private paintBar(g:Graphics,value:number,max:number,color:string,shield=0){
+    const previous=this.paintedBars.get(g);
+    if(previous&&previous.value===value&&previous.max===max&&previous.color===color&&previous.shield===shield)return;
+    this.paintedBars.set(g,{value,max,color,shield});
+    g.clear();g.fillColor=new Color().fromHEX('#65502E');g.roundRect(-76,-9,152,18,9);g.fill();g.fillColor=new Color().fromHEX('#DDD2AA');g.roundRect(-73,-6,146,12,6);g.fill();if(value>0){const w=Math.max(8,146*value/max);g.fillColor=new Color().fromHEX(color);g.roundRect(-73,-6,w,12,6);g.fill();g.fillColor=new Color(255,255,210,110);g.roundRect(-71,1,Math.max(4,w-4),4,2);g.fill();}if(shield>0){const w=158*Math.min(1,shield/max),left=79-w,r=Math.min(11,w/2);g.strokeColor=new Color().fromHEX('#6EDBFF');g.lineWidth=4;g.moveTo(left,12);g.lineTo(79-r,12);g.quadraticCurveTo(79,12,79,12-r);g.lineTo(79,-12+r);g.quadraticCurveTo(79,-12,79-r,-12);g.lineTo(left,-12);g.stroke();}}
   private valueLabel(text:string,x:number,y:number,w:number,size:number){const l=this.label(text,x,y,w,36,size,'#FFFFFF');l.enableOutline=true;l.outlineWidth=2;l.outlineColor=new Color(28,47,45,255);l.horizontalAlign=0;return l;}
   private statusIcon(kind:'heart'|'shield',x:number,y:number,color:string){const texture=this.statusArt[kind];if(texture)return this.picture(texture,new Rect(0,0,texture.width,texture.height),x,y,24,24,kind);const n=this.base(kind,x,y,24,24),g=n.addComponent(Graphics);g.fillColor=new Color().fromHEX(color);g.strokeColor=new Color(38,86,75,255);g.lineWidth=1.5;
     if(kind==='heart'){g.moveTo(0,-10);g.bezierCurveTo(-23,3,-8,21,0,8);g.bezierCurveTo(8,21,23,3,0,-10);}else{g.moveTo(-10,8);g.lineTo(0,12);g.lineTo(10,8);g.lineTo(8,-4);g.lineTo(0,-12);g.lineTo(-8,-4);}g.close();g.fill();g.stroke();return n;}
@@ -155,9 +173,12 @@ export class BattleView{
   private monsterRect(slot=0){const i=this.model.enemies[slot].kind;return new Rect((i%2)*this.monsters.width/2,Math.floor(i/2)*this.monsters.height/2,this.monsters.width/2,this.monsters.height/2);}
   private setMonsterFrame(n:Node,slot:number){const f=new SpriteFrame();f.texture=this.monsters;f.rect=this.monsterRect(slot);n.getComponent(Sprite)!.spriteFrame=f;const shadow=this.contactShadows[slot+3];if(shadow&&n===this.units[slot+3])shadow.offset=this.contactOffset(n);}
   private sync(){
-    const b=this.model;if(this.resultButton){this.resultButton.active=b.result!=='fighting';this.notice.node.active=b.result==='fighting';}
+    const b=this.model;
+    if(!this.externalPresentation){
+    if(this.resultButton){this.resultButton.active=b.result!=='fighting';this.notice.node.active=b.result==='fighting';}
     this.status.string=this.options.dungeon?this.options.subtitle!():b.regrouping?'整备后重试':b.waveDelay>0?'下一波即将入场':'第 '+b.wave+' 波';
     this.goldLabel.string=String(b.gold);this.incomeLabel.string=this.options.dungeon?(b.encounter?.id===5?'第 '+b.wave+' 关 · 已通关 '+b.clearedWaves:b.wave>DUNGEON_CONFIG.mobWaves?'Boss 波 · 击败首领及护卫':('第 '+b.wave+'/'+(DUNGEON_CONFIG.mobWaves+1)+' 波 · 击败 '+b.enemies.filter(e=>e.hp<=0).length+'/3')):'击杀 '+b.kills+' · 装备 '+b.inventory.length+' · 下件 '+Math.ceil(DROP_SECONDS-b.dropRemainder)+'秒';
+    }
     if(this.shownWave!==b.wave||(this.shownRegroup&&!b.regrouping)){
       this.shownWave=b.wave;this.model.enemies.forEach((e,j)=>{const n=this.units[j+3];const size=b.encounter&&b.encounter.id!==5&&b.wave>DUNGEON_CONFIG.mobWaves&&j===0?330:260;n.getComponent(UITransform)!.setContentSize(size,size);this.setMonsterFrame(n,j);this.setMonsterFrame(this.enemyPortraits[j],j);});this.resetFeedback();this.feedback.enter();
     }this.shownRegroup=b.regrouping;
@@ -165,14 +186,18 @@ export class BattleView{
     b.enemies.forEach((e,j)=>{const i=j+3,hp=this.feedback.hp[i];this.hpLabels[i].string=hp+'/'+e.maxHp;this.paintBar(this.bars[i],hp,e.maxHp,'#F38B71');this.enemyNames[j].string=b.encounter&&b.encounter.id!==5&&b.wave>DUNGEON_CONFIG.mobWaves&&j===0&&hp>0?'BOSS':'';this.heartIcons[i].active=hp>0;this.hpLabels[i].node.active=hp>0;this.bars[i].node.active=hp>0;this.shields[i].node.active=false;this.shieldIcons[i].active=false;});
     for(let i=0;i<3;i++){const active=i<b.formation.length;this.bars[i].node.active=active;this.hpLabels[i].node.active=active;this.heartIcons[i].active=active;if(!active){this.shields[i].node.active=false;this.shieldIcons[i].active=false;}}
     b.party.forEach((h,i)=>{
-      const hp=this.feedback.hp[i],shield=this.feedback.shields[i];this.hpLabels[i].string=hp+'/'+b.battleStats(i).hp;this.partyHP[i].string=this.hpLabels[i].string;
-      this.paintBar(this.bars[i],hp,b.battleStats(i).hp,'#9AF032',shield);this.paintBar(this.partyBars[i],hp,b.battleStats(i).hp,'#9AF032',shield);
-      for(const l of [this.shields[i],this.partyShields[i]]){l.string=String(shield);l.node.active=shield>0&&hp>0;}
-      this.shieldIcons[i].active=this.partyShieldIcons[i].active=shield>0&&hp>0;
+      const hp=this.feedback.hp[i],shield=this.feedback.shields[i],stats=b.battleStats(i);this.hpLabels[i].string=hp+'/'+stats.hp;if(!this.externalPresentation)this.partyHP[i].string=this.hpLabels[i].string;
+      this.paintBar(this.bars[i],hp,stats.hp,'#9AF032',shield);
+      if(!this.externalPresentation)this.paintBar(this.partyBars[i],hp,stats.hp,'#9AF032',shield);
+      for(const l of this.externalPresentation?[this.shields[i]]:[this.shields[i],this.partyShields[i]]){l.string=String(shield);l.node.active=shield>0&&hp>0;}
+      this.shieldIcons[i].active=shield>0&&hp>0;
+      if(this.externalPresentation)return;
+      this.partyShieldIcons[i].active=shield>0&&hp>0;
       for(let j=0;j<2;j++){const cd=j?h.cooldown2:h.cooldown,q=j?h.queued2:h.queued,open=b.unlocked(b.formation[i],j*2);this.skillLabels[i*2+j].string=!open?'':h.hp<=0?'已倒下':q?'已排队':cd>0?cd.toFixed(1):'';
-      const g=this.skillShades[i*2+j];g.clear();if(cd>0||h.hp<=0){g.fillColor=new Color(15,34,62,155);g.roundRect(-60,-60,120,h.hp<=0?120:Math.max(1,120*cd/(j?b.secondCooldown(b.formation[i]):b.battleStats(i).cooldown)),10);g.fill();}}
+      const g=this.skillShades[i*2+j];g.clear();if(cd>0||h.hp<=0){g.fillColor=new Color(15,34,62,155);g.roundRect(-60,-60,120,h.hp<=0?120:Math.max(1,120*cd/(j?b.secondCooldown(b.formation[i]):stats.cooldown)),10);g.fill();}}
 
     });
+    if(this.externalPresentation)return;
     this.autoDot.clear();this.autoDot.fillColor=new Color().fromHEX('#FFFFFF');this.autoDot.circle(0,0,13);this.autoDot.fill();this.autoDot.fillColor=new Color().fromHEX(b.autoSkill?'#71C730':'#B8A789');this.autoDot.circle(0,0,10);this.autoDot.fill();
     this.turns.forEach((n,i)=>n.active=!this.externalPresentation&&b.result==='fighting'&&b.waveDelay===0&&i===b.nextActor);
     if(this.stats&&this.stats.isValid)this.stats.string=b.party.map((h,i)=>b.battleStats(i).name+' '+h.damage+(b.formation[i]===2?' / 治疗 '+h.healing:'')).join('\n')+'\n承伤 '+b.received+' · '+b.elapsed.toFixed(1)+'秒';

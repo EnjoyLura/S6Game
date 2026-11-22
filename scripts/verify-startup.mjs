@@ -5,12 +5,15 @@ import {resolve} from 'node:path';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 const base=process.env.S6_URL||'http://127.0.0.1:7456/';
-const out=resolve('docs/美术参考/第二版/启动加载');await mkdir(out,{recursive:true});
+const out=resolve(process.env.S6_SCREENSHOTS||'docs/美术参考/第二版/启动加载');await mkdir(out,{recursive:true});
 const manifest=JSON.parse(await readFile('build/web-mobile/art-manifest.json','utf8'));
 const held=manifest.files.filter(f=>f.path.startsWith('assets/')).at(-1);
 const browser=await chromium.launch({channel:'chrome',headless:true});
 const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2});
 const page=await context.newPage(),errors=[],checks=[];page.on('pageerror',e=>errors.push(String(e)));
+const coldArtRequests=[];
+const recordColdArt=r=>{if(/\.(png|jpe?g|webp)(\?|$)/i.test(r.url()))coldArtRequests.push(new URL(r.url()).pathname);};
+page.on('request',recordColdArt);
 await context.addInitScript(()=>{
  window.startupProgress=[];
  new MutationObserver(()=>{const bar=document.getElementById('boot-progress');if(!bar)return;const value=Number(bar.getAttribute('aria-valuenow'));if(window.startupProgress.at(-1)?.value!==value)window.startupProgress.push({value,loaded:window.S6Boot?.stats.loaded,total:window.S6Boot?.stats.total,game:!!document.querySelector('.v2-nav')});}).observe(document,{subtree:true,childList:true,attributes:true,attributeFilter:['aria-valuenow']});
@@ -30,6 +33,9 @@ try{
   await page.screenshot({path:resolve(out,`加载中-${width}x${height}.png`)});
  }
  release();const cold=await done(page);assert.equal(cold.loaded,cold.total);assert.equal(cold.downloads,cold.total);checks.push({name:'cold-complete',stats:cold});
+ page.off('request',recordColdArt);
+ assert.equal(coldArtRequests.length,manifest.files.length,'each artwork downloads once');
+ assert.ok(coldArtRequests.every(url=>url.endsWith('.webp')),'Cocos and browser must never request PNG or JPEG');
  const progressSamples=await page.evaluate(()=>window.startupProgress);assert.ok(progressSamples.every((s,i)=>!i||s.value>=progressSamples[i-1].value),'progress is monotonic');
  assert.ok(progressSamples.some(s=>s.value===100&&s.loaded===s.total&&s.game),'100% requires art and game UI');
  assert.equal(await page.locator('#s6-v2 img').evaluateAll(images=>images.filter(i=>!i.complete||!i.naturalWidth).length),0,'visible UI has no missing images');

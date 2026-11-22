@@ -2,6 +2,10 @@
  * Keep this final layer grouped by component so the reference geometry has one owner.
  */
 export const SECOND_EDITION_POLISH = `
+.s6-performance-overlay{position:fixed;top:max(4px,env(safe-area-inset-top,0px));left:50%;translate:-50% 0;z-index:50;pointer-events:none;white-space:nowrap;background:#193327ed;color:#fff4d5;padding:4px 9px;border-radius:6px;font:700 11px/1.3 'Microsoft YaHei',sans-serif;font-variant-numeric:tabular-nums}
+#s6-v2 .performance-controls{display:flex;justify-content:center;flex-wrap:wrap;gap:2cqw;margin-top:2cqw}
+#s6-v2 .performance-controls button{min-height:8cqw;padding:0 3cqw;font-size:3.3cqw}
+#s6-v2 .performance-controls [aria-checked=true]{background:#d4ecb2;color:#325d1c}
 /* Shared spacing, warm paper and typography. */
 #s6-v2{font-variant-numeric:tabular-nums}
 #s6-v2 .page,#s6-v2 .secondary{background-color:#ffecd7}

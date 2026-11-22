@@ -28,7 +28,9 @@ export class DungeonPage{
  refresh(){this.close();this.render();if(this.model().dungeon.run)this.resume();}
  private info(title:string,body:string){this.close();const v=new ModalView(this.node,title,820,()=>this.close());this.modal=v.layer;this.text(v.card,body,0,-15,680,300,30);}
  private render(){
- this.content?.destroy();const p=this.content=modalNode(this.node,'Dungeon content',0,0,887,1774);
+ this.content?.destroy();this.content=null;
+ if(this.externalUI)return;
+ const p=this.content=modalNode(this.node,'Dungeon content',0,0,887,1774);
  modalPanel(p,0,0,887,1774,'#FBE6D0',0);this.image(p,this.yard,new Rect(0,0,this.yard.width,250),0,812,887,150);
  modalPanel(p,-350,831,160,65,'#FFF4DF',32);this.text(p,'副本',-350,831,150,60,42);
  modalPanel(p,-117,831,260,65,'#FFF4DF',32);this.gold=this.text(p,'● '+this.model().gold,-117,831,240,60,30);
@@ -112,6 +114,6 @@ export class DungeonPage{
  modalButton(p,'再次挑战',175,-610,300,80,()=>{const error=this.transact(m=>m.retryDungeon(Date.now()));if(error){message.string=error;return;}this.resume();});
  }
  private sync(){const d=this.model().dungeon;this.stamina.string='ϟ '+d.stamina+'/120';this.gold.string='● '+this.model().gold;const seconds=Math.max(0,Math.ceil((d.anchor+DUNGEON_CONFIG.recoverMs-d.clock)/1000));this.recovery.string=d.stamina===120?'体力已满':'下次恢复 '+('0'+Math.floor(seconds/60)).slice(-2)+':'+('0'+(seconds%60)).slice(-2);this.remaining.string=this.tab===2?'今日剩余挑战 '+(2-d.dailyUsed)+'/2 · 本地零点重置':this.tab===1?'最佳通关 '+(d.floor-1)+' 关 · 入场扣体力，阵亡结算':'体力随时间恢复 · 挑战前选择难度';}
- update(dt:number){this.sync();if(!this.battle||!this.fightLayer||this.finishing||this.choosingFormation)return;this.view?.update(dt);this.clock+=dt;if(this.clock>=1){this.clock=0;this.persistBattle();}if(this.battle.result!=='fighting'){this.finishDelay+=Math.min(dt,.1);if(this.finishDelay>=.6)this.end(false);}}
+ update(dt:number){if(!this.externalUI)this.sync();if(!this.battle||!this.fightLayer||this.finishing||this.choosingFormation)return;this.view?.update(dt);this.clock+=dt;if(this.clock>=1){this.clock=0;this.persistBattle();}if(this.battle.result!=='fighting'){this.finishDelay+=Math.min(dt,.1);if(this.finishDelay>=.6)this.end(false);}}
  beforeSave(){if(!this.mutating)this.persistBattle();}
 }

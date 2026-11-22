@@ -1,9 +1,46 @@
 import {Node,UITransform,Sprite,Graphics,view,Color,Camera} from 'cc';
 const original=new WeakMap<Node,{x:number;y:number;height:number;width:number;scaleX:number;scaleY:number;applied?:number}>();
 const battleLayouts=new WeakMap<Node,{key:string;hud:Element;scale:number;y:number}>();
+type WebLayout={hud:HTMLElement|null;battle:Node|null;height:number;dirty:boolean;observer:ResizeObserver;style:MutationObserver};
+const webLayouts=new WeakMap<Node,WebLayout>();
+
+function needsWebLayout(canvas:Node,height:number,battle:Node|null){
+ let layout=webLayouts.get(canvas);
+ if(!layout){
+  const markDirty=()=>{layout!.dirty=true;};
+  layout={hud:null,battle:null,height:0,dirty:true,observer:new ResizeObserver(markDirty),style:new MutationObserver(markDirty)};
+  const root=document.getElementById('s6-v2');
+  if(root)layout.style.observe(root,{attributes:true,attributeFilter:['style','class']});
+  webLayouts.set(canvas,layout);
+ }
+ const hud=document.querySelector<HTMLElement>('.battle-hud');
+ if(layout.hud!==hud){
+  layout.observer.disconnect();
+  if(hud){
+   layout.observer.observe(hud);
+   hud.querySelectorAll('.stage-heading,.turn-order,.field-actions,.skill-bar').forEach(element=>layout!.observer.observe(element));
+  }
+  layout.hud=hud;
+  layout.dirty=true;
+ }
+ if(!layout.dirty&&layout.height===height&&layout.battle===battle)return false;
+ layout.dirty=false;
+ layout.height=height;
+ layout.battle=battle;
+ return true;
+}
+
+export function releaseScreenLayout(canvas:Node){
+ const layout=webLayouts.get(canvas);
+ layout?.observer.disconnect();
+ layout?.style.disconnect();
+ webLayouts.delete(canvas);
+}
+
 // Preserve icon/label geometry; distribute their anchors over the real visible height.
-export function fitScreen(canvas:Node,camera:Camera){
+export function fitScreen(canvas:Node,camera:Camera,webBattle?:Node|null){
  const height=view.getVisibleSize().height;
+ if(webBattle!==undefined&&!needsWebLayout(canvas,height,webBattle))return;
  canvas.setPosition(443.5,height/2,0);canvas.getComponent(UITransform)!.setContentSize(887,height);
  camera.node.setPosition(443.5,height/2,1000);camera.orthoHeight=height/2;
  // Read each DOM rail once. Its geometry can change at the same visible height

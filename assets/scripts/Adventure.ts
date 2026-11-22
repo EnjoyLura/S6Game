@@ -1,6 +1,6 @@
 import {SecondEditionUI} from './SecondEditionUI';
 import {BattleView} from './BattleView';
-import {fitScreen} from './ScreenLayout';
+import {fitScreen,releaseScreenLayout} from './ScreenLayout';
 import {DungeonPage} from './DungeonPage';
 import {ModalView,setModalSkin,modalButton,modalRow,modalSection,modalText} from './ModalView';
 import {RecruitPage} from './RecruitPage';
@@ -60,10 +60,38 @@ export class Adventure extends Component {
   private texture(path:string):Promise<Texture2D>{return new Promise((resolve,reject)=>resources.load(path+'/texture',Texture2D,(e,t)=>e?reject(e):resolve(t)));}
   private toast(s:string){this.view?.toast(s);}
   private restart(index=this.model.monsterIndex){const previous=this.model;this.model=new SquadBattleModel(index,Math.random,3,true);this.model.inheritIncome(previous);this.model.autoSkill=previous.autoSkill;this.rebuildBattle();this.saveProgress();}
-  private openPage(page:'adventure'|'hero'|'bag'|'recruit'|'dungeon'){if(!this.heroPage||!this.bagPage||!this.recruitPage)return;if(this.currentPage==='dungeon')this.dungeonPage.beforeSave();this.currentPage=page;if(page==='dungeon')this.dungeonPage.refresh();if(page==='adventure'&&this.shownFormation!==this.model.formation.join())this.rebuildBattle();this.view.resetFeedback();if(page==='hero')this.heroPage.refresh();if(page==='bag'){this.bagPage.setGold(this.model.gold);this.bagPage.refresh();}this.root.active=page==='adventure';this.heroPage.node.active=page==='hero';this.bagPage.node.active=page==='bag';this.recruitPage.node.active=page==='recruit';this.dungeonPage.node.active=page==='dungeon';if(this.second){this.heroPage.node.active=false;this.bagPage.node.active=false;this.recruitPage.node.active=false;this.second.setPage(page);}}
+  private openPage(page:'adventure'|'hero'|'bag'|'recruit'|'dungeon'){
+    if(!this.heroPage||!this.bagPage||!this.recruitPage)return;
+    if(this.currentPage==='dungeon')this.dungeonPage.beforeSave();
+    this.currentPage=page;
+    if(page==='dungeon')this.dungeonPage.refresh();
+    if(page==='adventure'){
+      if(this.shownFormation!==this.model.formation.join())this.rebuildBattle();
+      this.view.resetFeedback();
+    }
+    this.root.active=page==='adventure';
+    this.dungeonPage.node.active=page==='dungeon';
+    if(this.second){this.second.setPage(page);return;}
+    if(page==='hero')this.heroPage.refresh();
+    if(page==='bag'){this.bagPage.setGold(this.model.gold);this.bagPage.refresh();}
+    this.heroPage.node.active=page==='hero';
+    this.bagPage.node.active=page==='bag';
+    this.recruitPage.node.active=page==='recruit';
+  }
   update(dt:number){
-    if(!this.ready||!this.entered||this.background)return;fitScreen(this.canvasRoot,this.screenCamera);this.model.refreshDungeon(Date.now());const nextId=this.model.nextGearId,oldCount=this.model.inventory.length,oldMaterials=this.model.materials;this.model.settleIdle(foregroundRewardDelta(dt));if(this.model.nextGearId>nextId){const saved=this.saveProgress(),kept=this.model.inventory.length-oldCount,recycled=this.model.nextGearId-nextId-kept;if(this.currentPage==='bag')this.bagPage.refresh();if(this.currentPage==='adventure')this.toast(!saved?this.saves.error:recycled?'自动分解 '+recycled+' 件 · 强化石 +'+(this.model.materials-oldMaterials)+(kept?' · 保留 '+kept+' 件':''):'获得 '+gearName(this.model.inventory[this.model.inventory.length-1])+' · 已进入背包');}this.saveClock+=dt;if(this.saveClock>=1){this.saveClock=0;this.saveProgress();}
-    if(this.second){if(!this.second.blocksBattle){if(this.currentPage==='dungeon')this.dungeonPage.update(dt);else if(this.currentPage==='adventure')this.view.update(dt);}this.second.update();return;}
+    if(!this.ready||!this.entered||this.background)return;fitScreen(this.canvasRoot,this.screenCamera,this.second?(this.currentPage==='adventure'?this.root:this.currentPage==='dungeon'?this.dungeonPage.activeView?.root||null:null):undefined);this.model.refreshDungeon(Date.now());const nextId=this.model.nextGearId,oldCount=this.model.inventory.length,oldMaterials=this.model.materials;this.model.settleIdle(foregroundRewardDelta(dt));if(this.model.nextGearId>nextId){const saved=this.saveProgress(),kept=this.model.inventory.length-oldCount,recycled=this.model.nextGearId-nextId-kept;if(this.currentPage==='bag'&&!this.second)this.bagPage.refresh();if(this.currentPage==='adventure')this.toast(!saved?this.saves.error:recycled?'自动分解 '+recycled+' 件 · 强化石 +'+(this.model.materials-oldMaterials)+(kept?' · 保留 '+kept+' 件':''):'获得 '+gearName(this.model.inventory[this.model.inventory.length-1])+' · 已进入背包');}this.saveClock+=dt;if(this.saveClock>=1){this.saveClock=0;this.saveProgress();}
+    if(this.second){
+      const trace=this.second.performance;
+      if(!this.second.blocksBattle&&(this.currentPage==='dungeon'||this.currentPage==='adventure')){
+        const start=trace.enabled?performance.now():0;
+        if(this.currentPage==='dungeon')this.dungeonPage.update(dt);else this.view.update(dt);
+        if(trace.enabled&&start)trace.record('battle',performance.now()-start);
+      }
+      const start=trace.enabled?performance.now():0;
+      this.second.update();
+      if(trace.enabled&&start)trace.record('hud',performance.now()-start);
+      return;
+    }
     if(this.currentPage==='dungeon'){this.dungeonPage.update(dt);return;}if(this.currentPage==='recruit')return;if(this.currentPage==='hero'){this.heroPage.refreshIncome();return;}if(this.currentPage==='bag'){this.bagPage.setGold(this.model.gold);return;}
     this.view.update(dt);
   }
@@ -83,5 +111,5 @@ export class Adventure extends Component {
   }
   private hide(){if(this.background)return;this.saveProgress();this.foregroundPaused=this.model.paused;this.background=true;this.model.paused=true;}
   private show(){if(!this.background)return;this.background=false;this.model.paused=this.foregroundPaused;this.model.prepareOffline(Date.now());this.saveProgress();this.showOffline();}
-  onDestroy(){this.second?.destroy();if(typeof window!=='undefined')window.removeEventListener('beforeunload',this.saveProgress);game.off(Game.EVENT_HIDE,this.hide,this);game.off(Game.EVENT_SHOW,this.show,this);}
+  onDestroy(){if(this.canvasRoot)releaseScreenLayout(this.canvasRoot);this.second?.destroy();if(typeof window!=='undefined')window.removeEventListener('beforeunload',this.saveProgress);game.off(Game.EVENT_HIDE,this.hide,this);game.off(Game.EVENT_SHOW,this.show,this);}
 }
