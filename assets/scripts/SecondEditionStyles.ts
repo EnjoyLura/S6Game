@@ -1,8 +1,10 @@
 /** Shared responsive skin, nine-slice controls and square item grids. */
 export const SECOND_EDITION_STYLES=`
-html,body{background:#263b2c!important}
+:root{--s6-game-width:min(100vw,56.25dvh,600px)}
+@media(max-aspect-ratio:3/5){:root{--s6-game-width:min(100vw,600px)}}
+html,body{background:#ffecd7!important}
 #s6-v2,#s6-v2 *{box-sizing:border-box}
-#s6-v2{--ink:#623719;--cream:#fff2df;--gold:#ffcc27;--scene:none;position:fixed;inset:0;margin:auto;width:min(100vw,56.25dvh,600px);max-width:600px;height:100dvh;color:var(--ink);font-family:'Microsoft YaHei','PingFang SC',sans-serif;font-size:clamp(12px,2.7vw,17px);font-weight:700;z-index:20;pointer-events:none;container-type:inline-size;isolation:isolate}
+#s6-v2{--ink:#623719;--cream:#fff2df;--gold:#ffcc27;--scene:none;position:fixed;inset:0;margin:auto;width:var(--s6-game-width);height:100dvh;color:var(--ink);font-family:'Microsoft YaHei','PingFang SC',sans-serif;font-size:clamp(12px,2.7vw,17px);font-weight:700;z-index:20;pointer-events:none;container-type:inline-size;isolation:isolate}
 #s6-v2 button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 #s6-v2 img{object-fit:contain;max-width:100%;user-select:none}
 #s6-v2 h1,#s6-v2 h2,#s6-v2 h3,#s6-v2 p{margin:0}
@@ -11,9 +13,9 @@ html,body{background:#263b2c!important}
 #s6-v2 h3{font-size:3.7cqw}
 #s6-v2 small{font-size:2.7cqw}
 #s6-v2 em{font-style:normal;color:#348c13}
-#s6-backdrop{position:fixed;inset:0;background-position:center;background-size:cover;z-index:0;pointer-events:none}
+#s6-backdrop{position:fixed;inset:0 0 auto;margin:0 auto;width:var(--s6-game-width);background:center / 100% 100% no-repeat;z-index:0;pointer-events:none}
 #GameDiv,#Cocos3dGameContainer{background:transparent!important}
-#GameDiv{position:relative!important;z-index:1!important;width:min(100vw,56.25dvh,600px)!important;max-width:600px;margin:auto!important}
+#GameDiv{position:relative!important;z-index:1!important;width:var(--s6-game-width)!important;margin:auto!important}
 #s6-v2 .v2-content{height:100%;position:relative}
 #s6-v2 .page,#s6-v2 .secondary{height:100%;pointer-events:auto;background:#fce7ce;overflow:hidden;display:flex;flex-direction:column;padding:2cqw 2cqw 0;gap:1.5cqw;background-image:var(--scene);background-size:100% auto;background-repeat:no-repeat}
 #s6-v2 .v2-button{border:1px solid #eda516;border-radius:2.8cqw;background:linear-gradient(#ffe45d 0%,#ffcc20 65%,#ffbc10);box-shadow:inset 0 1px 1px #fffbd1,0 2px 2px #be813040;min-height:7cqw;padding:1cqw 3cqw;display:inline-flex;align-items:center;justify-content:center;gap:.7cqw;position:relative;flex-shrink:0;pointer-events:auto;text-shadow:0 1px #ffffff50}

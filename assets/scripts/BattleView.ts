@@ -1,5 +1,5 @@
 import {battleDelta} from './BattleTiming';
-import {Node,UITransform,Layers,Color,Graphics,Label,Sprite,SpriteFrame,Texture2D,Rect,tween,Vec3,UIOpacity,Tween,Mask} from 'cc';
+import {Node,UITransform,Layers,Color,Graphics,Label,Sprite,SpriteFrame,Texture2D,Rect,tween,Vec3,UIOpacity,Tween,Mask,macro} from 'cc';
 import {SquadBattleModel,HERO_CONFIG,SquadHit,SKILL_NAMES,DROP_SECONDS,DUNGEON_CONFIG} from './SquadBattleModel';
 import {BattleFeedback} from './BattleFeedback';
 import {drawNavigation} from './GearView';
@@ -27,7 +27,18 @@ export class BattleView{
     this.statusArt={heart:art.heart,shield:art.shield};this.ui=art.ui;this.heroTextures=art.heroes;this.monsters=art.monsters;this.battleArt=[art.forest,art.nav,art.bag];this.rebuildBattle();
   }
   externalPresentation=false;private externalForest:Texture2D|null=null;
-  useExternalPresentation(texture?:Texture2D){this.externalPresentation=true;if(texture)this.externalForest=texture;for(const n of this.root.children)n.active=n===this.actors||n.name==='Forest';const forest=this.root.getChildByName('Forest');if(forest&&this.externalForest){const f=new SpriteFrame();f.texture=this.externalForest;f.rect=new Rect(0,0,this.externalForest.width,this.externalForest.height);forest.getComponent(Sprite)!.spriteFrame=f;}}
+  useExternalPresentation(texture?:Texture2D){
+    this.externalPresentation=true;
+    if(texture)this.externalForest=texture;
+    const forest=this.root.getChildByName('Forest');
+    // Creator preview can still use an opaque canvas and needs its original sprite.
+    for(const n of this.root.children)n.active=n===this.actors||n===forest&&!macro.ENABLE_TRANSPARENT_CANVAS;
+    if(forest?.active&&this.externalForest){
+      const frame=new SpriteFrame();frame.texture=this.externalForest;
+      frame.rect=new Rect(0,0,this.externalForest.width,this.externalForest.height);
+      forest.getComponent(Sprite)!.spriteFrame=frame;
+    }
+  }
   getSpeed(){return this.speed;}
   cycleSpeed(){this.speed=this.speed===1?2:1;}
   update(dt:number){const visual=battleDelta(dt,this.model.paused,this.speed);this.feedback.update(visual);for(const hit of this.model.step(visual))this.feedback.play(hit);this.updateFloats(this.model.paused?0:dt);this.sync();}

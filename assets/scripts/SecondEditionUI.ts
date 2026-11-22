@@ -7,7 +7,7 @@ import {FORMATIONS,TREE_NODES} from './V2Progress';
 import {COMBAT_KEYS,COMBAT_LABELS} from './CombatAttributes';
 
 type Page='hero'|'recruit'|'adventure'|'bag'|'dungeon';
-type Bridge={model:()=>SquadBattleModel;mutate:(fn:(m:SquadBattleModel)=>string|null)=>string|null;navigate:(p:Page)=>void;battle:()=>SquadBattleModel;speed:()=>number;setSpeed:()=>void;start:(id:number,difficulty:number)=>void;resume:()=>void;leave:()=>void;end:()=>void;retry:()=>void;exit:()=>void;formation:(ids:number[])=>string|null};
+type Bridge={model:()=>SquadBattleModel;mutate:(fn:(m:SquadBattleModel)=>string|null)=>string|null;navigate:(p:Page)=>void;battle:()=>SquadBattleModel;speed:()=>number;setSpeed:()=>void;toggleAutoSkill:()=>string|null;start:(id:number,difficulty:number)=>void;resume:()=>void;leave:()=>void;end:()=>void;retry:()=>void;exit:()=>void;formation:(ids:number[])=>string|null};
 const ARROW_ICON='<svg class="change-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 9.6h9.2V5.4l7.8 6.6-7.8 6.6v-4.2H3.5z" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
 const MENU_ICON='<svg class="menu-glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
 const STATS_ICON='<svg class="tool-glyph" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="13" width="5" height="9" rx="1.5"/><rect x="9.5" y="8" width="5" height="14" rx="1.5"/><rect x="17" y="2" width="5" height="20" rx="1.5"/></svg>';
@@ -17,6 +17,7 @@ const RESET_ICON='<svg class="reset-icon" viewBox="0 0 24 24" aria-hidden="true"
 const NAMES=['莱恩','艾琳','莉亚','罗宾'],ROLES=['坦克','输出','治疗','输出'];
 const Q=['#b8afa2','#83c632','#39afe7','#b36add','#ffc631'];
 const QUALITY_TEXT=['#7d6b5c','#488c1a','#1479b8','#8e34ba','#c47a00'];
+const setText=(node:Element|null|undefined,value:string)=>{if(node&&node.textContent!==value)node.textContent=value;};
 const esc=(s:unknown)=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 /** Small single-colour vector glyphs used for labels, rows and badges (game art stays in atlases). */
 const ICONS:Record<string,string>={
@@ -65,13 +66,18 @@ export class SecondEditionUI{
  readonly performance=new GamePerformance(()=>this.modal.querySelector('[role=dialog]')?.getAttribute('aria-label')||this.content.firstElementChild?.className.split(' ').slice(0,2).join(' ')||this.page);
  private urls:Record<string,string>={};private lastReceipt='';private lastOffline:unknown=null;private toastTimer:any;private lastUpdate=0;
  private listObserver:ResizeObserver|null=null;
+ private fieldObserver:ResizeObserver;
  get blocksBattle(){return this.inSecondary||this.modal.childElementCount>0;}
  private onKey=(e:KeyboardEvent)=>{if(e.key==='Escape'){if(this.modal.childElementCount)this.close();else if(this.inSecondary)this.root.querySelector<HTMLButtonElement>('.secondary-close')?.click();}};
  constructor(private port:Bridge,textures:Record<string,Texture2D>){
   for(const name of Object.keys(textures))this.urls[name]=this.source(textures[name]);
   this.prepareAtlas(textures);
   const style=document.createElement('style');style.id='second-edition-style';style.textContent=SECOND_EDITION_STYLES+SECOND_EDITION_POLISH;document.head.appendChild(style);
-  this.backdrop=document.createElement('div');this.backdrop.id='s6-backdrop';document.body.appendChild(this.backdrop);
+  this.backdrop=document.createElement('div');this.backdrop.id='s6-backdrop';
+  this.backdrop.style.backgroundImage=`url("${this.urls.scene0}")`;
+  this.backdrop.setAttribute('aria-hidden','true');
+  document.body.appendChild(this.backdrop);
+  this.fieldObserver=new ResizeObserver(()=>this.fitBackdrop());
   this.root=document.createElement('div');this.root.id='s6-v2';if(this.urls['v2-popup-frame']){[['--dialog-frame','v2-popup-frame'],['--btn-peach','btnPeach'],['--btn-gold','btnGold']].forEach(([v,n])=>this.urls[n]&&this.root.style.setProperty(v,`url('${this.urls[n]}')`));this.root.classList.add('has-frame');}if(this.urls.starOn){[['--star-on','starOn'],['--star-off','starOff'],['--star-button','starButton'],['--star-button-down','starButtonDown']].forEach(([v,n])=>this.root.style.setProperty(v,`url('${this.urls[n]}')`));this.root.classList.add('has-marks');}this.root.setAttribute('aria-label','挂机传说：无尽征途');this.root.innerHTML='<main class="v2-content"></main><div class="v2-modal-host"></div><div class="v2-toast" role="status"></div>';
   for(const [key,value] of [['gold',this.urls.control0],['cream',this.urls.control1],['panel',this.urls.control2],['plaque',this.urls.control3],['close',this.urls['v2-close-v3']||this.urls.roundClose||this.urls.control4],['peach',this.urls.peach||this.urls.control1]])this.root.style.setProperty('--'+key+'-art',`url("${value}")`);for(const [key,name] of [['--recruit-title','v2-recruit-title'],['--up-badge','v2-up-badge'],['--title-plaque','v2-title-plaque'],['--celebration','v2-celebration']])this.root.style.setProperty(key,`url('${this.urls[name]}')`);this.root.style.setProperty('--title-aspect',String(textures['v2-title-plaque'].width/textures['v2-title-plaque'].height));this.root.classList.add('has-decoration');document.body.appendChild(this.root);this.content=this.root.querySelector('main')!;this.modal=this.root.querySelector('.v2-modal-host')!;
   // A touchstart listener lets mobile Safari apply :active press styles to buttons.
@@ -177,8 +183,35 @@ export class SecondEditionUI{
  private rewardList(b:SquadBattleModel){return this.rewardItems(b.offline);}
  private rewardViewport(items:string,cls=''){return `<div class="reward-scroll ${cls}" tabindex="0" aria-label="奖励列表，可上下滑动"><div class="five-grid">${items||'<p class="empty-message">暂无奖励</p>'}</div></div>`;}
  private dungeonRewards(id:number,difficulty:number){const r=dungeonReward(id,difficulty);let items='';if(r.gold)items+=this.reward(6,r.gold,'金币');if(r.experience)items+=this.reward(7,r.experience,'每位英雄经验');if(r.materials)items+=this.reward(7,r.materials,'强化石');if(r.gear)items+=[0,1,3].map((s,i)=>this.gearReward(s,[3,2,1][i],r.level)).join('');return items;}
- draw(){this.inSecondary=false;this.root.classList.toggle('battle-mode',this.page==='adventure'||this.page==='dungeon'&&!!this.port.model().dungeon.run&&this.port.battle()!==this.port.model());this.backdrop.style.backgroundImage=`url("${this.urls.scene0}")`;this.backdrop.style.display='none';this.content.innerHTML=this.page==='adventure'?this.adventure():this.page==='hero'?this.hero():this.page==='bag'?this.bag():this.page==='recruit'?this.recruit():this.dungeons();}
- private adventure(){const b=this.port.battle();return `<div class="battle-hud">${this.wallet()}${this.button(MENU_ICON,()=>this.settings(),'menu quiet',false,'菜单')}<div class="stage-heading"><h1><span>${this.page==='dungeon'?DUNGEONS[this.port.model().dungeon.run!.id].name:'镇外森林'}</span></h1><b data-live="wave">第${b.wave}波</b><div class="checkpoint" role="progressbar" aria-label="检查点进度" aria-valuemin="0" aria-valuemax="10">${[0,1,2,3,4,5].map(()=>'<i></i>').join('')}${CHECKPOINT_FLAG}</div><small data-live="checkpoint">下一检查点 · 第${Math.ceil(b.wave/10)*10}波</small></div><div class="turn-order"><b>行动顺序</b>${b.order.map(i=>`<span class="turn-portrait" data-turn="${i}">${i<3?this.face(b.formation[i]):this.img('monster'+b.enemies[i-3].kind)}</span>`).join('<span class="turn-arrow">➜</span>')}</div><div class="battle-tools">${this.button(this.port.speed()+'×',()=>{this.port.setSpeed();this.draw();},'quiet')}${this.button(STATS_ICON+'<small>统计</small>',()=>this.statistics(),'quiet')}${this.button(AUTO_ICON+'<small>自动技能</small>',()=>{const before=b.autoSkill;b.autoSkill=!before;const error=this.port.mutate(()=>null);if(error){b.autoSkill=before;this.toast(error);}this.draw();},'quiet '+(b.autoSkill?'on':''))}</div><div class="field-actions">${this.button(ico('people','formation-glyph')+'阵型',()=>this.formation(),'quiet')}${this.page==='adventure'?this.button(this.img('nav6')+'挂机收益',()=>this.offline(),'quiet'):this.port.model().dungeon.run?.receipt?this.button('查看结算',()=>this.result(),'quiet'):this.button('离开战斗',()=>{this.port.leave();this.draw();},'quiet')}</div><div class="skill-bar">${b.formation.map((id,i)=>{const h=b.heroes[id];return `<section class="party-card"><header><span class="party-portrait">${this.face(id)}</span><div><b>${NAMES[id]}</b><span class="party-tags"><i>Lv.${h.level}</i><i class="role-pill r${id}">${this.roleGlyph(id,ico(id===0?'shield':ROLE_ICONS[id]))}${ROLES[id]}</i></span><div class="health-track"><i data-hp="${id}"></i></div><small data-hp-label="${id}">${this.resourceIcon('heart')}<span>${h.hp}/${b.stats(id).hp}</span></small><small data-shield="${id}"></small></div></header><div class="active-skills">${[0,2].map((skill,j)=>this.button((b.unlocked(id,skill)?this.skillIcon(id,skill):'<span class="locked-skill-icon">'+ico('lock')+'</span>')+`<span data-cooldown="${id}-${j}"></span><small>${b.unlocked(id,skill)?SKILL_NAMES[id][skill]:'待解锁'}</small>`,()=>{if(!b.requestSkill(i,j))this.toast(b.unlocked(id,skill)?'技能冷却中或英雄已阵亡':SKILL_LEVELS[skill]+'级解锁');else {const error=this.port.mutate(()=>null);if(error){if(j)h.queued2=false;else h.queued=false;this.toast(error);}else this.toast('已加入释放队列');}},'skill-button '+(b.unlocked(id,skill)?'':'unavailable'))).join('')}</div></section>`;}).join('')}</div>${this.nav(this.page==='dungeon'?'dungeon':'adventure')}</div>`;}
+ draw(){
+  this.inSecondary=false;
+  this.fieldObserver.disconnect();
+  this.content.innerHTML=this.page==='adventure'?this.adventure():this.page==='hero'?this.hero():this.page==='bag'?this.bag():this.page==='recruit'?this.recruit():this.dungeons();
+  const hud=this.content.querySelector<HTMLElement>('.battle-hud');
+  if(!hud)return;
+  this.syncBattleHud(hud);
+  this.fitBackdrop();
+  this.fieldObserver.observe(hud);
+  this.fieldObserver.observe(hud.querySelector('.skill-bar')!);
+ }
+ private fitBackdrop(){
+  const bar=this.content.querySelector('.battle-hud .skill-bar');
+  // Keep the last painted forest behind opaque pages during navigation.
+  if(bar)this.backdrop.style.height=bar.getBoundingClientRect().top+'px';
+ }
+ private changeSpeed(){
+  this.port.setSpeed();
+  const button=this.content.querySelector('[data-battle-speed]');
+  if(button)button.textContent=this.port.speed()+'×';
+ }
+ private toggleAutoSkill(){
+  const error=this.port.toggleAutoSkill();
+  if(error){this.toast(error);return;}
+  const enabled=this.port.battle().autoSkill,button=this.content.querySelector('[data-auto-skill]');
+  button?.classList.toggle('on',enabled);
+  button?.setAttribute('aria-pressed',String(enabled));
+ }
+ private adventure(){const b=this.port.battle();return `<div class="battle-hud">${this.wallet()}${this.button(MENU_ICON,()=>this.settings(),'menu quiet',false,'菜单')}<div class="stage-heading"><h1><span>${this.page==='dungeon'?DUNGEONS[this.port.model().dungeon.run!.id].name:'镇外森林'}</span></h1><b data-live="wave">第${b.wave}波</b><div class="checkpoint" role="progressbar" aria-label="检查点进度" aria-valuemin="0" aria-valuemax="10">${[0,1,2,3,4,5].map(()=>'<i></i>').join('')}${CHECKPOINT_FLAG}</div><small data-live="checkpoint">下一检查点 · 第${Math.ceil(b.wave/10)*10}波</small></div><div class="turn-order"><b>行动顺序</b>${b.order.map(i=>`<span class="turn-portrait" data-turn="${i}">${i<3?this.face(b.formation[i]):this.img('monster'+b.enemies[i-3].kind)}</span>`).join('<span class="turn-arrow">➜</span>')}</div><div class="battle-tools">${this.button(this.port.speed()+'×',()=>this.changeSpeed(),'quiet').replace('data-action=', 'data-battle-speed data-action=')}${this.button(STATS_ICON+'<small>统计</small>',()=>this.statistics(),'quiet')}${this.button(AUTO_ICON+'<small>自动技能</small>',()=>this.toggleAutoSkill(),'quiet '+(b.autoSkill?'on':'')).replace('data-action=', 'data-auto-skill aria-pressed="'+b.autoSkill+'" data-action=')}</div><div class="field-actions">${this.button(ico('people','formation-glyph')+'阵型',()=>this.formation(),'quiet')}${this.page==='adventure'?this.button(this.img('nav6')+'挂机收益',()=>this.offline(),'quiet'):this.port.model().dungeon.run?.receipt?this.button('查看结算',()=>this.result(),'quiet'):this.button('离开战斗',()=>{this.port.leave();this.draw();},'quiet')}</div><div class="skill-bar">${b.formation.map((id,i)=>{const h=b.heroes[id];return `<section class="party-card"><header><span class="party-portrait">${this.face(id)}</span><div><b>${NAMES[id]}</b><span class="party-tags"><i>Lv.${h.level}</i><i class="role-pill r${id}">${this.roleGlyph(id,ico(id===0?'shield':ROLE_ICONS[id]))}${ROLES[id]}</i></span><div class="health-track"><i data-hp="${id}"></i></div><small data-hp-label="${id}">${this.resourceIcon('heart')}<span>${h.hp}/${b.stats(id).hp}</span></small><small data-shield="${id}"></small></div></header><div class="active-skills">${[0,2].map((skill,j)=>this.button((b.unlocked(id,skill)?this.skillIcon(id,skill):'<span class="locked-skill-icon">'+ico('lock')+'</span>')+`<span data-cooldown="${id}-${j}"></span><small>${b.unlocked(id,skill)?SKILL_NAMES[id][skill]:'待解锁'}</small>`,()=>{if(!b.requestSkill(i,j))this.toast(b.unlocked(id,skill)?'技能冷却中或英雄已阵亡':SKILL_LEVELS[skill]+'级解锁');else {const error=this.port.mutate(()=>null);if(error){if(j)h.queued2=false;else h.queued=false;this.toast(error);}else this.toast('已加入释放队列');}},'skill-button '+(b.unlocked(id,skill)?'':'unavailable'))).join('')}</div></section>`;}).join('')}</div>${this.nav(this.page==='dungeon'?'dungeon':'adventure')}</div>`;}
  private skillIcon(id:number,index:number){const b=this.port.model();return this.img('ability'+(!b.unlocked(id,index)?3:index%2===1?1:id===0?index===0?0:2:id===2?5:id===1?4:2));}
  private performanceControls(){
   return `<div class="performance-controls">${this.button('性能测试：'+(this.performance.enabled?'开':'关'),()=>{
@@ -222,7 +255,7 @@ export class SecondEditionUI{
  private picker(slot:number){const b=this.port.model(),items=this.filtered(slot).filter(g=>b.owner(g.id)<0);this.popup('装备选择',this.filters(()=>this.picker(slot))+`<div class="equipment-scroll"><div class="five-grid">${items.map(g=>this.button(this.gear(g),()=>this.detail(g.id),'flat')).join('')}${Array.from({length:Math.max(0,20-items.length)},()=>'<div class="gear-tile empty"></div>').join('')}</div></div><div class="part-tabs labeled">${[-1,0,3,4,5,1,2].map(i=>this.button((i<0?ico('grid','outline-grid'):this.img('icon'+i))+`<small>${i<0?'全部':EQUIPMENT_PARTS[i]}</small>`,()=>this.picker(i),i===slot?'selected':'flat')).join('')}</div>`,'','large');}
  private gearRows(g:Gear,next?:Gear,random=false){const primary=gearPrimary(g),s=gearStats(g),after=next?gearStats(next):s;const rows=(['hp','attack','defense','power'] as const).filter(k=>(random?k!==primary:k===primary)&&s[k]>0).map(k=>this.row(GEAR_ATTRIBUTE_NAMES[k],next&&(!random||g.level%10===9)?this.arrow(s[k],after[k]):'+'+s[k],{hp:'attr0',attack:'attr1',defense:'attr2',power:'attr12'}[k])).join('');const affixes=random?COMBAT_KEYS.filter(k=>g.combat?.[k]).map(k=>this.row(COMBAT_LABELS[k],next&&g.level%10===9?this.arrow(Math.round(g.combat![k]!*10000)/100+'%',Math.round((next.combat?.[k]||0)*10000)/100+'%'):'+'+Math.round(g.combat![k]!*10000)/100+'%','attr'+(4+COMBAT_KEYS.indexOf(k)))).join(''):'';return rows+affixes||'<div class="info-pad compact">无</div>';}
  private detail(id:number){const b=this.port.model(),g=b.inventory.find(g=>g.id===id);if(!g)return;const owner=b.owner(id);this.popup('装备详情',`<div class="item-heading">${this.gear(g)}<div><h3>${gearName(g)}</h3><p class="quality-pill" style="--tone:${QUALITY_TEXT[g.quality]}">${QUALITY_NAMES[g.quality]} · ${EQUIPMENT_PARTS[g.slot]}</p><p class="pill">Lv.${g.level}${g.enhancement?' · 强化 +'+g.enhancement:''}</p></div>${this.button(this.img(g.locked?'lock':'unlock'),()=>this.run(m=>m.toggleLock(id),()=>this.detail(id)),'flat lock-button',false,g.locked?'解除锁定':'锁定装备')}</div>${this.divider()}`+this.section('基础属性')+this.gearRows(g)+this.section('随机属性')+this.gearRows(g,undefined,true)+`<h3 class="section-title effect"><span>${this.urls.effectStar?this.img('effectStar','section-mark'):ico('sparkle')}装备效果</span></h3>${g.effects?.length?g.effects.map(e=>`<div class="effect-line">${this.urls.healEffect?this.img('healEffect','effect-mark'):ico('refresh')}<span>${e==='attack'?'攻击力':'最大生命值'}提高<em>5%</em></span></div>`).join(''):'<div class="effect-line empty">暂无装备效果</div>'}${this.divider('sprig')}<small class="equip-owner">${owner>=0?'穿戴中：'+NAMES[owner]:'穿戴给：'+NAMES[this.selected]}</small>`,this.button('强化',()=>{this.close();this.upgradePage(id);},'peach')+this.button(owner>=0?'卸下':'穿戴',()=>this.run(m=>m.equip(owner>=0?owner:this.selected,owner>=0?null:id,g.slot),()=>{this.close();this.draw();})) );}
- private upgradePage(id:number){const b=this.port.model(),g=b.inventory.find(g=>g.id===id);if(!g)return;this.inSecondary=true;this.root.classList.remove('battle-mode');const breakthrough=g.level%10===9,cost=(g.quality+1)*(breakthrough?15:4),gold=g.level*(breakthrough?100:30),after=gearUpgradePreview(g);const need=(have:number,n:number)=>`<b><em class="${have>=n?'':'short'}">${have}</em>/${n}</b>`;this.content.innerHTML=`<div class="secondary upgrade-page"><div class="forge-scene" style="background-image:url('${this.urls.scene4}')">${this.wallet(false)}<h1 class="title-plaque plaque">${this.plate('装备强化')}</h1><div class="forge-item">${this.gear(g)}<div><h2>${gearName(g)}</h2><p class="quality-pill" style="--tone:${QUALITY_TEXT[g.quality]}">${QUALITY_NAMES[g.quality]} · ${EQUIPMENT_PARTS[g.slot]}</p></div></div>${this.img('icon'+g.slot,'forge-weapon')}</div><div class="upgrade-body"><h1 class="level-preview">${g.level>=100?'Lv.100 · 已达上限':'Lv.'+g.level+' '+ARROW_ICON+' <em>Lv.'+(g.level+1)+'</em>'}</h1>${this.section('基础属性')+this.gearRows(g,after)+this.section('随机属性')+this.gearRows(g,after,true)}${breakthrough?'<p class="breakthrough-note"><span>◇　突破提升基础属性与随机属性　◇</span></p>':''}<div class="upgrade-costs"><div><span class="cost-icon">${this.img('material')}</span>${need(b.materials,cost)}</div><div><span class="cost-icon">${this.img('icon6')}</span>${need(b.gold,gold)}</div>${this.button(g.level>=100?'已满级':breakthrough?'突破':'升级',()=>this.run(m=>m.upgradeGear(id),()=>this.upgradePage(id)),'',g.level>=100)}</div>${this.button('关闭',()=>this.draw(),'secondary-close')}</div></div>`;}
+ private upgradePage(id:number){const b=this.port.model(),g=b.inventory.find(g=>g.id===id);if(!g)return;this.inSecondary=true;const breakthrough=g.level%10===9,cost=(g.quality+1)*(breakthrough?15:4),gold=g.level*(breakthrough?100:30),after=gearUpgradePreview(g);const need=(have:number,n:number)=>`<b><em class="${have>=n?'':'short'}">${have}</em>/${n}</b>`;this.content.innerHTML=`<div class="secondary upgrade-page"><div class="forge-scene" style="background-image:url('${this.urls.scene4}')">${this.wallet(false)}<h1 class="title-plaque plaque">${this.plate('装备强化')}</h1><div class="forge-item">${this.gear(g)}<div><h2>${gearName(g)}</h2><p class="quality-pill" style="--tone:${QUALITY_TEXT[g.quality]}">${QUALITY_NAMES[g.quality]} · ${EQUIPMENT_PARTS[g.slot]}</p></div></div>${this.img('icon'+g.slot,'forge-weapon')}</div><div class="upgrade-body"><h1 class="level-preview">${g.level>=100?'Lv.100 · 已达上限':'Lv.'+g.level+' '+ARROW_ICON+' <em>Lv.'+(g.level+1)+'</em>'}</h1>${this.section('基础属性')+this.gearRows(g,after)+this.section('随机属性')+this.gearRows(g,after,true)}${breakthrough?'<p class="breakthrough-note"><span>◇　突破提升基础属性与随机属性　◇</span></p>':''}<div class="upgrade-costs"><div><span class="cost-icon">${this.img('material')}</span>${need(b.materials,cost)}</div><div><span class="cost-icon">${this.img('icon6')}</span>${need(b.gold,gold)}</div>${this.button(g.level>=100?'已满级':breakthrough?'突破':'升级',()=>this.run(m=>m.upgradeGear(id),()=>this.upgradePage(id)),'',g.level>=100)}</div>${this.button('关闭',()=>this.draw(),'secondary-close')}</div></div>`;}
  private bag(){const b=this.port.model(),items=this.filtered(),cap=Math.max(b.interfaceProgress.capacity,b.inventory.length),cost=500*(1+Math.floor((b.interfaceProgress.capacity-200)/50));return `<div class="page bag-page" style="--scene:url('${this.urls.scene5}')">${this.wallet(false)}<div class="main-tabs">${['装备','材料','道具'].map((t,i)=>this.button(t,()=>{this.category=i;this.draw();},i===this.category?'selected':'quiet')).join('')}</div>${this.category===0?`<div class="part-tabs">${[-1,0,1,2,3,4,5].map(i=>this.button(i<0?ico('grid','outline-grid'):this.img('icon'+i),()=>{this.part=i;this.draw();},i===this.part?'selected':'quiet',false,i<0?'全部':EQUIPMENT_PARTS[i])).join('')}</div>${this.filters(()=>{this.close();this.draw();})}`:''}<div class="bag-scroll cream-card"><div class="five-grid">${this.category===0?items.map(g=>this.button(this.gear(g),()=>this.detail(g.id),'flat')).join('')+Array.from({length:Math.max(0,25-items.length)},()=>'<div class="gear-tile empty"></div>').join(''):this.category===1?this.reward(7,b.materials,'强化石'):'<p class="empty-message">暂无道具</p>'}</div></div><div class="bag-footer"><b>容量 ${b.inventory.length}/${cap}</b>${this.button(ico('plus')+this.img('icon6')+cost+' 扩容',()=>this.confirm('提示',`是否消耗 ${this.img('icon6','inline-icon')} <b>${cost}</b><br>将背包容量扩充至 <b>${b.interfaceProgress.capacity+50}</b> 格？<small>当前容量 ${b.inventory.length}/${cap}</small>`,()=>this.run(m=>m.expandBag(),()=>this.draw())),'quiet expand-button')}${this.button('批量分解',()=>this.salvage(),'salvage-button')}</div>${this.nav('bag')}</div>`;}
  private salvage(){
   const model=this.port.model();
@@ -302,61 +335,61 @@ export class SecondEditionUI{
  private rewards(items:string){this.popup('恭喜获得',this.rewardViewport(items),'','fullscreen rewards-fullscreen');}
  /** Formation slot placement: front row on the right, back row on the left (rates come from FORMATIONS). */
  private placement(rates:number[]){const even=Math.max(...rates)-Math.min(...rates)<5;if(even)return [{x:83,y:67,front:true},{x:50,y:67,front:false},{x:17,y:67,front:false}];if(rates[1]>=rates[0]*.9)return [{x:70,y:41,front:true},{x:70,y:80,front:true},{x:28,y:60,front:false}];return [{x:74,y:66,front:true},{x:43,y:45,front:false},{x:19,y:74,front:false}];}
- private formation(){const b=this.port.battle();let draft=b.formation.slice(),preset=this.port.model().interfaceProgress.preset;this.inSecondary=true;this.root.classList.remove('battle-mode');this.backdrop.style.display='none';
+ private formation(){const b=this.port.battle();let draft=b.formation.slice(),preset=this.port.model().interfaceProgress.preset;this.inSecondary=true;this.fieldObserver.disconnect();
   const render=()=>{const f=FORMATIONS[this.port.model().interfaceProgress.formation],place=this.placement(f.rates);this.content.innerHTML=`<div class="secondary formation-page"><div class="formation-scene" data-formation="${this.port.model().interfaceProgress.formation}" style="background-image:url('${this.urls['v2-formation-yard-v4']}')"><h1 class="title-plaque plaque">${this.plate('编队')}</h1><div class="standing-heroes">${[0,1,2].map(slot=>{const p=place[slot],style=`left:${p.x}%;top:${p.y}%`;return draft[slot]===undefined?this.button('＋',()=>this.toast('点击下方英雄卡片上阵'),'empty-position" style="'+style,false,'空位'):this.button(`<span class="role-tag">${this.roleBadge(draft[slot])}${NAMES[draft[slot]]} · ${ROLES[draft[slot]]}</span><span class="formation-actor">${this.face(draft[slot])}</span><span class="row-plaque">${p.front?'前排':'后排'}</span><small>受击率 ${f.rates[slot]}%</small>`,()=>{draft.splice(slot,1);render();},'standing '+(p.front?'front':'back')+'" style="'+style,false,NAMES[draft[slot]]);}).join('')}</div></div><div class="formation-sheet"><div class="formation-toolbar"><b>已上阵 ${draft.length}/3</b><i></i><div class="preset-buttons">${[0,1,2,3].map(i=>this.button(String(i+1),()=>{preset=i;draft=this.port.model().interfaceProgress.presets[i].filter(id=>this.port.model().owns(id));render();},i===preset?'selected':'quiet')).join('')}</div><i></i><span class="formation-name">${f.name}</span>${this.button('<svg class="formation-layout-icon" viewBox="0 0 40 36" aria-hidden="true"><path d="M20 7 7 28h26L20 7" fill="none" stroke="currentColor" stroke-width="2.3"/><g fill="#ffe46a" stroke="currentColor" stroke-width="2.3"><circle cx="20" cy="7" r="5"/><circle cx="7" cy="28" r="5"/><circle cx="33" cy="28" r="5"/></g></svg>阵型选择',()=>this.formationTypes(render))}</div><div class="roster-grid">${HERO_CONFIG.map((h,id)=>this.button(this.heroCard(id,{deployed:draft.indexOf(id)>=0}),()=>{if(!this.port.model().owns(id)){this.toast('请先招募该英雄');return;}const i=draft.indexOf(id);if(i>=0)draft.splice(i,1);else if(draft.length<3)draft.push(id);else this.toast('最多上阵三名英雄，请先移除一位');render();},'flat',false,NAMES[id])).join('')}</div></div>${this.button('关闭',()=>{if(!draft.length){this.toast('至少上阵一名英雄');return;}const error=this.port.formation(draft);if(error){this.toast(error);return;}this.run(m=>{m.interfaceProgress.presets[preset]=draft.slice();m.interfaceProgress.preset=preset;return null;},()=>this.port.navigate(this.page));},'secondary-close')}</div>`;};render();}
  private formationTypes(back:()=>void,pick=this.port.model().interfaceProgress.formation){const team=this.port.battle().formation,heroes=[0,1,2].map(n=>team[n]??[0,1,2].filter(i=>team.indexOf(i)<0)[n-team.length]??n);this.popup('阵型选择',`<div class="two-grid formation-types">${FORMATIONS.map((f,i)=>{const place=i===2?[{x:50,y:25},{x:24,y:75},{x:76,y:75}]:i===1?[{x:73,y:25},{x:73,y:75},{x:26,y:50}]:[{x:73,y:50},{x:26,y:25},{x:26,y:75}];return this.button(`<header>${ico(['shield','sword','people','bolt'][i])}<h3>${f.name}</h3><small>后排 ➜ 前排</small><i class="radio ${pick===i?'on':''}">${pick===i?ico('check'):''}</i></header><div class="formation-mini">${[0,1,2].map(n=>`<div style="left:${place[n].x}%;top:${place[n].y}%">${this.face(heroes[n])}<b>受击率 ${f.rates[n]}%</b></div>`).join('')}</div>`,()=>this.formationTypes(back,i),'flat formation-option '+(pick===i?'picked':''),false,f.name);}).join('')}</div><p class="formation-note">${ico('leaf')}受击率决定敌人普通攻击的目标概率${ico('leaf','mirror')}</p>`,this.button('使用阵型',()=>this.run(m=>{m.interfaceProgress.formation=pick;return null;},()=>{this.port.battle().interfaceProgress.formation=pick;this.close();back();}),'wide'),'large');}
+ private syncBattleHud(hud:HTMLElement){
+  const battle=this.port.battle();
+  setText(hud.querySelector('[data-live="checkpoint"]'),'下一检查点 · 第'+Math.ceil(battle.wave/10)*10+'波');
+  const unit=this.page==='dungeon'&&this.port.model().dungeon.run?.id===5?'关':'波';
+  setText(hud.querySelector('[data-live="wave"]'),'第'+battle.wave+unit);
+  const progress=hud.querySelector<HTMLElement>('.checkpoint');
+  const completed=(battle.wave-1)%10;
+  if(progress&&progress.getAttribute('aria-valuenow')!==String(completed)){
+   progress.style.setProperty('--progress',String(completed/10));
+   progress.setAttribute('aria-valuenow',String(completed));
+   progress.querySelectorAll('i').forEach((node,i)=>node.classList.toggle('passed',i*2<=completed));
+  }
+  hud.querySelectorAll<HTMLElement>('[data-turn]').forEach(node=>{
+   const i=Number(node.dataset.turn);
+   node.classList.toggle('turn-current',battle.nextActor===i);
+   if(i>=3){
+    const image=node.querySelector('img'),source=this.urls['monster'+battle.enemies[i-3].kind];
+    if(image&&image.src!==source)image.src=source;
+   }
+  });
+  battle.formation.forEach(id=>{
+   const hero=battle.heroes[id],max=battle.stats(id).hp;
+   const bar=hud.querySelector<HTMLElement>(`[data-hp="${id}"]`),width=Math.max(0,hero.hp/max*100)+'%';
+   if(bar&&bar.style.width!==width)bar.style.width=width;
+   setText(hud.querySelector(`[data-hp-label="${id}"] span`),hero.hp+'/'+max);
+   const shield=hud.querySelector(`[data-shield="${id}"]`);
+   if(shield){
+    if(hero.shield>0){
+     const value=shield.querySelector('span');
+     if(value)setText(value,String(hero.shield));
+     else shield.innerHTML=this.resourceIcon('shield')+'<span>'+hero.shield+'</span>';
+    }else if(shield.firstChild)shield.textContent='';
+   }
+   const cooldowns=[hero.cooldown,hero.cooldown2],queued=[hero.queued,hero.queued2];
+   for(let i=0;i<2;i++)setText(hud.querySelector(`[data-cooldown="${id}-${i}"]`),queued[i]?'待释放':cooldowns[i]>0?cooldowns[i].toFixed(1):'');
+  });
+ }
  update(){
   const now=performance.now();
   if(now-this.lastUpdate<50)return;
   this.lastUpdate=now;
   const model=this.port.model();
-  const setText=(node:Element|null|undefined,value:string)=>{if(node&&node.textContent!==value)node.textContent=value;};
   this.content.querySelectorAll('.wallet').forEach(wallet=>{
    const values=wallet.querySelectorAll('.resource b');
    setText(values[0],String(model.gold));
    if(values[1]&&!wallet.querySelector('.ticket-resource'))setText(values[1],model.dungeon.stamina+'/120');
   });
   const hud=this.content.querySelector<HTMLElement>('.battle-hud');
-  if(hud){
-   const battle=this.port.battle();
-   setText(hud.querySelector('[data-live="checkpoint"]'),'下一检查点 · 第'+Math.ceil(battle.wave/10)*10+'波');
-   const unit=this.page==='dungeon'&&model.dungeon.run?.id===5?'关':'波';
-   setText(hud.querySelector('[data-live="wave"]'),'第'+battle.wave+unit);
-   const progress=hud.querySelector<HTMLElement>('.checkpoint');
-   const completed=(battle.wave-1)%10;
-   if(progress&&progress.getAttribute('aria-valuenow')!==String(completed)){
-    progress.style.setProperty('--progress',String(completed/10));
-    progress.setAttribute('aria-valuenow',String(completed));
-    progress.querySelectorAll('i').forEach((node,i)=>node.classList.toggle('passed',i*2<=completed));
-   }
-   hud.querySelectorAll<HTMLElement>('[data-turn]').forEach(node=>{
-    const i=Number(node.dataset.turn);
-    node.classList.toggle('turn-current',battle.nextActor===i);
-    if(i>=3){
-     const image=node.querySelector('img'),source=this.urls['monster'+battle.enemies[i-3].kind];
-     if(image&&image.src!==source)image.src=source;
-    }
-   });
-   battle.formation.forEach(id=>{
-    const hero=battle.heroes[id],max=battle.stats(id).hp;
-    const bar=hud.querySelector<HTMLElement>(`[data-hp="${id}"]`),width=Math.max(0,hero.hp/max*100)+'%';
-    if(bar&&bar.style.width!==width)bar.style.width=width;
-    setText(hud.querySelector(`[data-hp-label="${id}"] span`),hero.hp+'/'+max);
-    const shield=hud.querySelector(`[data-shield="${id}"]`);
-    if(shield){
-     if(hero.shield>0){
-      const value=shield.querySelector('span');
-      if(value)setText(value,String(hero.shield));
-      else shield.innerHTML=this.resourceIcon('shield')+'<span>'+hero.shield+'</span>';
-     }else if(shield.firstChild)shield.textContent='';
-    }
-    const cooldowns=[hero.cooldown,hero.cooldown2],queued=[hero.queued,hero.queued2];
-    for(let i=0;i<2;i++)setText(hud.querySelector(`[data-cooldown="${id}-${i}"]`),queued[i]?'待释放':cooldowns[i]>0?cooldowns[i].toFixed(1):'');
-   });
-  }
+  if(hud)this.syncBattleHud(hud);
  const receipt=this.port.model().dungeon.run?.receipt;if(receipt&&this.page==='dungeon'&&this.port.battle()!==this.port.model()){const key=JSON.stringify(receipt);if(this.lastReceipt!==key){this.lastReceipt=key;this.draw();this.result();}}else if(!receipt)this.lastReceipt='';
  const off=this.port.model().offline;if(off&&off!==this.lastOffline&&!this.modal.childElementCount&&!this.inSecondary){this.lastOffline=off;this.offline();}
  }
  private result(){const b=this.port.battle(),r=this.port.model().dungeon.run!,p=r.receipt!;this.popup(r.id===5?'无尽结算':b.result==='victory'?'挑战胜利':'挑战失败',`<p class="pool-name">${DUNGEONS[r.id].name} · ${DIFFICULTIES[r.difficulty]}</p><p class="result-line">通关 <em>${p.cleared}</em> ${r.id===5?'关':'波'} · 用时 ${Math.floor(b.elapsed)}秒</p>`+this.section('获得奖励')+this.rewardViewport(this.reward(6,p.gold,'金币',4)+this.reward(7,p.experience,'每位英雄经验')+this.reward(7,p.materials,'强化石')+(p.gear?this.reward(0,p.gear,'装备',3):''))+this.section('战斗统计')+b.formation.map(id=>this.row(NAMES[id],'伤害 '+b.heroes[id].damage+' / 治疗 '+b.heroes[id].healing,ROLE_ICONS[id])).join(''),this.button('退出',()=>{this.close();this.port.exit();this.draw();},'peach')+this.button('再次挑战',()=>{this.close();this.port.retry();this.lastReceipt='';this.draw();}),'large');}
- destroy(){this.performance.stop();this.derivedArt.forEach(url=>URL.revokeObjectURL(url));this.listObserver?.disconnect();this.root.remove();this.backdrop.remove();document.getElementById('second-edition-style')?.remove();document.removeEventListener('keydown',this.onKey);clearTimeout(this.toastTimer);}
+ destroy(){this.performance.stop();this.derivedArt.forEach(url=>URL.revokeObjectURL(url));this.listObserver?.disconnect();this.fieldObserver.disconnect();this.root.remove();this.backdrop.remove();document.getElementById('second-edition-style')?.remove();document.removeEventListener('keydown',this.onKey);clearTimeout(this.toastTimer);}
 }

@@ -8,6 +8,7 @@ for (const image of images) {
   }
 }
 if(settings.splashScreen.totalTime!==0||settings.splashScreen.logo)throw Error('Cocos splash must be disabled');
+if(settings.engine.macros.ENABLE_TRANSPARENT_CANVAS!==true)throw Error('The persistent forest requires a transparent WebGL canvas');
 if(images.length!==art.files.length)throw Error('Incomplete startup art manifest');
 for(const f of images){const entry=art.files.find(a=>a.path===f.path);if(!entry||entry.sha256!==f.sha256||entry.bytes!==f.bytes)throw Error('Incorrect startup art hash: '+f.path);}
 if(!fs.readFileSync(path.join(root,'index.html'),'utf8').includes('id="s6-boot"'))throw Error('Missing startup screen');

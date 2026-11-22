@@ -7,6 +7,8 @@ fs.cpSync(path.join(source,'art'),path.join(out,'boot/art'),{recursive:true});
 const settingsFile=path.join(out,'src/settings.json');
 const settings=JSON.parse(fs.readFileSync(settingsFile,'utf8'));
 settings.splashScreen={totalTime:0,logo:null,background:null};
+// The forest is painted below WebGL so it survives canvas clears and page swaps.
+settings.engine.macros.ENABLE_TRANSPARENT_CANVAS=true;
 fs.writeFileSync(settingsFile,JSON.stringify(settings,null,2));
 const files=[];
 function walk(dir){for(const ent of fs.readdirSync(dir,{withFileTypes:true})){
