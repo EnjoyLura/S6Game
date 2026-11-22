@@ -78,6 +78,13 @@ export class SecondEditionUI{
   document.addEventListener('keydown',this.onKey);
   this.draw();window.dispatchEvent(new Event('resize'));
  }
+ /** Decode every derived icon/background too, including pages not yet opened. */
+ async waitForArt(){
+  const urls=Array.from(new Set(Object.keys(this.urls).map(key=>this.urls[key])));let next=0;
+  await Promise.all(Array.from({length:8},async()=>{
+   while(next<urls.length){const image=new Image();image.src=urls[next++];await image.decode();}
+  }));
+ }
  private source(t:Texture2D){const i:any=t.image;return i?.nativeAsset?.src||i?.data?.src||i?.nativeUrl||'';}
  private crop(t:Texture2D,x:number,y:number,w:number,h:number){const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d')!;const img:any=t.image.data;ctx.drawImage(img,x,y,w,h,0,0,w,h);return canvas.toDataURL('image/png');}
  private fitArt(source:CanvasImageSource,width:number,height:number,padding=.06,resolution=256){const raw=document.createElement('canvas');raw.width=width;raw.height=height;const ctx=raw.getContext('2d')!;ctx.drawImage(source,0,0,width,height);const pixels=ctx.getImageData(0,0,width,height).data;let left=width,top=height,right=0,bottom=0;for(let y=0;y<height;y++)for(let x=0;x<width;x++)if(pixels[(y*width+x)*4+3]>32){left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}if(left>right)return raw.toDataURL();const out=document.createElement('canvas');out.width=out.height=resolution;const c=out.getContext('2d')!,w=right-left+1,h=bottom-top+1,scale=resolution*(1-padding*2)/Math.max(w,h);c.drawImage(raw,left,top,w,h,(resolution-w*scale)/2,(resolution-h*scale)/2,w*scale,h*scale);return out.toDataURL();}

@@ -1,0 +1,477 @@
+{
+  "files": 49,
+  "totals": {
+    "original": 46184195,
+    "lossless": 33737248,
+    "q92": 7208264,
+    "75pct_q92": 5020360,
+    "mixed": 19355514
+  },
+  "rgbaBytes": 195516716,
+  "backgrounds": [
+    "forest.png",
+    "training-yard.png",
+    "v2-backgrounds.png",
+    "v2-battle-forest.png",
+    "v2-feature-scenes.png",
+    "v2-forge-scene.png",
+    "v2-formation-yard-v4.png",
+    "v2-summon-scene.png",
+    "v2-up-scene-v3.png"
+  ],
+  "characters": [
+    "actors.png",
+    "hero-archer.png",
+    "hero-knight.png",
+    "hero-mage.png",
+    "hero-priest.png",
+    "monsters-4.png",
+    "v2-hero-archer.png",
+    "v2-hero-knight.png",
+    "v2-hero-mage.png",
+    "v2-hero-priest.png"
+  ],
+  "rows": [
+    {
+      "name": "actors.png",
+      "width": 1774,
+      "height": 887,
+      "original": 632582,
+      "lossless": 390196,
+      "q92": 112896,
+      "75pct_q92": 81188
+    },
+    {
+      "name": "adventure-ui-v5.png",
+      "width": 887,
+      "height": 1774,
+      "original": 2122954,
+      "lossless": 1680918,
+      "q92": 304388,
+      "75pct_q92": 214366
+    },
+    {
+      "name": "bag-ui-v4.png",
+      "width": 953,
+      "height": 1651,
+      "original": 1819987,
+      "lossless": 1346712,
+      "q92": 215014,
+      "75pct_q92": 148136
+    },
+    {
+      "name": "dungeon-ui-v2.png",
+      "width": 953,
+      "height": 1651,
+      "original": 2062539,
+      "lossless": 1654320,
+      "q92": 302252,
+      "75pct_q92": 206118
+    },
+    {
+      "name": "forest.png",
+      "width": 1086,
+      "height": 1448,
+      "original": 1965350,
+      "lossless": 1635392,
+      "q92": 249114,
+      "75pct_q92": 174192
+    },
+    {
+      "name": "hero-archer.png",
+      "width": 1254,
+      "height": 1254,
+      "original": 1083869,
+      "lossless": 667432,
+      "q92": 127414,
+      "75pct_q92": 91858
+    },
+    {
+      "name": "hero-knight.png",
+      "width": 1254,
+      "height": 1254,
+      "original": 818203,
+      "lossless": 489324,
+      "q92": 113034,
+      "75pct_q92": 81774
+    },
+    {
+      "name": "hero-mage.png",
+      "width": 1254,
+      "height": 1254,
+      "original": 789860,
+      "lossless": 515640,
+      "q92": 126770,
+      "75pct_q92": 88816
+    },
+    {
+      "name": "hero-priest.png",
+      "width": 1254,
+      "height": 1254,
+      "original": 763953,
+      "lossless": 471794,
+      "q92": 117802,
+      "75pct_q92": 84044
+    },
+    {
+      "name": "hero-ui-v6.png",
+      "width": 887,
+      "height": 1774,
+      "original": 1979717,
+      "lossless": 1486420,
+      "q92": 271640,
+      "75pct_q92": 188386
+    },
+    {
+      "name": "modal-controls-9.png",
+      "width": 1254,
+      "height": 1254,
+      "original": 843532,
+      "lossless": 512984,
+      "q92": 226984,
+      "75pct_q92": 153162
+    },
+    {
+      "name": "modal-skin-v1.png",
+      "width": 952,
+      "height": 1652,
+      "original": 1623113,
+      "lossless": 861364,
+      "q92": 88798,
+      "75pct_q92": 60026
+    },
+    {
+      "name": "monsters-4.png",
+      "width": 1254,
+      "height": 1254,
+      "original": 778862,
+      "lossless": 482724,
+      "q92": 139184,
+      "75pct_q92": 97810
+    },
+    {
+      "name": "recruit-ui-v1.png",
+      "width": 1774,
+      "height": 887,
+      "original": 1783050,
+      "lossless": 1294088,
+      "q92": 231522,
+      "75pct_q92": 158622
+    },
+    {
+      "name": "training-yard.png",
+      "width": 1254,
+      "height": 1254,
+      "original": 1785657,
+      "lossless": 1394170,
+      "q92": 161014,
+      "75pct_q92": 114282
+    },
+    {
+      "name": "v2-attribute-icons.png",
+      "width": 896,
+      "height": 256,
+      "original": 43242,
+      "lossless": 23034,
+      "q92": 23332,
+      "75pct_q92": 23792
+    },
+    {
+      "name": "v2-backgrounds.png",
+      "width": 1024,
+      "height": 1536,
+      "original": 2282477,
+      "lossless": 1860734,
+      "q92": 399078,
+      "75pct_q92": 269176
+    },
+    {
+      "name": "v2-battle-forest.png",
+      "width": 1122,
+      "height": 1402,
+      "original": 1833568,
+      "lossless": 1422962,
+      "q92": 248462,
+      "75pct_q92": 167816
+    },
+    {
+      "name": "v2-celebration.png",
+      "width": 574,
+      "height": 300,
+      "original": 155556,
+      "lossless": 121512,
+      "q92": 56670,
+      "75pct_q92": 38126
+    },
+    {
+      "name": "v2-close-v3.png",
+      "width": 363,
+      "height": 369,
+      "original": 161811,
+      "lossless": 111870,
+      "q92": 30268,
+      "75pct_q92": 20668
+    },
+    {
+      "name": "v2-controls.png",
+      "width": 1265,
+      "height": 1243,
+      "original": 958195,
+      "lossless": 545708,
+      "q92": 129694,
+      "75pct_q92": 85252
+    },
+    {
+      "name": "v2-feature-scenes.png",
+      "width": 900,
+      "height": 1080,
+      "original": 1684228,
+      "lossless": 1380670,
+      "q92": 309728,
+      "75pct_q92": 217016
+    },
+    {
+      "name": "v2-forge-scene.png",
+      "width": 1411,
+      "height": 1115,
+      "original": 1893168,
+      "lossless": 1424930,
+      "q92": 214948,
+      "75pct_q92": 151504
+    },
+    {
+      "name": "v2-formation-yard-v4.png",
+      "width": 1536,
+      "height": 1024,
+      "original": 1696138,
+      "lossless": 1194428,
+      "q92": 146548,
+      "75pct_q92": 103434
+    },
+    {
+      "name": "v2-hero-archer.png",
+      "width": 640,
+      "height": 640,
+      "original": 340022,
+      "lossless": 245022,
+      "q92": 78662,
+      "75pct_q92": 54524
+    },
+    {
+      "name": "v2-hero-knight.png",
+      "width": 640,
+      "height": 640,
+      "original": 340340,
+      "lossless": 237024,
+      "q92": 71826,
+      "75pct_q92": 49392
+    },
+    {
+      "name": "v2-hero-mage.png",
+      "width": 640,
+      "height": 640,
+      "original": 361628,
+      "lossless": 272920,
+      "q92": 80588,
+      "75pct_q92": 54846
+    },
+    {
+      "name": "v2-hero-marks.png",
+      "width": 1728,
+      "height": 192,
+      "original": 234073,
+      "lossless": 132394,
+      "q92": 70684,
+      "75pct_q92": 64784
+    },
+    {
+      "name": "v2-hero-priest.png",
+      "width": 640,
+      "height": 640,
+      "original": 293934,
+      "lossless": 211080,
+      "q92": 62530,
+      "75pct_q92": 43618
+    },
+    {
+      "name": "v2-icons.png",
+      "width": 1263,
+      "height": 1246,
+      "original": 1023318,
+      "lossless": 715180,
+      "q92": 247662,
+      "75pct_q92": 170960
+    },
+    {
+      "name": "v2-navigation-polished.png",
+      "width": 1254,
+      "height": 1254,
+      "original": 838589,
+      "lossless": 565770,
+      "q92": 178650,
+      "75pct_q92": 123280
+    },
+    {
+      "name": "v2-navigation.png",
+      "width": 1254,
+      "height": 1254,
+      "original": 1426954,
+      "lossless": 1003016,
+      "q92": 296262,
+      "75pct_q92": 205918
+    },
+    {
+      "name": "v2-popup-buttons.png",
+      "width": 288,
+      "height": 224,
+      "original": 74262,
+      "lossless": 49372,
+      "q92": 11768,
+      "75pct_q92": 9858
+    },
+    {
+      "name": "v2-popup-frame.png",
+      "width": 640,
+      "height": 889,
+      "original": 522660,
+      "lossless": 330892,
+      "q92": 14888,
+      "75pct_q92": 9702
+    },
+    {
+      "name": "v2-popup-marks.png",
+      "width": 896,
+      "height": 128,
+      "original": 111103,
+      "lossless": 70632,
+      "q92": 36018,
+      "75pct_q92": 32366
+    },
+    {
+      "name": "v2-recruit-title.png",
+      "width": 573,
+      "height": 257,
+      "original": 159591,
+      "lossless": 118096,
+      "q92": 40930,
+      "75pct_q92": 27172
+    },
+    {
+      "name": "v2-resource-symbols.png",
+      "width": 1254,
+      "height": 1254,
+      "original": 985803,
+      "lossless": 689144,
+      "q92": 228930,
+      "75pct_q92": 160046
+    },
+    {
+      "name": "v2-result-title-v6.png",
+      "width": 1702,
+      "height": 605,
+      "original": 731118,
+      "lossless": 590570,
+      "q92": 267354,
+      "75pct_q92": 178980
+    },
+    {
+      "name": "v2-skills.png",
+      "width": 1254,
+      "height": 1254,
+      "original": 1886231,
+      "lossless": 1326858,
+      "q92": 323174,
+      "75pct_q92": 226176
+    },
+    {
+      "name": "v2-sprout-left-v3.png",
+      "width": 438,
+      "height": 319,
+      "original": 91764,
+      "lossless": 64974,
+      "q92": 22954,
+      "75pct_q92": 15620
+    },
+    {
+      "name": "v2-sprout-right-v3.png",
+      "width": 420,
+      "height": 314,
+      "original": 81387,
+      "lossless": 58466,
+      "q92": 21832,
+      "75pct_q92": 14656
+    },
+    {
+      "name": "v2-status-heart.png",
+      "width": 256,
+      "height": 256,
+      "original": 56814,
+      "lossless": 40874,
+      "q92": 14448,
+      "75pct_q92": 10290
+    },
+    {
+      "name": "v2-status-shield.png",
+      "width": 256,
+      "height": 256,
+      "original": 60986,
+      "lossless": 44886,
+      "q92": 15090,
+      "75pct_q92": 10464
+    },
+    {
+      "name": "v2-summon-scene.png",
+      "width": 948,
+      "height": 1659,
+      "original": 2236864,
+      "lossless": 1852402,
+      "q92": 346490,
+      "75pct_q92": 234244
+    },
+    {
+      "name": "v2-talent-marks.png",
+      "width": 1344,
+      "height": 192,
+      "original": 374353,
+      "lossless": 256374,
+      "q92": 78118,
+      "75pct_q92": 63712
+    },
+    {
+      "name": "v2-title-plaque-v3.png",
+      "width": 704,
+      "height": 154,
+      "original": 117661,
+      "lossless": 83932,
+      "q92": 24226,
+      "75pct_q92": 16236
+    },
+    {
+      "name": "v2-title-plaque.png",
+      "width": 562,
+      "height": 174,
+      "original": 115892,
+      "lossless": 81496,
+      "q92": 22244,
+      "75pct_q92": 15080
+    },
+    {
+      "name": "v2-up-badge.png",
+      "width": 503,
+      "height": 281,
+      "original": 156377,
+      "lossless": 119202,
+      "q92": 38014,
+      "75pct_q92": 25440
+    },
+    {
+      "name": "v2-up-scene-v3.png",
+      "width": 941,
+      "height": 1672,
+      "original": 2000860,
+      "lossless": 1607346,
+      "q92": 268368,
+      "75pct_q92": 183432
+    }
+  ]
+}

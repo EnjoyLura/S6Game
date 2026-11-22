@@ -1,0 +1,369 @@
+{
+  "checks": [
+    {
+      "name": "cold-complete",
+      "stats": {
+        "total": 53,
+        "loaded": 53,
+        "cacheHits": 0,
+        "downloads": 53,
+        "bytes": 46496275,
+        "cacheAvailable": true
+      }
+    },
+    {
+      "name": "warm-no-image-network",
+      "stats": {
+        "total": 53,
+        "loaded": 53,
+        "cacheHits": 53,
+        "downloads": 0,
+        "bytes": 46496275,
+        "cacheAvailable": true
+      }
+    },
+    {
+      "name": "corrupt-cache-repaired",
+      "stats": {
+        "total": 53,
+        "loaded": 53,
+        "cacheHits": 52,
+        "downloads": 1,
+        "bytes": 46496275,
+        "cacheAvailable": true
+      }
+    },
+    {
+      "name": "changed-content-hash",
+      "stats": {
+        "total": 53,
+        "loaded": 53,
+        "cacheHits": 52,
+        "downloads": 1,
+        "bytes": 46496276,
+        "cacheAvailable": true
+      }
+    },
+    {
+      "name": "failure-retry",
+      "stats": {
+        "total": 53,
+        "loaded": 53,
+        "cacheHits": 52,
+        "downloads": 1,
+        "bytes": 46496275,
+        "cacheAvailable": true
+      }
+    },
+    {
+      "name": "storage-unavailable",
+      "stats": {
+        "total": 53,
+        "loaded": 53,
+        "cacheHits": 0,
+        "downloads": 53,
+        "bytes": 46496275,
+        "cacheAvailable": false
+      }
+    },
+    {
+      "name": "storage-full",
+      "stats": {
+        "total": 53,
+        "loaded": 53,
+        "cacheHits": 0,
+        "downloads": 53,
+        "bytes": 46496275,
+        "cacheAvailable": false
+      }
+    },
+    {
+      "name": "github-pages-release-subpath",
+      "stats": {
+        "total": 53,
+        "loaded": 53,
+        "cacheHits": 0,
+        "downloads": 53,
+        "bytes": 46496275,
+        "cacheAvailable": true
+      }
+    }
+  ],
+  "progressSamples": [
+    {
+      "value": 0,
+      "game": false
+    },
+    {
+      "value": 3,
+      "loaded": 5,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 8,
+      "loaded": 6,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 10,
+      "loaded": 7,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 13,
+      "loaded": 8,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 15,
+      "loaded": 9,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 17,
+      "loaded": 11,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 18,
+      "loaded": 13,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 22,
+      "loaded": 14,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 25,
+      "loaded": 15,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 28,
+      "loaded": 17,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 29,
+      "loaded": 18,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 32,
+      "loaded": 19,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 36,
+      "loaded": 20,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 38,
+      "loaded": 21,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 41,
+      "loaded": 23,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 43,
+      "loaded": 24,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 44,
+      "loaded": 27,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 46,
+      "loaded": 28,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 50,
+      "loaded": 29,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 53,
+      "loaded": 30,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 55,
+      "loaded": 31,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 56,
+      "loaded": 32,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 57,
+      "loaded": 33,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 60,
+      "loaded": 34,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 63,
+      "loaded": 36,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 64,
+      "loaded": 37,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 66,
+      "loaded": 39,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 70,
+      "loaded": 41,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 74,
+      "loaded": 42,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 78,
+      "loaded": 43,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 80,
+      "loaded": 45,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 81,
+      "loaded": 46,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 82,
+      "loaded": 49,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 83,
+      "loaded": 50,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 87,
+      "loaded": 52,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 88,
+      "loaded": 53,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 89,
+      "loaded": 53,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 90,
+      "loaded": 53,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 91,
+      "loaded": 53,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 92,
+      "loaded": 53,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 93,
+      "loaded": 53,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 94,
+      "loaded": 53,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 95,
+      "loaded": 53,
+      "total": 53,
+      "game": false
+    },
+    {
+      "value": 96,
+      "loaded": 53,
+      "total": 53,
+      "game": true
+    },
+    {
+      "value": 100,
+      "loaded": 53,
+      "total": 53,
+      "game": true
+    }
+  ],
+  "errors": []
+}
