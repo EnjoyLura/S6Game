@@ -86,3 +86,5 @@ title = Image.open(SOURCE / '招募结果艺术字-v6.png').convert('RGBA')
 bounds = title.getchannel('A').point(lambda a: 255 if a > 40 else 0).getbbox()
 assert bounds, 'recruitment display title'
 title.crop(bounds).save(DEST / 'v2-result-title-v6.png', optimize=True)
+
+copyfile(SOURCE / '编队训练场-v4.png', DEST / 'v2-formation-yard-v4.png')

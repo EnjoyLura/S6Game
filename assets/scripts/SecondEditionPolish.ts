@@ -281,12 +281,12 @@ export const SECOND_EDITION_POLISH = `
 #s6-v2 .result-cards.single{width:29cqw;margin:12cqw auto 0;position:relative;isolation:isolate}
 #s6-v2 .result-cards.single:before{content:'';position:absolute;inset:-10cqw -14cqw;z-index:-1;pointer-events:none;background:radial-gradient(ellipse,#ffc84e66,transparent 65%),repeating-conic-gradient(from 12deg,#ffdd7c00 0deg 22deg,#ffdd7c50 23deg 31deg,#ffdd7c00 32deg 45deg);mask-image:radial-gradient(ellipse,#000 15%,transparent 69%)}
 #s6-v2 .result-cards.single:after{content:'✦';position:absolute;left:-8cqw;top:24%;font-size:5cqw;color:#fff5cd;text-shadow:0 0 1cqw #ffd06b,38cqw 14cqw 0 #fff5cd,38cqw 14cqw 1cqw #ffc54d;pointer-events:none}
-#s6-v2 .result-cards .hero-card{padding:.65cqw .65cqw 1.05cqw;border:.3cqw solid #fff8e8;border-radius:2.8cqw;gap:.45cqw;background:linear-gradient(135deg,#fff4e2,#ffdfbd);box-shadow:0 .25cqw .1cqw #d89560,0 0 .5cqw #fff0c4,0 .5cqw 1cqw #1a142b55;overflow:visible}
-#s6-v2 .result-cards .hero-card .portrait{aspect-ratio:.92;border-radius:1.8cqw;background:linear-gradient(130deg,#ffffff40,transparent 55%),var(--quality)}
-#s6-v2 .result-cards .hero-card>b{font-size:3.2cqw}
-#s6-v2 .result-cards .hero-card .star-row{font-size:2.7cqw}
-#s6-v2 .result-cards .role-badge{width:5.4cqw;height:5.4cqw;border:.3cqw solid #fff9e7;left:-.65cqw;top:-.65cqw;box-shadow:0 .2cqw .3cqw #52311f55;background-image:linear-gradient(135deg,#ffffff66,transparent 65%)}
-#s6-v2 .result-cards .role-glyph{width:3.7cqw;height:3.7cqw}
+#s6-v2 .hero-card{padding:.65cqw .65cqw 1.05cqw;border:.3cqw solid #fff8e8;border-radius:2.8cqw;gap:.45cqw;background:linear-gradient(135deg,#fff4e2,#ffdfbd);box-shadow:0 .25cqw .1cqw #d89560,0 0 .5cqw #fff0c4,0 .5cqw 1cqw #1a142b55;overflow:visible}
+#s6-v2 .hero-card .portrait{aspect-ratio:.92;border-radius:1.8cqw;background:linear-gradient(130deg,#ffffff40,transparent 55%),var(--quality)}
+#s6-v2 .hero-card>b{font-size:3.2cqw}
+#s6-v2 .hero-card .star-row{font-size:2.7cqw}
+#s6-v2 .hero-card>.role-badge{width:5.4cqw;height:5.4cqw;border:.3cqw solid #fff9e7;left:-.65cqw;top:-.65cqw;box-shadow:0 .2cqw .3cqw #52311f55;background-image:linear-gradient(135deg,#ffffff66,transparent 65%)}
+#s6-v2 .hero-card>.role-badge .role-glyph{width:3.7cqw;height:3.7cqw}
 #s6-v2 .result-cards .card-tag{font-size:2.5cqw;padding:.35cqw .9cqw}
 #s6-v2 .result-cards .card-tag.new{top:-.9cqw;right:-.4cqw;transform:rotate(-7deg);font-style:normal;border:.2cqw solid #ffbe5d;border-radius:.4cqw 1.8cqw .4cqw 1.2cqw;background:linear-gradient(#ff9250,#ff442c 65%,#e92e20);text-shadow:0 .2cqw #b62715;box-shadow:0 .25cqw .4cqw #71371a55}
 #s6-v2 .result-cards .card-tag.dup{top:1cqw;right:.8cqw;border-radius:1.8cqw;background:#443d4f8c;font-size:2.1cqw}
@@ -339,15 +339,23 @@ export const SECOND_EDITION_POLISH = `
 
 /* Formation: compact presets and readable, bounded miniature positions. */
 #s6-v2 .formation-scene{height:66cqw;min-height:66cqw;background-size:100% 100%}
+#s6-v2 .formation-scene[data-formation="1"]{height:70cqw;min-height:70cqw}
 #s6-v2 .title-plaque .plate{font-size:5.3cqw;padding:0;letter-spacing:.15cqw}
-#s6-v2 .standing-heroes{inset:15cqw 3% 1cqw}
-#s6-v2 .standing .face{height:15cqw}
-#s6-v2 .standing.front .face{height:21cqw}
-#s6-v2 .standing-heroes:has(.front:nth-child(2)) .front .face{height:15cqw}
+#s6-v2 .standing-heroes{inset:0 3%}
+#s6-v2 .standing-heroes .v2-button.standing{width:24%}
+#s6-v2 .standing-heroes .v2-button.standing.front{width:30%}
+#s6-v2 .formation-actor{position:relative;display:block;isolation:isolate;width:100%;height:20cqw}
+#s6-v2 .standing.front .formation-actor{height:24cqw}
+#s6-v2 .formation-scene[data-formation="1"] .standing.front .formation-actor{height:14.8cqw}
+#s6-v2 .formation-scene[data-formation="2"] .standing .formation-actor{height:20cqw}
+#s6-v2 .standing .formation-actor .face{width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:none;position:relative;z-index:1}
+#s6-v2 .standing:before{display:none}
+#s6-v2 .formation-actor:before{content:'';position:absolute;left:10%;right:10%;bottom:-2cqw;height:5.2cqw;border:.35cqw solid #fff7c7;border-radius:50%;background:#ffd97555;box-shadow:0 0 0 .3cqw #ffcb67,0 0 1cqw #ffdb7166;z-index:-2}
+#s6-v2 .formation-actor:after{content:'';position:absolute;left:24%;right:24%;bottom:0;height:1.8cqw;border-radius:50%;background:#7b4a3347;z-index:-1}
 #s6-v2 .standing .role-tag{font-size:2.6cqw;line-height:1.15;padding:.2cqw 1cqw .2cqw .3cqw;margin-bottom:.3cqw}
 #s6-v2 .standing .role-tag .role-badge{width:3.2cqw;height:3.2cqw}
 #s6-v2 .standing .role-tag .role-glyph{width:2.4cqw;height:2.4cqw}
-#s6-v2 .standing .row-plaque{font-size:2.5cqw;line-height:1.15;border-width:1px;margin-top:-.8cqw;padding:0 2.2cqw}
+#s6-v2 .standing .row-plaque{font-size:2.5cqw;line-height:1.25;border-width:1px;margin-top:.25cqw;padding:.1cqw 2.2cqw;z-index:1}
 #s6-v2 .standing small{font-size:2.6cqw;line-height:1.15;margin-top:.2cqw}
 #s6-v2 .role-tag{font-size:2.9cqw}
 #s6-v2 .formation-sheet{background:#ffecd7;box-shadow:none;border-radius:4cqw 4cqw 0 0;margin-top:0}
@@ -355,13 +363,24 @@ export const SECOND_EDITION_POLISH = `
 #s6-v2 .formation-toolbar .preset-buttons{gap:1cqw}
 #s6-v2 .preset-buttons .v2-button{width:6.3cqw;height:6.3cqw;font-size:3.6cqw}
 #s6-v2 .formation-toolbar>button{font-size:3.3cqw;padding:.6cqw 2cqw;min-height:7cqw}
+#s6-v2 .formation-layout-icon{width:4.8cqw;height:4.3cqw;flex:none;display:block}
 #s6-v2 .formation-name{font-size:3cqw}
 #s6-v2 .roster-grid{margin:0 1cqw;padding:3cqw 2.8cqw;gap:2.5cqw;background:#fff4e3;border:1px solid #e6c39e;border-radius:4cqw;scrollbar-width:thin;scrollbar-color:#f5b72d #f3d5b3}
-#s6-v2 .hero-card .portrait{aspect-ratio:1.02}
-#s6-v2 .hero-card{background:linear-gradient(140deg,#ffffff66,transparent 45%),linear-gradient(var(--quality) 30%,#fff3df 86%);border-color:#fff3dd;box-shadow:0 .2cqw .4cqw #53320a33}
-#s6-v2 .hero-card .portrait{background:none}
+#s6-v2 .roster-grid .hero-card .portrait{aspect-ratio:1.02;overflow:visible}
+#s6-v2 .roster-grid .hero-card>b{font-size:3.4cqw;margin-top:.8cqw}
+#s6-v2 .roster-grid .hero-card .star-row{font-size:3.1cqw}
+#s6-v2 .roster-grid .hero-card.locked .portrait{background:linear-gradient(135deg,#aaa0ae,#756b7c)}
+#s6-v2 .roster-grid .hero-card.locked .role-badge{filter:grayscale(.7);opacity:.7}
+#s6-v2 .roster-grid .hero-card.locked .portrait .face{filter:grayscale(.55) brightness(.65)}
+#s6-v2 .roster-grid .hero-card.locked>b,#s6-v2 .roster-grid .hero-card.locked>.star-row{display:none}
+#s6-v2 .roster-grid .hero-card.locked .portrait{aspect-ratio:.78}
+#s6-v2 .roster-grid .portrait .face{box-sizing:border-box;padding-bottom:1.2cqw}
+#s6-v2 .roster-grid .deployed{left:12%;right:12%;top:auto;bottom:-.25cqw;height:3.5cqw;display:grid;place-items:center;isolation:isolate;font-size:2.7cqw;line-height:1;font-weight:800;padding:0 .6cqw;background:#dcff93;clip-path:polygon(6% 0,94% 0,100% 50%,94% 100%,6% 100%,0 50%);text-shadow:0 .15cqw #3a7b15;z-index:2}
+#s6-v2 .roster-grid .deployed:before{content:'';position:absolute;inset:.22cqw;clip-path:inherit;background:linear-gradient(#9ee342,#4da41e);z-index:-1}
+#s6-v2 .roster-grid .card-lock{width:5cqw;height:5.5cqw;right:.4cqw;top:.4cqw}
 #s6-v2 .hero-card .portrait .face{width:100%;height:100%;object-fit:contain;object-position:center 100%;transform:scale(.98);transform-origin:center bottom}
 #s6-v2 .formation-page>.secondary-close{margin:3cqw auto max(3cqw,env(safe-area-inset-bottom,0px));width:42%;height:10cqw;min-height:10cqw;font-size:5cqw}
+#s6-v2.has-frame .formation-page>.secondary-close{height:11cqw;min-height:11cqw;font-size:5.8cqw;padding:0 3cqw;border:1px solid transparent!important;background:none!important;box-shadow:none!important;border-image:var(--btn-gold) 50 60 fill / 5cqw 5.4cqw stretch!important}
 #s6-v2 .formation-types{gap:2cqw}
 #s6-v2 .v2-button.formation-option{padding:1.2cqw;border-width:1px;overflow:hidden}
 #s6-v2 .formation-option header{gap:.5cqw;flex-wrap:wrap}

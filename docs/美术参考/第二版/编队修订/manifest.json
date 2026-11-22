@@ -1,0 +1,853 @@
+{
+  "checks": 20,
+  "evidence": [
+    {
+      "name": "守护阵",
+      "width": 360,
+      "height": 640,
+      "actors": [
+        {
+          "foot": 191.683984375,
+          "floor": 109.293125,
+          "actorBottom": 193.84375
+        },
+        {
+          "foot": 134.9578125,
+          "floor": 109.293125,
+          "actorBottom": 136.7578125
+        },
+        {
+          "foot": 203.8640625,
+          "floor": 109.293125,
+          "actorBottom": 205.6640625
+        }
+      ],
+      "tags": [
+        {
+          "top": 352.828125,
+          "bottom": 365.421875,
+          "portraitBottom": 364.53125,
+          "levelTop": 369.015625
+        },
+        {
+          "top": 352.84375,
+          "bottom": 365.4375,
+          "portraitBottom": 364.546875,
+          "levelTop": 369.03125
+        },
+        {
+          "top": 352.828125,
+          "bottom": 365.421875,
+          "portraitBottom": 364.53125,
+          "levelTop": 369.015625
+        }
+      ]
+    },
+    {
+      "name": "双锋阵",
+      "width": 360,
+      "height": 640,
+      "actors": [
+        {
+          "foot": 122.465234375,
+          "floor": 115.92,
+          "actorBottom": 123.796875
+        },
+        {
+          "foot": 220.746484375,
+          "floor": 115.92,
+          "actorBottom": 222.078125
+        },
+        {
+          "foot": 179.2390625,
+          "floor": 115.92,
+          "actorBottom": 181.0390625
+        }
+      ],
+      "tags": [
+        {
+          "top": 367.234375,
+          "bottom": 379.828125,
+          "portraitBottom": 378.9375,
+          "levelTop": 383.421875
+        },
+        {
+          "top": 367.25,
+          "bottom": 379.84375,
+          "portraitBottom": 378.953125,
+          "levelTop": 383.4375
+        },
+        {
+          "top": 367.234375,
+          "bottom": 379.828125,
+          "portraitBottom": 378.9375,
+          "levelTop": 383.421875
+        }
+      ]
+    },
+    {
+      "name": "均衡阵",
+      "width": 360,
+      "height": 640,
+      "actors": [
+        {
+          "foot": 187.2390625,
+          "floor": 109.293125,
+          "actorBottom": 189.0390625
+        },
+        {
+          "foot": 187.2390625,
+          "floor": 109.293125,
+          "actorBottom": 189.0390625
+        },
+        {
+          "foot": 187.2390625,
+          "floor": 109.293125,
+          "actorBottom": 189.0390625
+        }
+      ],
+      "tags": [
+        {
+          "top": 352.828125,
+          "bottom": 365.421875,
+          "portraitBottom": 364.53125,
+          "levelTop": 369.015625
+        },
+        {
+          "top": 352.84375,
+          "bottom": 365.4375,
+          "portraitBottom": 364.546875,
+          "levelTop": 369.03125
+        },
+        {
+          "top": 352.828125,
+          "bottom": 365.421875,
+          "portraitBottom": 364.53125,
+          "levelTop": 369.015625
+        }
+      ]
+    },
+    {
+      "name": "突击阵",
+      "width": 360,
+      "height": 640,
+      "actors": [
+        {
+          "foot": 191.683984375,
+          "floor": 109.293125,
+          "actorBottom": 193.84375
+        },
+        {
+          "foot": 134.9578125,
+          "floor": 109.293125,
+          "actorBottom": 136.7578125
+        },
+        {
+          "foot": 203.8640625,
+          "floor": 109.293125,
+          "actorBottom": 205.6640625
+        }
+      ],
+      "tags": [
+        {
+          "top": 352.828125,
+          "bottom": 365.421875,
+          "portraitBottom": 364.53125,
+          "levelTop": 369.015625
+        },
+        {
+          "top": 352.84375,
+          "bottom": 365.4375,
+          "portraitBottom": 364.546875,
+          "levelTop": 369.03125
+        },
+        {
+          "top": 352.828125,
+          "bottom": 365.421875,
+          "portraitBottom": 364.53125,
+          "levelTop": 369.015625
+        }
+      ]
+    },
+    {
+      "name": "守护阵",
+      "width": 390,
+      "height": 844,
+      "actors": [
+        {
+          "foot": 207.74609375,
+          "floor": 118.3996875,
+          "actorBottom": 210.0859375
+        },
+        {
+          "foot": 146.2765625,
+          "floor": 118.3996875,
+          "actorBottom": 148.2265625
+        },
+        {
+          "foot": 220.9328125,
+          "floor": 118.3996875,
+          "actorBottom": 222.8828125
+        }
+      ],
+      "tags": [
+        {
+          "top": 382.046875,
+          "bottom": 395.6875,
+          "portraitBottom": 394.71875,
+          "levelTop": 399.578125
+        },
+        {
+          "top": 382.0625,
+          "bottom": 395.703125,
+          "portraitBottom": 394.734375,
+          "levelTop": 399.59375
+        },
+        {
+          "top": 382.046875,
+          "bottom": 395.6875,
+          "portraitBottom": 394.71875,
+          "levelTop": 399.578125
+        }
+      ]
+    },
+    {
+      "name": "双锋阵",
+      "width": 390,
+      "height": 844,
+      "actors": [
+        {
+          "foot": 132.75234375,
+          "floor": 125.58000000000001,
+          "actorBottom": 134.1953125
+        },
+        {
+          "foot": 239.22109375,
+          "floor": 125.58000000000001,
+          "actorBottom": 240.6640625
+        },
+        {
+          "foot": 194.2609375,
+          "floor": 125.58000000000001,
+          "actorBottom": 196.2109375
+        }
+      ],
+      "tags": [
+        {
+          "top": 397.65625,
+          "bottom": 411.296875,
+          "portraitBottom": 410.328125,
+          "levelTop": 415.1875
+        },
+        {
+          "top": 397.671875,
+          "bottom": 411.3125,
+          "portraitBottom": 410.34375,
+          "levelTop": 415.203125
+        },
+        {
+          "top": 397.65625,
+          "bottom": 411.296875,
+          "portraitBottom": 410.328125,
+          "levelTop": 415.1875
+        }
+      ]
+    },
+    {
+      "name": "均衡阵",
+      "width": 390,
+      "height": 844,
+      "actors": [
+        {
+          "foot": 202.9015625,
+          "floor": 118.3996875,
+          "actorBottom": 204.8515625
+        },
+        {
+          "foot": 202.9015625,
+          "floor": 118.3996875,
+          "actorBottom": 204.8515625
+        },
+        {
+          "foot": 202.9015625,
+          "floor": 118.3996875,
+          "actorBottom": 204.8515625
+        }
+      ],
+      "tags": [
+        {
+          "top": 382.046875,
+          "bottom": 395.6875,
+          "portraitBottom": 394.71875,
+          "levelTop": 399.578125
+        },
+        {
+          "top": 382.0625,
+          "bottom": 395.703125,
+          "portraitBottom": 394.734375,
+          "levelTop": 399.59375
+        },
+        {
+          "top": 382.046875,
+          "bottom": 395.6875,
+          "portraitBottom": 394.71875,
+          "levelTop": 399.578125
+        }
+      ]
+    },
+    {
+      "name": "突击阵",
+      "width": 390,
+      "height": 844,
+      "actors": [
+        {
+          "foot": 207.74609375,
+          "floor": 118.3996875,
+          "actorBottom": 210.0859375
+        },
+        {
+          "foot": 146.2765625,
+          "floor": 118.3996875,
+          "actorBottom": 148.2265625
+        },
+        {
+          "foot": 220.9328125,
+          "floor": 118.3996875,
+          "actorBottom": 222.8828125
+        }
+      ],
+      "tags": [
+        {
+          "top": 382.046875,
+          "bottom": 395.6875,
+          "portraitBottom": 394.71875,
+          "levelTop": 399.578125
+        },
+        {
+          "top": 382.0625,
+          "bottom": 395.703125,
+          "portraitBottom": 394.734375,
+          "levelTop": 399.59375
+        },
+        {
+          "top": 382.046875,
+          "bottom": 395.6875,
+          "portraitBottom": 394.71875,
+          "levelTop": 399.578125
+        }
+      ]
+    },
+    {
+      "name": "守护阵",
+      "width": 430,
+      "height": 764,
+      "actors": [
+        {
+          "foot": 229.0234375,
+          "floor": 130.4675,
+          "actorBottom": 231.6015625
+        },
+        {
+          "foot": 161.296875,
+          "floor": 130.4675,
+          "actorBottom": 163.4453125
+        },
+        {
+          "foot": 243.546875,
+          "floor": 130.4675,
+          "actorBottom": 245.6953125
+        }
+      ],
+      "tags": [
+        {
+          "top": 420.75,
+          "bottom": 435.78125,
+          "portraitBottom": 434.71875,
+          "levelTop": 440.078125
+        },
+        {
+          "top": 420.75,
+          "bottom": 435.78125,
+          "portraitBottom": 434.71875,
+          "levelTop": 440.078125
+        },
+        {
+          "top": 420.75,
+          "bottom": 435.78125,
+          "portraitBottom": 434.71875,
+          "levelTop": 440.078125
+        }
+      ]
+    },
+    {
+      "name": "双锋阵",
+      "width": 430,
+      "height": 764,
+      "actors": [
+        {
+          "foot": 146.38671875,
+          "floor": 138.37375,
+          "actorBottom": 147.9765625
+        },
+        {
+          "foot": 263.69921875,
+          "floor": 138.37375,
+          "actorBottom": 265.2890625
+        },
+        {
+          "foot": 214.15625,
+          "floor": 138.37375,
+          "actorBottom": 216.3046875
+        }
+      ],
+      "tags": [
+        {
+          "top": 437.9375,
+          "bottom": 452.96875,
+          "portraitBottom": 451.90625,
+          "levelTop": 457.265625
+        },
+        {
+          "top": 437.9375,
+          "bottom": 452.96875,
+          "portraitBottom": 451.90625,
+          "levelTop": 457.265625
+        },
+        {
+          "top": 437.9375,
+          "bottom": 452.96875,
+          "portraitBottom": 451.90625,
+          "levelTop": 457.265625
+        }
+      ]
+    },
+    {
+      "name": "均衡阵",
+      "width": 430,
+      "height": 764,
+      "actors": [
+        {
+          "foot": 223.6875,
+          "floor": 130.4675,
+          "actorBottom": 225.8359375
+        },
+        {
+          "foot": 223.6875,
+          "floor": 130.4675,
+          "actorBottom": 225.8359375
+        },
+        {
+          "foot": 223.6875,
+          "floor": 130.4675,
+          "actorBottom": 225.8359375
+        }
+      ],
+      "tags": [
+        {
+          "top": 420.75,
+          "bottom": 435.78125,
+          "portraitBottom": 434.71875,
+          "levelTop": 440.078125
+        },
+        {
+          "top": 420.75,
+          "bottom": 435.78125,
+          "portraitBottom": 434.71875,
+          "levelTop": 440.078125
+        },
+        {
+          "top": 420.75,
+          "bottom": 435.78125,
+          "portraitBottom": 434.71875,
+          "levelTop": 440.078125
+        }
+      ]
+    },
+    {
+      "name": "突击阵",
+      "width": 430,
+      "height": 764,
+      "actors": [
+        {
+          "foot": 229.0234375,
+          "floor": 130.4675,
+          "actorBottom": 231.6015625
+        },
+        {
+          "foot": 161.296875,
+          "floor": 130.4675,
+          "actorBottom": 163.4453125
+        },
+        {
+          "foot": 243.546875,
+          "floor": 130.4675,
+          "actorBottom": 245.6953125
+        }
+      ],
+      "tags": [
+        {
+          "top": 420.75,
+          "bottom": 435.78125,
+          "portraitBottom": 434.71875,
+          "levelTop": 440.078125
+        },
+        {
+          "top": 420.75,
+          "bottom": 435.78125,
+          "portraitBottom": 434.71875,
+          "levelTop": 440.078125
+        },
+        {
+          "top": 420.75,
+          "bottom": 435.78125,
+          "portraitBottom": 434.71875,
+          "levelTop": 440.078125
+        }
+      ]
+    },
+    {
+      "name": "守护阵",
+      "width": 430,
+      "height": 932,
+      "actors": [
+        {
+          "foot": 229.1546875,
+          "floor": 130.5465625,
+          "actorBottom": 231.734375
+        },
+        {
+          "foot": 161.396875,
+          "floor": 130.5465625,
+          "actorBottom": 163.546875
+        },
+        {
+          "foot": 243.69375,
+          "floor": 130.5465625,
+          "actorBottom": 245.84375
+        }
+      ],
+      "tags": [
+        {
+          "top": 420.96875,
+          "bottom": 436.015625,
+          "portraitBottom": 434.953125,
+          "levelTop": 440.3125
+        },
+        {
+          "top": 420.984375,
+          "bottom": 436.03125,
+          "portraitBottom": 434.96875,
+          "levelTop": 440.328125
+        },
+        {
+          "top": 420.96875,
+          "bottom": 436.015625,
+          "portraitBottom": 434.953125,
+          "levelTop": 440.3125
+        }
+      ]
+    },
+    {
+      "name": "双锋阵",
+      "width": 430,
+      "height": 932,
+      "actors": [
+        {
+          "foot": 146.471875,
+          "floor": 138.46,
+          "actorBottom": 148.0625
+        },
+        {
+          "foot": 263.8625,
+          "floor": 138.46,
+          "actorBottom": 265.453125
+        },
+        {
+          "foot": 214.2875,
+          "floor": 138.46,
+          "actorBottom": 216.4375
+        }
+      ],
+      "tags": [
+        {
+          "top": 438.171875,
+          "bottom": 453.21875,
+          "portraitBottom": 452.15625,
+          "levelTop": 457.515625
+        },
+        {
+          "top": 438.1875,
+          "bottom": 453.234375,
+          "portraitBottom": 452.171875,
+          "levelTop": 457.53125
+        },
+        {
+          "top": 438.171875,
+          "bottom": 453.21875,
+          "portraitBottom": 452.15625,
+          "levelTop": 457.515625
+        }
+      ]
+    },
+    {
+      "name": "均衡阵",
+      "width": 430,
+      "height": 932,
+      "actors": [
+        {
+          "foot": 223.834375,
+          "floor": 130.5465625,
+          "actorBottom": 225.984375
+        },
+        {
+          "foot": 223.834375,
+          "floor": 130.5465625,
+          "actorBottom": 225.984375
+        },
+        {
+          "foot": 223.834375,
+          "floor": 130.5465625,
+          "actorBottom": 225.984375
+        }
+      ],
+      "tags": [
+        {
+          "top": 420.96875,
+          "bottom": 436.015625,
+          "portraitBottom": 434.953125,
+          "levelTop": 440.3125
+        },
+        {
+          "top": 420.984375,
+          "bottom": 436.03125,
+          "portraitBottom": 434.96875,
+          "levelTop": 440.328125
+        },
+        {
+          "top": 420.96875,
+          "bottom": 436.015625,
+          "portraitBottom": 434.953125,
+          "levelTop": 440.3125
+        }
+      ]
+    },
+    {
+      "name": "突击阵",
+      "width": 430,
+      "height": 932,
+      "actors": [
+        {
+          "foot": 229.1546875,
+          "floor": 130.5465625,
+          "actorBottom": 231.734375
+        },
+        {
+          "foot": 161.396875,
+          "floor": 130.5465625,
+          "actorBottom": 163.546875
+        },
+        {
+          "foot": 243.69375,
+          "floor": 130.5465625,
+          "actorBottom": 245.84375
+        }
+      ],
+      "tags": [
+        {
+          "top": 420.96875,
+          "bottom": 436.015625,
+          "portraitBottom": 434.953125,
+          "levelTop": 440.3125
+        },
+        {
+          "top": 420.984375,
+          "bottom": 436.03125,
+          "portraitBottom": 434.96875,
+          "levelTop": 440.328125
+        },
+        {
+          "top": 420.96875,
+          "bottom": 436.015625,
+          "portraitBottom": 434.953125,
+          "levelTop": 440.3125
+        }
+      ]
+    },
+    {
+      "name": "守护阵",
+      "width": 487,
+      "height": 986,
+      "actors": [
+        {
+          "foot": 259.6796875,
+          "floor": 147.846875,
+          "actorBottom": 262.6015625
+        },
+        {
+          "foot": 182.924609375,
+          "floor": 147.846875,
+          "actorBottom": 185.359375
+        },
+        {
+          "foot": 276.127734375,
+          "floor": 147.846875,
+          "actorBottom": 278.5625
+        }
+      ],
+      "tags": [
+        {
+          "top": 476.453125,
+          "bottom": 493.484375,
+          "portraitBottom": 492.28125,
+          "levelTop": 498.359375
+        },
+        {
+          "top": 476.453125,
+          "bottom": 493.484375,
+          "portraitBottom": 492.28125,
+          "levelTop": 498.359375
+        },
+        {
+          "top": 476.453125,
+          "bottom": 493.484375,
+          "portraitBottom": 492.28125,
+          "levelTop": 498.359375
+        }
+      ]
+    },
+    {
+      "name": "双锋阵",
+      "width": 487,
+      "height": 986,
+      "actors": [
+        {
+          "foot": 166.01875,
+          "floor": 156.8096875,
+          "actorBottom": 167.8203125
+        },
+        {
+          "foot": 298.971875,
+          "floor": 156.8096875,
+          "actorBottom": 300.7734375
+        },
+        {
+          "foot": 242.830859375,
+          "floor": 156.8096875,
+          "actorBottom": 245.265625
+        }
+      ],
+      "tags": [
+        {
+          "top": 495.9375,
+          "bottom": 512.96875,
+          "portraitBottom": 511.765625,
+          "levelTop": 517.84375
+        },
+        {
+          "top": 495.9375,
+          "bottom": 512.96875,
+          "portraitBottom": 511.765625,
+          "levelTop": 517.84375
+        },
+        {
+          "top": 495.9375,
+          "bottom": 512.96875,
+          "portraitBottom": 511.765625,
+          "levelTop": 517.84375
+        }
+      ]
+    },
+    {
+      "name": "均衡阵",
+      "width": 487,
+      "height": 986,
+      "actors": [
+        {
+          "foot": 253.627734375,
+          "floor": 147.846875,
+          "actorBottom": 256.0625
+        },
+        {
+          "foot": 253.627734375,
+          "floor": 147.846875,
+          "actorBottom": 256.0625
+        },
+        {
+          "foot": 253.627734375,
+          "floor": 147.846875,
+          "actorBottom": 256.0625
+        }
+      ],
+      "tags": [
+        {
+          "top": 476.453125,
+          "bottom": 493.484375,
+          "portraitBottom": 492.28125,
+          "levelTop": 498.359375
+        },
+        {
+          "top": 476.453125,
+          "bottom": 493.484375,
+          "portraitBottom": 492.28125,
+          "levelTop": 498.359375
+        },
+        {
+          "top": 476.453125,
+          "bottom": 493.484375,
+          "portraitBottom": 492.28125,
+          "levelTop": 498.359375
+        }
+      ]
+    },
+    {
+      "name": "突击阵",
+      "width": 487,
+      "height": 986,
+      "actors": [
+        {
+          "foot": 259.6796875,
+          "floor": 147.846875,
+          "actorBottom": 262.6015625
+        },
+        {
+          "foot": 182.924609375,
+          "floor": 147.846875,
+          "actorBottom": 185.359375
+        },
+        {
+          "foot": 276.127734375,
+          "floor": 147.846875,
+          "actorBottom": 278.5625
+        }
+      ],
+      "tags": [
+        {
+          "top": 476.453125,
+          "bottom": 493.484375,
+          "portraitBottom": 492.28125,
+          "levelTop": 498.359375
+        },
+        {
+          "top": 476.453125,
+          "bottom": 493.484375,
+          "portraitBottom": 492.28125,
+          "levelTop": 498.359375
+        },
+        {
+          "top": 476.453125,
+          "bottom": 493.484375,
+          "portraitBottom": 492.28125,
+          "levelTop": 498.359375
+        }
+      ]
+    }
+  ],
+  "interactions": [
+    "locked hero",
+    "actual recruitment",
+    "shared card frame",
+    "remove/add hero",
+    "persist formation"
+  ],
+  "errors": []
+}
