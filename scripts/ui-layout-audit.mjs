@@ -8,7 +8,12 @@ export async function auditLayout(page,id,viewport){
   const dialog=document.querySelector('.v2-dialog');
   return {
    root:rect(document.querySelector('#s6-v2')),
-   plaques:[...document.querySelectorAll('.plate')].filter(visible).map(n=>({box:rect(n),ratio:Number(getComputedStyle(document.querySelector('#s6-v2')).getPropertyValue('--title-aspect'))})),
+   plaques:[...document.querySelectorAll('.plate')].filter(visible).map(n=>{
+    const text=n.querySelector('span'),style=getComputedStyle(text),box=rect(n),label=rect(text),ctx=document.createElement('canvas').getContext('2d');
+    ctx.font=style.fontWeight+' '+style.fontSize+' '+style.fontFamily;const m=ctx.measureText(text.textContent),line=parseFloat(style.lineHeight);
+    const inkCenter=label.y+(line-m.fontBoundingBoxAscent-m.fontBoundingBoxDescent)/2+m.fontBoundingBoxAscent+(m.actualBoundingBoxDescent-m.actualBoundingBoxAscent)/2;
+    return {box,ratio:Number(getComputedStyle(document.querySelector('#s6-v2')).getPropertyValue('--title-aspect')),title:text.textContent,inkCenter,faceCenter:box.y+box.h*88/154};
+   }),
    sprouts:[...document.querySelectorAll('.talent-sprout')].map(n=>{const r=rect(n),p=document.querySelector('path.branch[data-branch="'+n.dataset.branch+'"]'),length=p.getTotalLength(),matrix=p.getScreenCTM();let gap=Infinity;for(let i=0;i<=250;i++){const point=p.getPointAtLength(length*i/250).matrixTransform(matrix);gap=Math.min(gap,Math.hypot(point.x-r.x-r.w/2,point.y-r.bottom));}return {gap,ratio:r.w/r.h,natural:n.naturalWidth/n.naturalHeight};}),
    cooldowns:[...document.querySelectorAll('[data-cooldown]')].map(n=>({label:rect(n),art:rect(n.parentElement.querySelector('img,.locked-skill-icon'))})),
    party:[...document.querySelectorAll('.party-card')].map(n=>({box:rect(n),tray:rect(n.closest('.skill-bar')),header:rect(n.querySelector('header')),info:rect(n.querySelector('header>div')),skills:rect(n.querySelector('.active-skills'))})),
@@ -32,7 +37,7 @@ export async function auditLayout(page,id,viewport){
  const tag=`${id} ${viewport.width}×${viewport.height}`;
  const separated=(a,b)=>a.right<=b.x+.5||b.right<=a.x+.5||a.bottom<=b.y+.5||b.bottom<=a.y+.5;
  assert.deepEqual(report.brokenImages,[],tag+' loaded artwork');
- for(const p of report.plaques)assert.ok(Math.abs(p.box.w/p.box.h-p.ratio)<.02,tag+' title artwork preserves aspect ratio');
+ for(const p of report.plaques){assert.ok(Math.abs(p.box.w/p.box.h-p.ratio)<.02,tag+' title artwork preserves aspect ratio');assert.ok(Math.abs(p.inkCenter-p.faceCenter)<1.5,tag+' '+p.title+' glyphs visually centered in plaque face');}
  for(const s of report.sprouts){assert.ok(s.gap<.6,tag+' sprout stem touches branch');assert.ok(Math.abs(s.ratio-s.natural)<.02,tag+' sprout is not squeezed');}
  for(const c of report.cooldowns)assert.ok(Math.abs(c.label.x+c.label.w/2-c.art.x-c.art.w/2)<.5&&Math.abs(c.label.y+c.label.h/2-c.art.y-c.art.h/2)<.5,tag+' cooldown centered on icon');
  for(const p of report.party){assert.ok(p.info.bottom<=p.header.bottom+.5,tag+' health and shield fit the header');assert.ok(p.skills.y-p.info.bottom>=report.root.w*.01&&p.skills.y-p.info.bottom<=report.root.w*.035,tag+' information and skills have compact non-overlapping spacing');assert.ok(p.skills.bottom<=p.tray.bottom-.5&&p.box.bottom<=p.tray.bottom,tag+' entire party content fits its tray');}

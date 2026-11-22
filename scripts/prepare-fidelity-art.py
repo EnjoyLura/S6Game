@@ -80,3 +80,9 @@ for i, name in [(6, 'heart'), (7, 'shield')]:
     canvas.alpha_composite(sprite, ((256 - sprite.width)//2, (256 - sprite.height)//2))
     canvas.save(DEST / f'v2-status-{name}.png', optimize=True)
 print('Prepared shared battlefield and party status icons')
+
+# Recruitment owns its lighter header; keep reward decoration independent.
+title = Image.open(SOURCE / '招募结果艺术字-v6.png').convert('RGBA')
+bounds = title.getchannel('A').point(lambda a: 255 if a > 40 else 0).getbbox()
+assert bounds, 'recruitment display title'
+title.crop(bounds).save(DEST / 'v2-result-title-v6.png', optimize=True)

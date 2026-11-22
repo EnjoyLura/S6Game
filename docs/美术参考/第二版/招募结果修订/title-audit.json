@@ -1,0 +1,1197 @@
+{
+  "layouts": 145,
+  "titleSamples": 95,
+  "maxGlyphCenterErrorCssPx": 1.422,
+  "titles": [
+    {
+      "id": "14-skill",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "plaques": [
+        {
+          "title": "技能详情",
+          "errorCssPx": -0.058
+        }
+      ]
+    },
+    {
+      "id": "14-skill",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "plaques": [
+        {
+          "title": "技能详情",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "14-skill",
+      "viewport": {
+        "width": 430,
+        "height": 764
+      },
+      "plaques": [
+        {
+          "title": "技能详情",
+          "errorCssPx": 0.937
+        }
+      ]
+    },
+    {
+      "id": "14-skill",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "plaques": [
+        {
+          "title": "技能详情",
+          "errorCssPx": 0.932
+        }
+      ]
+    },
+    {
+      "id": "14-skill",
+      "viewport": {
+        "width": 487,
+        "height": 986
+      },
+      "plaques": [
+        {
+          "title": "技能详情",
+          "errorCssPx": 1.422
+        }
+      ]
+    },
+    {
+      "id": "13-star",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "plaques": [
+        {
+          "title": "英雄升星",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "13-star",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "plaques": [
+        {
+          "title": "英雄升星",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "13-star",
+      "viewport": {
+        "width": 430,
+        "height": 764
+      },
+      "plaques": [
+        {
+          "title": "英雄升星",
+          "errorCssPx": 0.437
+        }
+      ]
+    },
+    {
+      "id": "13-star",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "plaques": [
+        {
+          "title": "英雄升星",
+          "errorCssPx": 0.432
+        }
+      ]
+    },
+    {
+      "id": "13-star",
+      "viewport": {
+        "width": 487,
+        "height": 986
+      },
+      "plaques": [
+        {
+          "title": "英雄升星",
+          "errorCssPx": 1.422
+        }
+      ]
+    },
+    {
+      "id": "15-talents",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "plaques": [
+        {
+          "title": "天赋树",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "15-talents",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "plaques": [
+        {
+          "title": "天赋树",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "15-talents",
+      "viewport": {
+        "width": 430,
+        "height": 764
+      },
+      "plaques": [
+        {
+          "title": "天赋树",
+          "errorCssPx": 0.937
+        }
+      ]
+    },
+    {
+      "id": "15-talents",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "plaques": [
+        {
+          "title": "天赋树",
+          "errorCssPx": 0.932
+        }
+      ]
+    },
+    {
+      "id": "15-talents",
+      "viewport": {
+        "width": 487,
+        "height": 986
+      },
+      "plaques": [
+        {
+          "title": "天赋树",
+          "errorCssPx": 1.422
+        }
+      ]
+    },
+    {
+      "id": "10-equipment",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "plaques": [
+        {
+          "title": "装备详情",
+          "errorCssPx": -0.058
+        }
+      ]
+    },
+    {
+      "id": "10-equipment",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "plaques": [
+        {
+          "title": "装备详情",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "10-equipment",
+      "viewport": {
+        "width": 430,
+        "height": 764
+      },
+      "plaques": [
+        {
+          "title": "装备详情",
+          "errorCssPx": 0.937
+        }
+      ]
+    },
+    {
+      "id": "10-equipment",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "plaques": [
+        {
+          "title": "装备详情",
+          "errorCssPx": 0.932
+        }
+      ]
+    },
+    {
+      "id": "10-equipment",
+      "viewport": {
+        "width": 487,
+        "height": 986
+      },
+      "plaques": [
+        {
+          "title": "装备详情",
+          "errorCssPx": 1.422
+        }
+      ]
+    },
+    {
+      "id": "12-equipment-picker",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "plaques": [
+        {
+          "title": "装备选择",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "12-equipment-picker",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "plaques": [
+        {
+          "title": "装备选择",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "12-equipment-picker",
+      "viewport": {
+        "width": 430,
+        "height": 764
+      },
+      "plaques": [
+        {
+          "title": "装备选择",
+          "errorCssPx": 0.937
+        }
+      ]
+    },
+    {
+      "id": "12-equipment-picker",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "plaques": [
+        {
+          "title": "装备选择",
+          "errorCssPx": 0.932
+        }
+      ]
+    },
+    {
+      "id": "12-equipment-picker",
+      "viewport": {
+        "width": 487,
+        "height": 986
+      },
+      "plaques": [
+        {
+          "title": "装备选择",
+          "errorCssPx": 1.422
+        }
+      ]
+    },
+    {
+      "id": "11-confirm",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "plaques": [
+        {
+          "title": "提示",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "11-confirm",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "plaques": [
+        {
+          "title": "提示",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "11-confirm",
+      "viewport": {
+        "width": 430,
+        "height": 764
+      },
+      "plaques": [
+        {
+          "title": "提示",
+          "errorCssPx": 0.937
+        }
+      ]
+    },
+    {
+      "id": "11-confirm",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "plaques": [
+        {
+          "title": "提示",
+          "errorCssPx": 0.932
+        }
+      ]
+    },
+    {
+      "id": "11-confirm",
+      "viewport": {
+        "width": 487,
+        "height": 986
+      },
+      "plaques": [
+        {
+          "title": "提示",
+          "errorCssPx": 1.422
+        }
+      ]
+    },
+    {
+      "id": "24-salvage",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "plaques": [
+        {
+          "title": "装备分解",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "24-salvage",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "plaques": [
+        {
+          "title": "装备分解",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "24-salvage",
+      "viewport": {
+        "width": 430,
+        "height": 764
+      },
+      "plaques": [
+        {
+          "title": "装备分解",
+          "errorCssPx": 0.937
+        }
+      ]
+    },
+    {
+      "id": "24-salvage",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "plaques": [
+        {
+          "title": "装备分解",
+          "errorCssPx": 0.932
+        }
+      ]
+    },
+    {
+      "id": "24-salvage",
+      "viewport": {
+        "width": 487,
+        "height": 986
+      },
+      "plaques": [
+        {
+          "title": "装备分解",
+          "errorCssPx": 1.422
+        }
+      ]
+    },
+    {
+      "id": "16-pool-normal",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "plaques": [
+        {
+          "title": "常驻池详情",
+          "errorCssPx": -0.058
+        }
+      ]
+    },
+    {
+      "id": "16-pool-normal",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "plaques": [
+        {
+          "title": "常驻池详情",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "16-pool-normal",
+      "viewport": {
+        "width": 430,
+        "height": 764
+      },
+      "plaques": [
+        {
+          "title": "常驻池详情",
+          "errorCssPx": 0.937
+        }
+      ]
+    },
+    {
+      "id": "16-pool-normal",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "plaques": [
+        {
+          "title": "常驻池详情",
+          "errorCssPx": 0.932
+        }
+      ]
+    },
+    {
+      "id": "16-pool-normal",
+      "viewport": {
+        "width": 487,
+        "height": 986
+      },
+      "plaques": [
+        {
+          "title": "常驻池详情",
+          "errorCssPx": 1.422
+        }
+      ]
+    },
+    {
+      "id": "17-pool-up",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "plaques": [
+        {
+          "title": "UP池详情",
+          "errorCssPx": -0.058
+        }
+      ]
+    },
+    {
+      "id": "17-pool-up",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "plaques": [
+        {
+          "title": "UP池详情",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "17-pool-up",
+      "viewport": {
+        "width": 430,
+        "height": 764
+      },
+      "plaques": [
+        {
+          "title": "UP池详情",
+          "errorCssPx": 0.937
+        }
+      ]
+    },
+    {
+      "id": "17-pool-up",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "plaques": [
+        {
+          "title": "UP池详情",
+          "errorCssPx": 0.932
+        }
+      ]
+    },
+    {
+      "id": "17-pool-up",
+      "viewport": {
+        "width": 487,
+        "height": 986
+      },
+      "plaques": [
+        {
+          "title": "UP池详情",
+          "errorCssPx": 1.422
+        }
+      ]
+    },
+    {
+      "id": "23-challenge",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "plaques": [
+        {
+          "title": "副本挑战",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "23-challenge",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "plaques": [
+        {
+          "title": "副本挑战",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "23-challenge",
+      "viewport": {
+        "width": 430,
+        "height": 764
+      },
+      "plaques": [
+        {
+          "title": "副本挑战",
+          "errorCssPx": 0.937
+        }
+      ]
+    },
+    {
+      "id": "23-challenge",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "plaques": [
+        {
+          "title": "副本挑战",
+          "errorCssPx": 0.932
+        }
+      ]
+    },
+    {
+      "id": "23-challenge",
+      "viewport": {
+        "width": 487,
+        "height": 986
+      },
+      "plaques": [
+        {
+          "title": "副本挑战",
+          "errorCssPx": 1.422
+        }
+      ]
+    },
+    {
+      "id": "28-dungeon-defeat",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "plaques": [
+        {
+          "title": "挑战失败",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "28-dungeon-defeat",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "plaques": [
+        {
+          "title": "挑战失败",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "28-dungeon-defeat",
+      "viewport": {
+        "width": 430,
+        "height": 764
+      },
+      "plaques": [
+        {
+          "title": "挑战失败",
+          "errorCssPx": 0.937
+        }
+      ]
+    },
+    {
+      "id": "28-dungeon-defeat",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "plaques": [
+        {
+          "title": "挑战失败",
+          "errorCssPx": 0.932
+        }
+      ]
+    },
+    {
+      "id": "28-dungeon-defeat",
+      "viewport": {
+        "width": 487,
+        "height": 986
+      },
+      "plaques": [
+        {
+          "title": "挑战失败",
+          "errorCssPx": 1.422
+        }
+      ]
+    },
+    {
+      "id": "18-formation",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "plaques": [
+        {
+          "title": "编队",
+          "errorCssPx": 0.945
+        }
+      ]
+    },
+    {
+      "id": "18-formation",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "plaques": [
+        {
+          "title": "编队",
+          "errorCssPx": 0.939
+        }
+      ]
+    },
+    {
+      "id": "18-formation",
+      "viewport": {
+        "width": 430,
+        "height": 764
+      },
+      "plaques": [
+        {
+          "title": "编队",
+          "errorCssPx": 0.933
+        }
+      ]
+    },
+    {
+      "id": "18-formation",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "plaques": [
+        {
+          "title": "编队",
+          "errorCssPx": 0.93
+        }
+      ]
+    },
+    {
+      "id": "18-formation",
+      "viewport": {
+        "width": 487,
+        "height": 986
+      },
+      "plaques": [
+        {
+          "title": "编队",
+          "errorCssPx": 0.921
+        }
+      ]
+    },
+    {
+      "id": "21-formations",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "plaques": [
+        {
+          "title": "编队",
+          "errorCssPx": 0.945
+        },
+        {
+          "title": "阵型选择",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "21-formations",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "plaques": [
+        {
+          "title": "编队",
+          "errorCssPx": 0.939
+        },
+        {
+          "title": "阵型选择",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "21-formations",
+      "viewport": {
+        "width": 430,
+        "height": 764
+      },
+      "plaques": [
+        {
+          "title": "编队",
+          "errorCssPx": 0.933
+        },
+        {
+          "title": "阵型选择",
+          "errorCssPx": 0.937
+        }
+      ]
+    },
+    {
+      "id": "21-formations",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "plaques": [
+        {
+          "title": "编队",
+          "errorCssPx": 0.93
+        },
+        {
+          "title": "阵型选择",
+          "errorCssPx": 0.932
+        }
+      ]
+    },
+    {
+      "id": "21-formations",
+      "viewport": {
+        "width": 487,
+        "height": 986
+      },
+      "plaques": [
+        {
+          "title": "编队",
+          "errorCssPx": 0.921
+        },
+        {
+          "title": "阵型选择",
+          "errorCssPx": 1.422
+        }
+      ]
+    },
+    {
+      "id": "09-offline",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "plaques": [
+        {
+          "title": "挂机奖励",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "09-offline",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "plaques": [
+        {
+          "title": "挂机奖励",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "09-offline",
+      "viewport": {
+        "width": 430,
+        "height": 764
+      },
+      "plaques": [
+        {
+          "title": "挂机奖励",
+          "errorCssPx": 0.937
+        }
+      ]
+    },
+    {
+      "id": "09-offline",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "plaques": [
+        {
+          "title": "挂机奖励",
+          "errorCssPx": 0.932
+        }
+      ]
+    },
+    {
+      "id": "09-offline",
+      "viewport": {
+        "width": 487,
+        "height": 986
+      },
+      "plaques": [
+        {
+          "title": "挂机奖励",
+          "errorCssPx": 1.422
+        }
+      ]
+    },
+    {
+      "id": "25-upgrade",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "plaques": [
+        {
+          "title": "装备强化",
+          "errorCssPx": 0.943
+        }
+      ]
+    },
+    {
+      "id": "25-upgrade",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "plaques": [
+        {
+          "title": "装备强化",
+          "errorCssPx": 0.941
+        }
+      ]
+    },
+    {
+      "id": "25-upgrade",
+      "viewport": {
+        "width": 430,
+        "height": 764
+      },
+      "plaques": [
+        {
+          "title": "装备强化",
+          "errorCssPx": 0.937
+        }
+      ]
+    },
+    {
+      "id": "25-upgrade",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "plaques": [
+        {
+          "title": "装备强化",
+          "errorCssPx": 0.932
+        }
+      ]
+    },
+    {
+      "id": "25-upgrade",
+      "viewport": {
+        "width": 487,
+        "height": 986
+      },
+      "plaques": [
+        {
+          "title": "装备强化",
+          "errorCssPx": 0.92
+        }
+      ]
+    },
+    {
+      "id": "26-breakthrough",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "plaques": [
+        {
+          "title": "装备强化",
+          "errorCssPx": 0.943
+        }
+      ]
+    },
+    {
+      "id": "26-breakthrough",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "plaques": [
+        {
+          "title": "装备强化",
+          "errorCssPx": 0.941
+        }
+      ]
+    },
+    {
+      "id": "26-breakthrough",
+      "viewport": {
+        "width": 430,
+        "height": 764
+      },
+      "plaques": [
+        {
+          "title": "装备强化",
+          "errorCssPx": 0.937
+        }
+      ]
+    },
+    {
+      "id": "26-breakthrough",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "plaques": [
+        {
+          "title": "装备强化",
+          "errorCssPx": 0.932
+        }
+      ]
+    },
+    {
+      "id": "26-breakthrough",
+      "viewport": {
+        "width": 487,
+        "height": 986
+      },
+      "plaques": [
+        {
+          "title": "装备强化",
+          "errorCssPx": 0.92
+        }
+      ]
+    },
+    {
+      "id": "27-dungeon-victory",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "plaques": [
+        {
+          "title": "挑战胜利",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "27-dungeon-victory",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "plaques": [
+        {
+          "title": "挑战胜利",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "27-dungeon-victory",
+      "viewport": {
+        "width": 430,
+        "height": 764
+      },
+      "plaques": [
+        {
+          "title": "挑战胜利",
+          "errorCssPx": 0.937
+        }
+      ]
+    },
+    {
+      "id": "27-dungeon-victory",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "plaques": [
+        {
+          "title": "挑战胜利",
+          "errorCssPx": 0.932
+        }
+      ]
+    },
+    {
+      "id": "27-dungeon-victory",
+      "viewport": {
+        "width": 487,
+        "height": 986
+      },
+      "plaques": [
+        {
+          "title": "挑战胜利",
+          "errorCssPx": 1.422
+        }
+      ]
+    },
+    {
+      "id": "29-endless-result",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "plaques": [
+        {
+          "title": "无尽结算",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "29-endless-result",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "plaques": [
+        {
+          "title": "无尽结算",
+          "errorCssPx": 0.442
+        }
+      ]
+    },
+    {
+      "id": "29-endless-result",
+      "viewport": {
+        "width": 430,
+        "height": 764
+      },
+      "plaques": [
+        {
+          "title": "无尽结算",
+          "errorCssPx": 0.937
+        }
+      ]
+    },
+    {
+      "id": "29-endless-result",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "plaques": [
+        {
+          "title": "无尽结算",
+          "errorCssPx": 0.932
+        }
+      ]
+    },
+    {
+      "id": "29-endless-result",
+      "viewport": {
+        "width": 487,
+        "height": 986
+      },
+      "plaques": [
+        {
+          "title": "无尽结算",
+          "errorCssPx": 1.422
+        }
+      ]
+    }
+  ]
+}

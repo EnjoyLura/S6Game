@@ -1,0 +1,192 @@
+{
+  "checks": [
+    {
+      "id": "single-new",
+      "width": 360,
+      "height": 640,
+      "cards": 1,
+      "headerY": 76.796875,
+      "cardY": 231.125,
+      "cardHeight": 148.84375
+    },
+    {
+      "id": "single-new",
+      "width": 390,
+      "height": 844,
+      "cards": 1,
+      "headerY": 101.265625,
+      "cardY": 268.453125,
+      "cardHeight": 161.28125
+    },
+    {
+      "id": "single-new",
+      "width": 430,
+      "height": 764,
+      "cards": 1,
+      "headerY": 91.671875,
+      "cardY": 275.90625,
+      "cardHeight": 177.734375
+    },
+    {
+      "id": "single-new",
+      "width": 430,
+      "height": 932,
+      "cards": 1,
+      "headerY": 111.828125,
+      "cardY": 296.171875,
+      "cardHeight": 177.828125
+    },
+    {
+      "id": "single-new",
+      "width": 487,
+      "height": 986,
+      "cards": 1,
+      "headerY": 118.3125,
+      "cardY": 327.09375,
+      "cardHeight": 201.453125
+    },
+    {
+      "id": "single-duplicate",
+      "width": 360,
+      "height": 640,
+      "cards": 1,
+      "headerY": 76.796875,
+      "cardY": 231.125,
+      "cardHeight": 148.84375
+    },
+    {
+      "id": "single-duplicate",
+      "width": 390,
+      "height": 844,
+      "cards": 1,
+      "headerY": 101.265625,
+      "cardY": 268.453125,
+      "cardHeight": 161.28125
+    },
+    {
+      "id": "single-duplicate",
+      "width": 430,
+      "height": 764,
+      "cards": 1,
+      "headerY": 91.671875,
+      "cardY": 275.90625,
+      "cardHeight": 177.734375
+    },
+    {
+      "id": "single-duplicate",
+      "width": 430,
+      "height": 932,
+      "cards": 1,
+      "headerY": 111.828125,
+      "cardY": 296.171875,
+      "cardHeight": 177.828125
+    },
+    {
+      "id": "single-duplicate",
+      "width": 487,
+      "height": 986,
+      "cards": 1,
+      "headerY": 118.3125,
+      "cardY": 327.09375,
+      "cardHeight": 201.453125
+    },
+    {
+      "id": "ten",
+      "width": 360,
+      "height": 640,
+      "cards": 10,
+      "headerY": 76.796875,
+      "cardY": 233.515625,
+      "cardHeight": 97.109375
+    },
+    {
+      "id": "ten",
+      "width": 390,
+      "height": 844,
+      "cards": 10,
+      "headerY": 101.265625,
+      "cardY": 280.078125,
+      "cardHeight": 105.234375
+    },
+    {
+      "id": "ten",
+      "width": 430,
+      "height": 764,
+      "cards": 10,
+      "headerY": 91.671875,
+      "cardY": 278.765625,
+      "cardHeight": 115.953125
+    },
+    {
+      "id": "ten",
+      "width": 430,
+      "height": 932,
+      "cards": 10,
+      "headerY": 111.828125,
+      "cardY": 309.078125,
+      "cardHeight": 116.03125
+    },
+    {
+      "id": "ten",
+      "width": 487,
+      "height": 986,
+      "cards": 10,
+      "headerY": 118.3125,
+      "cardY": 337.546875,
+      "cardHeight": 131.453125
+    },
+    {
+      "id": "up-ten",
+      "width": 360,
+      "height": 640,
+      "cards": 10,
+      "headerY": 76.796875,
+      "cardY": 233.515625,
+      "cardHeight": 97.109375
+    },
+    {
+      "id": "up-ten",
+      "width": 390,
+      "height": 844,
+      "cards": 10,
+      "headerY": 101.265625,
+      "cardY": 280.078125,
+      "cardHeight": 105.234375
+    },
+    {
+      "id": "up-ten",
+      "width": 430,
+      "height": 764,
+      "cards": 10,
+      "headerY": 91.671875,
+      "cardY": 278.765625,
+      "cardHeight": 115.953125
+    },
+    {
+      "id": "up-ten",
+      "width": 430,
+      "height": 932,
+      "cards": 10,
+      "headerY": 111.828125,
+      "cardY": 309.078125,
+      "cardHeight": 116.03125
+    },
+    {
+      "id": "up-ten",
+      "width": 487,
+      "height": 986,
+      "cards": 10,
+      "headerY": 118.3125,
+      "cardY": 337.546875,
+      "cardHeight": 131.453125
+    }
+  ],
+  "errors": [],
+  "interactions": [
+    "fresh/duplicate tags",
+    "both ticket balances",
+    "result repeat draw",
+    "outside close",
+    "reload persistence"
+  ]
+}
