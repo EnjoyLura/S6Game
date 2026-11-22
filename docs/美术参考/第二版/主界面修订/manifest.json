@@ -29,6 +29,18 @@
     "487x986 endless",
     "487x986 daily"
   ],
+  "compactParty": [
+    "360x640, shield 0",
+    "360x640, shield 88",
+    "390x844, shield 0",
+    "390x844, shield 88",
+    "430x764, shield 0",
+    "430x764, shield 88",
+    "430x932, shield 0",
+    "430x932, shield 88",
+    "487x986, shield 0",
+    "487x986, shield 88"
+  ],
   "safeArea": "47px, four main pages",
   "freshPartyLockedSkills": 3,
   "errors": []

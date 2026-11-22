@@ -5,8 +5,8 @@ export const SECOND_EDITION_POLISH = `
 /* Shared spacing, warm paper and typography. */
 #s6-v2{font-variant-numeric:tabular-nums}
 #s6-v2 .page,#s6-v2 .secondary{background-color:#ffecd7}
-#s6-v2 .bag-page,#s6-v2 .dungeon-page{gap:1.5cqw}
-#s6-v2 .bag-page>.wallet,#s6-v2 .dungeon-page>.wallet{height:7cqw}
+#s6-v2 .bag-page,#s6-v2 .dungeon-page{--catalog-top:max(12px,env(safe-area-inset-top,0px));--catalog-scenery:27cqw;gap:1.5cqw;background-image:linear-gradient(transparent 0 calc(var(--catalog-top) + var(--catalog-scenery)),#ffecd7 calc(var(--catalog-top) + var(--catalog-scenery))),var(--scene)}
+#s6-v2 .bag-page>.wallet,#s6-v2 .dungeon-page>.wallet{height:calc(var(--catalog-scenery) + 1cqw);align-items:flex-start}
 #s6-v2 .bag-page>.main-tabs,#s6-v2 .dungeon-page>.main-tabs{height:9cqw;margin:0}
 #s6-v2 .page>.v2-nav button,#s6-v2 .battle-hud>.v2-nav button{border-radius:4.4cqw;font-size:4.1cqw}
 #s6-v2 .page>.v2-nav img,#s6-v2 .battle-hud>.v2-nav img{width:9.4cqw;height:9.4cqw}
@@ -33,8 +33,8 @@ export const SECOND_EDITION_POLISH = `
 #s6-v2 .ticket-lettering text{fill:#fff9e8;stroke:#77399b;stroke-width:3;paint-order:stroke fill;font:900 23px Arial,sans-serif;text-anchor:middle}
 #s6-v2 .ticket-resource .ticket-art{width:7cqw;height:6cqw}
 
-/* Adventure tray keeps the reference share of the screen, including tall phones. */
-#s6-v2 .battle-hud{--battle-room:max(0px,100dvh - 178cqw);padding-bottom:0}
+/* Adventure information follows its content; tall phones do not stretch the gap. */
+#s6-v2 .battle-hud{padding-bottom:0}
 #s6-v2 .battle-hud>.v2-nav{height:calc(17.5cqw + env(safe-area-inset-bottom,0px));padding-bottom:max(1.5cqw,env(safe-area-inset-bottom,0px));flex:none}
 #s6-v2 .battle-hud .stage-heading{margin:0;height:20cqw}
 #s6-v2 .battle-hud .stage-heading h1{font-size:6.5cqw;text-shadow:none}
@@ -52,9 +52,9 @@ export const SECOND_EDITION_POLISH = `
 #s6-v2 .battle-tools small{font-size:2cqw;line-height:1.1;font-weight:800}
 #s6-v2 .turn-portrait{overflow:hidden;border-radius:50%}
 #s6-v2 .turn-portrait .face{width:100%;height:100%;object-fit:cover;transform:scale(1.65);transform-origin:center 12%}
-#s6-v2 .skill-bar{height:calc(42cqw + var(--battle-room)*.34);padding:3cqw 1.8cqw 2cqw;gap:1.5cqw}
-#s6-v2 .party-card{justify-content:space-between;padding-right:1.3cqw;gap:1cqw}
-#s6-v2 .party-card>header{height:calc(18cqw + var(--battle-room)*.18);gap:.8cqw}
+#s6-v2 .battle-hud .skill-bar{height:auto;min-height:0;padding:2.5cqw 1.8cqw 1.8cqw;gap:1.5cqw}
+#s6-v2 .party-card{justify-content:flex-start;padding-right:1.3cqw;gap:2cqw;min-height:0}
+#s6-v2 .party-card>header{height:auto;flex:none;gap:.8cqw}
 #s6-v2 .party-card b{font-size:3.2cqw}
 #s6-v2 .party-card>header>div{gap:.8cqw}
 #s6-v2 .party-card>header>div>b{font-size:3.5cqw;line-height:1.3}
